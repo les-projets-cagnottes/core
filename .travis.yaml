@@ -1,0 +1,9 @@
+language: java
+dist: xenial
+sudo: required
+
+jdk:
+  - openjdk12
+
+script:
+- ./mvnw clean install -B
