@@ -6,4 +6,4 @@ jdk:
   - openjdk12
 
 script:
-- ./mvnw clean install -B
+- mvn clean install -B
