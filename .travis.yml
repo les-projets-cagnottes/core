@@ -4,4 +4,5 @@ sudo: false
 jdk:
   - openjdk12
 
-script: mvn clean verify
+install: true
+script: ./mvnw clean install
