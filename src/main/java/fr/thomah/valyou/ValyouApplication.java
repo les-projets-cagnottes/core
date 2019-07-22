@@ -11,6 +11,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -28,11 +30,11 @@ public class ValyouApplication {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
-		User admin = userRepository.findByUsername("admin");
+		User admin = userRepository.findByEmail("admin@valyou.fr");
 		if(admin == null) {
 			String generatedPassword = randomString();
-			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
-			userRepository.save(new User("admin", DigestUtils.sha1Hex(generatedPassword)));
+			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
+			userRepository.save(new User("admin@valyou.fr", DigestUtils.sha1Hex(generatedPassword)));
 		}
 	}
 

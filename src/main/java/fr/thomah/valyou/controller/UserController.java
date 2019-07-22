@@ -2,6 +2,7 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.exceptions.NotFoundException;
+import fr.thomah.valyou.exceptions.UnauthaurizedException;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,17 @@ public class UserController {
     @Autowired
     private
     UserRepository repository;
+
+    @RequestMapping(value = "/api/user/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public User login(@RequestBody User user) {
+        User userInDb = repository.findByEmailAndPassword(user.getEmail(), user.getPassword());
+        if(userInDb == null) {
+            throw new UnauthaurizedException();
+        } else {
+            userInDb.setPassword("");
+            return userInDb;
+        }
+    }
 
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
