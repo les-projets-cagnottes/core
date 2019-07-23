@@ -12,7 +12,7 @@ import java.util.Date;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @JsonIgnoreProperties(
-        value = {"createdAt", "updatedAt"},
+        value = {"updatedAt"},
         allowGetters = true
 )
 public abstract class AuditEntity implements Serializable {
@@ -28,5 +28,9 @@ public abstract class AuditEntity implements Serializable {
     @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
     private Date updatedAt;
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 }
 
