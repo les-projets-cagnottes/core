@@ -6,12 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import fr.thomah.valyou.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Clock;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClock;
+import org.graalvm.compiler.core.common.SuppressFBWarnings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,10 @@ public class JwtTokenUtil implements Serializable {
     private Long expiration;
 
     public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public String getEmailFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
@@ -69,9 +74,9 @@ public class JwtTokenUtil implements Serializable {
         return false;
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(User userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername());
+        return doGenerateToken(claims, userDetails.getEmail());
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
@@ -109,11 +114,11 @@ public class JwtTokenUtil implements Serializable {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         JwtUser user = (JwtUser) userDetails;
-        final String username = getUsernameFromToken(token);
+        final String email = getEmailFromToken(token);
         final Date created = getIssuedAtDateFromToken(token);
         //final Date expiration = getExpirationDateFromToken(token);
         return (
-            username.equals(user.getUsername())
+                email.equals(user.getUsername())
                 && !isTokenExpired(token)
                 && !isCreatedBeforeLastPasswordReset(created, user.getLastPasswordResetDate())
         );

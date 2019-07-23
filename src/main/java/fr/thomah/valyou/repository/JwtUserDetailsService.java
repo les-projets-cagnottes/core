@@ -1,13 +1,13 @@
-package fr.thomah.valyou.security.service;
+package fr.thomah.valyou.repository;
 
+import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.exceptions.EmailNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import fr.thomah.valyou.model.security.User;
 import fr.thomah.valyou.security.JwtUserFactory;
-import fr.thomah.valyou.security.repository.UserRepository;
 
 @Service("jwtUserDetailsService")
 public class JwtUserDetailsService implements UserDetailsService {
@@ -17,10 +17,10 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findByEmail(username);
 
         if (user == null) {
-            throw new UsernameNotFoundException(String.format("No user found with username '%s'.", username));
+            throw new EmailNotFoundException(String.format("No user found with email '%s'.", username));
         } else {
             return JwtUserFactory.create(user);
         }

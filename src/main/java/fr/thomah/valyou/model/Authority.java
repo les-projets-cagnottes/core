@@ -1,4 +1,5 @@
-package fr.thomah.valyou.model.security;
+package fr.thomah.valyou.model;
+
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -9,18 +10,23 @@ import java.util.List;
 public class Authority {
 
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "authority_seq")
-    @SequenceGenerator(name = "authority_seq", sequenceName = "authority_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "NAME", length = 50)
+    @Column(length = 50)
     @NotNull
     @Enumerated(EnumType.STRING)
     private AuthorityName name;
 
     @ManyToMany(mappedBy = "authorities", fetch = FetchType.LAZY)
     private List<User> users;
+
+    public Authority() {
+    }
+
+    public Authority(AuthorityName authorityName) {
+        this.name = authorityName;
+    }
 
     public Long getId() {
         return id;

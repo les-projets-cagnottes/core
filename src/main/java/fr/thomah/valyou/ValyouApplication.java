@@ -1,8 +1,10 @@
 package fr.thomah.valyou;
 
-import fr.thomah.valyou.entity.User;
+import fr.thomah.valyou.model.Authority;
+import fr.thomah.valyou.model.AuthorityName;
+import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -20,6 +21,9 @@ public class ValyouApplication {
 
 	private static final String ALPHA_NUMERIC_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ValyouApplication.class);
+
+	@Autowired
+	private AuthorityRepository authorityRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -31,10 +35,21 @@ public class ValyouApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
 		User admin = userRepository.findByEmail("admin@valyou.fr");
+
+		// First launch of App
 		if(admin == null) {
+
+			// Creation of every roles in database
+			for(AuthorityName authorityName : AuthorityName.values()) {
+				authorityRepository.save(new Authority(authorityName));
+			}
+
+			String email = "admin@valyou.fr";
 			String generatedPassword = randomString();
+			admin = new User(email, BCrypt.hashpw(generatedPassword, BCrypt.gensalt()));
+			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
-			userRepository.save(new User("admin@valyou.fr", DigestUtils.sha1Hex(generatedPassword)));
+			userRepository.save(admin);
 		}
 	}
 

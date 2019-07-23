@@ -1,16 +1,19 @@
 package fr.thomah.valyou;
 
 import fr.thomah.valyou.security.JwtAuthenticationEntryPoint;
-import fr.thomah.valyou.security.JwtRequestFilter;
+import fr.thomah.valyou.security.JwtAuthorizationTokenFilter;
+import fr.thomah.valyou.repository.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -23,28 +26,36 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcConfigurer {
 
     @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    @Autowired
-    private UserDetailsService jwtUserDetailsService;
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-// configure AuthenticationManager so that it knows from where to load
-// user for matching credentials
-// Use BCryptPasswordEncoder
-        auth.userDetailsService(jwtUserDetailsService).passwordEncoder(passwordEncoder());
-    }
+    private JwtUserDetailsService jwtUserDetailsService;
+
+    // Custom JWT based security filter
+    @Autowired
+    private JwtAuthorizationTokenFilter authenticationTokenFilter;
+
+    @Value("${jwt.header}")
+    private String tokenHeader;
+
+    @Value("${jwt.route.authentication.path}")
+    private String authenticationPath;
+
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**");
     }
 
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth
+                .userDetailsService(jwtUserDetailsService)
+                .passwordEncoder(passwordEncoderBean());
+    }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoderBean() {
         return new BCryptPasswordEncoder();
     }
 
@@ -56,17 +67,40 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-// We don't need CSRF for this example
-        httpSecurity.csrf().disable()
-// dont authenticate this particular request
-                .authorizeRequests().antMatchers("/authenticate").permitAll().
-// all other requests need to be authenticated
-        anyRequest().authenticated().and().
-// make sure we use stateless session; session won't be used to
-// store user's state.
-        exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-// Add a filter to validate the tokens with every request
-        httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity
+                // we don't need CSRF because our token is invulnerable
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                // don't create session
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeRequests()
+                // Un-secure H2 Database
+                .antMatchers("/h2-console/**/**").permitAll()
+                .antMatchers("/api/auth/login**").permitAll()
+                .anyRequest().authenticated();
+        httpSecurity
+                .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        // disable page caching
+        httpSecurity
+                .headers()
+                .frameOptions().sameOrigin()  // required to set for H2 else H2 Console will be blank.
+                .cacheControl();
     }
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        // AuthenticationTokenFilter will ignore the below paths
+        web
+                .ignoring()
+                .antMatchers(
+                        HttpMethod.POST,
+                        authenticationPath
+                )
+
+                // Un-secure H2 Database (for testing purposes, H2 console shouldn't be unprotected in production)
+                .and()
+                .ignoring()
+                .antMatchers("/h2-console/**/**");
+    }
+
 }

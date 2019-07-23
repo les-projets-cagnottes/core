@@ -1,8 +1,11 @@
 package fr.thomah.valyou.security;
 
+import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,12 +44,12 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
 
         final String requestHeader = request.getHeader(this.tokenHeader);
 
-        String username = null;
+        String email = null;
         String authToken = null;
         if (requestHeader != null && requestHeader.startsWith("Bearer ")) {
             authToken = requestHeader.substring(7);
             try {
-                username = jwtTokenUtil.getUsernameFromToken(authToken);
+                email = jwtTokenUtil.getEmailFromToken(authToken);
             } catch (IllegalArgumentException e) {
                 logger.error("an error occurred during getting username from token", e);
             } catch (ExpiredJwtException e) {
@@ -56,15 +59,15 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
             logger.warn("couldn't find bearer string, will ignore the header");
         }
 
-        logger.debug("checking authentication for user '{}'", username);
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        logger.debug("checking authentication for user '{}'", email);
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             logger.debug("security context was null, so authorizing user");
 
             // It is not compelling necessary to load the use details from the database. You could also store the information
-            // in the token and read it from it. It's up to you ;)            
+            // in the token and read it from it. It's up to you ;)
             UserDetails userDetails;
             try {
-                userDetails = userDetailsService.loadUserByUsername(username);
+                userDetails = userDetailsService.loadUserByUsername(email);
             } catch (UsernameNotFoundException e) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
                 return;
@@ -76,7 +79,7 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
             if (jwtTokenUtil.validateToken(authToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                logger.info("authorized user '{}', setting security context", username);
+                logger.info("authorized user '{}', setting security context", email);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

@@ -1,6 +1,10 @@
-package fr.thomah.valyou.entity;
+package fr.thomah.valyou.model;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -10,15 +14,17 @@ public class User extends AuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
     @Column(name = "username")
     private String username;
 
     @Column(name = "password")
+    @NotNull
     private String password;
 
     @Column(name = "email", unique=true)
+    @NotNull
     private String email;
 
     @Column(name = "firstname")
@@ -27,19 +33,37 @@ public class User extends AuditEntity {
     @Column(name = "lastname")
     private String lastname;
 
+    @Column(name = "enabled")
+    @NotNull
+    private Boolean enabled;
+
+    @Column(name = "lastpasswordresetdate")
+    @Temporal(TemporalType.TIMESTAMP)
+    @NotNull
+    private Date lastPasswordResetDate;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_authority",
+            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
+    private List<Authority> authorities = new ArrayList<>();
+
     public User() {
     }
 
     public User(String email, String password) {
         this.email = email;
         this.password = password;
+        this.enabled = false;
+        this.lastPasswordResetDate = new Date();
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -83,6 +107,30 @@ public class User extends AuditEntity {
         this.lastname = lastname;
     }
 
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Date getLastPasswordResetDate() {
+        return lastPasswordResetDate;
+    }
+
+    public void setLastPasswordResetDate(Date lastPasswordResetDate) {
+        this.lastPasswordResetDate = lastPasswordResetDate;
+    }
+
+    public List<Authority> getAuthorities() {
+        return authorities;
+    }
+
+    public void setAuthorities(List<Authority> authorities) {
+        this.authorities = authorities;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -92,6 +140,12 @@ public class User extends AuditEntity {
                 ", email='" + email + '\'' +
                 ", firstname='" + firstname + '\'' +
                 ", lastname='" + lastname + '\'' +
+                ", enabled=" + enabled +
+                ", lastPasswordResetDate=" + lastPasswordResetDate +
                 '}';
+    }
+
+    public void addAuthority(Authority authority) {
+        authorities.add(authority);
     }
 }

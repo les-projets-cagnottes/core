@@ -1,4 +1,4 @@
-package fr.thomah.valyou.entity;
+package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.annotation.CreatedDate;

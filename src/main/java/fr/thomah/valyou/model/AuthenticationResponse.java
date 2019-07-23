@@ -1,17 +1,17 @@
-package fr.thomah.valyou.security.service;
+package fr.thomah.valyou.model;
 
 import java.io.Serializable;
 
 /**
  * Created by stephan on 20.03.16.
  */
-public class JwtAuthenticationResponse implements Serializable {
+public class AuthenticationResponse implements Serializable {
 
     private static final long serialVersionUID = 1250166508152483573L;
 
     private final String token;
 
-    public JwtAuthenticationResponse(String token) {
+    public AuthenticationResponse(String token) {
         this.token = token;
     }
 

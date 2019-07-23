@@ -3,10 +3,10 @@ package fr.thomah.valyou.security;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import fr.thomah.valyou.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import fr.thomah.valyou.model.security.Authority;
-import fr.thomah.valyou.model.security.User;
+import fr.thomah.valyou.model.Authority;
 
 public final class JwtUserFactory {
 
