@@ -9,7 +9,4 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAll(Pageable pageable);
     User findByEmail(String email);
-    User findByEmailAndPassword(String email, String password);
-
-    User findByUsername(String username);
 }

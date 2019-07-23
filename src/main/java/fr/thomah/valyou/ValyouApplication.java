@@ -46,7 +46,7 @@ public class ValyouApplication {
 
 			String email = "admin@valyou.fr";
 			String generatedPassword = randomString();
-			admin = new User(email, BCrypt.hashpw(generatedPassword, BCrypt.gensalt()));
+			admin = new User(email, generatedPassword);
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
 			userRepository.save(admin);

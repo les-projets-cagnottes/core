@@ -1,5 +1,9 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -47,16 +51,18 @@ public class User extends AuditEntity {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    private List<Authority> authorities = new ArrayList<>();
+    @JsonIgnore
+    private List<Authority> authorities;
 
     public User() {
+        this.enabled = false;
+        this.lastPasswordResetDate = new Date();
+        this.authorities = new ArrayList<>();
     }
 
     public User(String email, String password) {
         this.email = email;
-        this.password = password;
-        this.enabled = false;
-        this.lastPasswordResetDate = new Date();
+        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
     public Long getId() {

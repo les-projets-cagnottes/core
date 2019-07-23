@@ -1,7 +1,8 @@
-package fr.thomah.valyou.repository;
+package fr.thomah.valyou.service;
 
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.exceptions.EmailNotFoundException;
+import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -63,7 +63,7 @@ public class AuthenticationController {
         }
     }
 
-    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/whoami", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public User getAuthenticatedUser(HttpServletRequest request) {
         String token = request.getHeader(TOKEN_HEADER).substring(7);
         String email = jwtTokenUtil.getEmailFromToken(token);
