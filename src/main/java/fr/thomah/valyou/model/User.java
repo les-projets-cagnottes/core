@@ -2,6 +2,7 @@ package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import fr.thomah.valyou.tool.RandomGenerator;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
@@ -32,32 +33,34 @@ public class User extends AuditEntity {
     private String email;
 
     @Column(name = "firstname")
-    private String firstname;
+    private String firstname = "";
 
     @Column(name = "lastname")
-    private String lastname;
+    private String lastname = "";
+
+    @Column(name = "color")
+    private String color = "";
+
+    @Column(name = "avatarUrl")
+    private String avatarUrl;
 
     @Column(name = "enabled")
     @NotNull
-    private Boolean enabled;
+    private Boolean enabled = false;
 
     @Column(name = "lastpasswordresetdate")
     @Temporal(TemporalType.TIMESTAMP)
     @NotNull
-    private Date lastPasswordResetDate;
+    private Date lastPasswordResetDate = new Date();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    @JsonIgnore
-    private List<Authority> authorities;
+    private List<Authority> authorities = new ArrayList<>();
 
     public User() {
-        this.enabled = false;
-        this.lastPasswordResetDate = new Date();
-        this.authorities = new ArrayList<>();
     }
 
     public User(String email, String password) {
@@ -113,6 +116,25 @@ public class User extends AuditEntity {
         this.lastname = lastname;
     }
 
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getAvatarUrl() {
+        if(avatarUrl == null) {
+            return "https://ui-avatars.com/api/?name=" + firstname + "+" + lastname + "&background=" + color;
+        }
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public Boolean getEnabled() {
         return enabled;
     }
@@ -153,5 +175,9 @@ public class User extends AuditEntity {
 
     public void addAuthority(Authority authority) {
         authorities.add(authority);
+    }
+
+    public void generateColor() {
+        this.color = RandomGenerator.randomColor();
     }
 }

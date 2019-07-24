@@ -78,6 +78,7 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
                 // Un-secure H2 Database
                 .antMatchers("/h2-console/**/**").permitAll()
                 .antMatchers("/api/auth/login**").permitAll()
+                .antMatchers(HttpMethod.OPTIONS,"/**").permitAll()//allow CORS option calls
                 .anyRequest().authenticated();
         httpSecurity
                 .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
@@ -101,7 +102,8 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
                 // Un-secure H2 Database (for testing purposes, H2 console shouldn't be unprotected in production)
                 .and()
                 .ignoring()
-                .antMatchers("/h2-console/**/**");
+                .antMatchers("/h2-console/**/**")
+                .antMatchers(HttpMethod.OPTIONS,"/**");
     }
 
 }

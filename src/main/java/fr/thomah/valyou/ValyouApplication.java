@@ -5,6 +5,7 @@ import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.tool.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +14,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @SpringBootApplication
 @EnableJpaAuditing
 public class ValyouApplication {
 
-	private static final String ALPHA_NUMERIC_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ValyouApplication.class);
 
 	@Autowired
@@ -45,22 +44,16 @@ public class ValyouApplication {
 			}
 
 			String email = "admin@valyou.fr";
-			String generatedPassword = randomString();
+			String generatedPassword = RandomGenerator.randomString();
 			admin = new User(email, generatedPassword);
+			admin.setFirstname("Administrator");
+			admin.generateColor();
+			admin.setEnabled(true);
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
 			userRepository.save(admin);
 		}
 	}
 
-	private String randomString() {
-		int count = 12;
-		StringBuilder builder = new StringBuilder();
-		while (count-- != 0) {
-			int character = (int) (Math.random() * ALPHA_NUMERIC_STRING.length());
-			builder.append(ALPHA_NUMERIC_STRING.charAt(character));
-		}
-		return builder.toString();
-	}
 }
 

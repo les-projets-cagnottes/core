@@ -1,7 +1,9 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.exceptions.NotFoundException;
+import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class UserController {
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
 
     @Autowired
     private UserRepository repository;
@@ -29,6 +34,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public void create(@RequestBody User user) {
         user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        user.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_USER));
+        user.generateColor();
         repository.save(user);
     }
 
