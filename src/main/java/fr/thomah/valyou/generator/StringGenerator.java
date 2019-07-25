@@ -1,8 +1,8 @@
-package fr.thomah.valyou.tool;
+package fr.thomah.valyou.generator;
 
 import java.util.Random;
 
-public class RandomGenerator {
+public class StringGenerator {
 
     private static final String ALPHA_NUMERIC_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 

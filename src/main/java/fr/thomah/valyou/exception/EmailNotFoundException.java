@@ -1,4 +1,4 @@
-package fr.thomah.valyou.exceptions;
+package fr.thomah.valyou.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

@@ -1,11 +1,12 @@
 package fr.thomah.valyou;
 
+import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.Authority;
 import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
-import fr.thomah.valyou.tool.RandomGenerator;
+import fr.thomah.valyou.generator.StringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +45,9 @@ public class ValyouApplication {
 			}
 
 			String email = "admin@valyou.fr";
-			String generatedPassword = RandomGenerator.randomString();
-			admin = new User(email, generatedPassword);
+			String generatedPassword = StringGenerator.randomString();
+			admin = UserGenerator.newUser(email, generatedPassword);
 			admin.setFirstname("Administrator");
-			admin.generateColor();
-			admin.setEnabled(true);
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
 			userRepository.save(admin);

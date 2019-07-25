@@ -1,8 +1,6 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import fr.thomah.valyou.tool.RandomGenerator;
+import fr.thomah.valyou.generator.StringGenerator;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
@@ -178,6 +176,6 @@ public class User extends AuditEntity {
     }
 
     public void generateColor() {
-        this.color = RandomGenerator.randomColor();
+        this.color = StringGenerator.randomColor();
     }
 }

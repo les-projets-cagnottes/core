@@ -3,10 +3,10 @@ package fr.thomah.valyou.controller;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 
-import fr.thomah.valyou.exceptions.BadRequestException;
+import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.UserRepository;
-import fr.thomah.valyou.exceptions.AuthenticationException;
+import fr.thomah.valyou.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;

@@ -1,8 +1,9 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
-import fr.thomah.valyou.exceptions.NotFoundException;
+import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +34,7 @@ public class UserController {
     @RequestMapping(value = "/api/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public void create(@RequestBody User user) {
-        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
-        user.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_USER));
-        user.generateColor();
-        repository.save(user);
+        repository.save(UserGenerator.newUser(user));
     }
 
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
