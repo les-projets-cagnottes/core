@@ -1,5 +1,6 @@
 package fr.thomah.valyou;
 
+import fr.thomah.valyou.security.CorsFilter;
 import fr.thomah.valyou.security.JwtAuthenticationEntryPoint;
 import fr.thomah.valyou.security.JwtAuthorizationTokenFilter;
 import fr.thomah.valyou.service.JwtUserDetailsService;
@@ -19,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -42,17 +44,16 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
     @Value("${jwt.route.authentication.path}")
     private String authenticationPath;
 
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**");
-    }
-
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth
                 .userDetailsService(jwtUserDetailsService)
                 .passwordEncoder(passwordEncoderBean());
+    }
+
+    @Bean
+    CorsFilter corsFilter() {
+        return new CorsFilter();
     }
 
     @Bean
@@ -67,31 +68,7 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
     }
 
     @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                // we don't need CSRF because our token is invulnerable
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                // don't create session
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeRequests()
-                // Un-secure H2 Database
-                .antMatchers("/h2-console/**/**").permitAll()
-                .antMatchers("/api/auth/login**").permitAll()
-                .antMatchers(HttpMethod.OPTIONS,"/**").permitAll()//allow CORS option calls
-                .anyRequest().authenticated();
-        httpSecurity
-                .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        // disable page caching
-        httpSecurity
-                .headers()
-                .frameOptions().sameOrigin()  // required to set for H2 else H2 Console will be blank.
-                .cacheControl();
-    }
-
-    @Override
     public void configure(WebSecurity web) throws Exception {
-        // AuthenticationTokenFilter will ignore the below paths
         web
                 .ignoring()
                 .antMatchers(
@@ -103,7 +80,28 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
                 .and()
                 .ignoring()
                 .antMatchers("/h2-console/**/**")
-                .antMatchers(HttpMethod.OPTIONS,"/**");
+
+                .and()
+                .ignoring()
+                .antMatchers(HttpMethod.OPTIONS, "/**");
+    }
+
+    @Override
+    protected void configure(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .addFilterBefore(corsFilter(), SessionManagementFilter.class)
+                // we don't need CSRF because our token is invulnerable
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                // don't create session
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeRequests()
+                // Un-secure H2 Database
+                .antMatchers("/h2-console/**/**").permitAll()
+                .antMatchers("/api/auth/login**").permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
 }

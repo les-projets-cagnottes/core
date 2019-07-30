@@ -44,6 +44,7 @@ public class UserController {
         if (userInDb == null) {
             throw new NotFoundException();
         } else {
+            userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
             repository.save(user);
         }
     }
