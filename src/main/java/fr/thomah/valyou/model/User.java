@@ -1,5 +1,7 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.thomah.valyou.generator.StringGenerator;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
@@ -26,7 +28,7 @@ public class User extends AuditEntity {
     @NotNull
     private String password;
 
-    @Column(name = "email", unique=true)
+    @Column(name = "email", unique = true)
     @NotNull
     private String email;
 
@@ -57,6 +59,19 @@ public class User extends AuditEntity {
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
     private List<Authority> authorities = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Organization> organizations;
+
+    @OneToMany(mappedBy = "sponsor")
+    private List<Budget> budgets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "leader")
+    private List<Project> projects = new ArrayList<>();
+
+    @OneToMany(mappedBy = "contributor")
+    private List<Donation> donations = new ArrayList<>();
 
     public User() {
     }
@@ -123,7 +138,7 @@ public class User extends AuditEntity {
     }
 
     public String getAvatarUrl() {
-        if(avatarUrl == null) {
+        if (avatarUrl == null || avatarUrl.equals("")) {
             return "https://ui-avatars.com/api/?name=" + firstname + "+" + lastname + "&background=" + color;
         }
         return avatarUrl;

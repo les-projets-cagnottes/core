@@ -26,6 +26,9 @@ public class ValyouApplication {
 	private AuthorityRepository authorityRepository;
 
 	@Autowired
+	private UserGenerator userGenerator;
+
+	@Autowired
 	private UserRepository userRepository;
 
 	public static void main(String[] args) {
@@ -43,6 +46,7 @@ public class ValyouApplication {
 			for(AuthorityName authorityName : AuthorityName.values()) {
 				authorityRepository.save(new Authority(authorityName));
 			}
+			userGenerator.init(); // Refresh authorities
 
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();

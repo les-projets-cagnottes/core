@@ -31,7 +31,7 @@ public class UserGenerator {
     public static User newUser(User user) {
         user.generateColor();
         user.setEnabled(true);
-        user.addAuthority(authorities.stream().filter(authority -> authority.getName().equals(AuthorityName.ROLE_ADMIN)).findFirst().orElse(null));
+        user.addAuthority(authorities.stream().filter(authority -> authority.getName().equals(AuthorityName.ROLE_USER)).findFirst().orElse(null));
         return user;
     }
 

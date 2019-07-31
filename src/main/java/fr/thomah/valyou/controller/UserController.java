@@ -31,6 +31,14 @@ public class UserController {
         return repository.findAll(pageable);
     }
 
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"email"})
+    @PreAuthorize("hasRole('USER')")
+    public User findByEmail(@RequestParam("email") String email) {
+        User user = repository.findByEmail(email);
+        user.setPassword("");
+        return user;
+    }
+
     @RequestMapping(value = "/api/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public void create(@RequestBody User user) {
