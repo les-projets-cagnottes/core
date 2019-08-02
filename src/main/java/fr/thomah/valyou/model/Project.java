@@ -1,5 +1,6 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -48,6 +49,10 @@ public class Project extends AuditEntity {
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
     private List<User> peopleGivingTime = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Organization> organizations;
 
     public Project() {
     }
@@ -114,6 +119,14 @@ public class Project extends AuditEntity {
 
     public void setPeopleGivingTime(List<User> peopleGivingTime) {
         this.peopleGivingTime = peopleGivingTime;
+    }
+
+    public List<Organization> getOrganizations() {
+        return organizations;
+    }
+
+    public void setOrganizations(List<Organization> organizations) {
+        this.organizations = organizations;
     }
 
     @Override

@@ -2,6 +2,7 @@ package fr.thomah.valyou.model;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,9 +20,16 @@ public class Organization extends AuditEntity {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "organizations_users",
-            joinColumns = {@JoinColumn(name = "organizations_id", referencedColumnName = "id")},
+            joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     private List<User> members;
+
+    @ManyToMany
+    @JoinTable(
+            name = "project_organizations",
+            joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")})
+    private List<Project> projects = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "organization",
@@ -59,5 +67,13 @@ public class Organization extends AuditEntity {
 
     public void setBudgets(List<Budget> budgets) {
         this.budgets = budgets;
+    }
+
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<Project> projects) {
+        this.projects = projects;
     }
 }

@@ -18,11 +18,11 @@ public class ProjectController {
     @Autowired
     private ProjectRepository repository;
 
-    @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    @PreAuthorize("hasRole('USER')")
-    public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+    @PreAuthorize("isMember(#orgId)")
+    @RequestMapping(value = "/api/{orgId}/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit, @PathVariable long orgId) {
         Pageable pageable = PageRequest.of(offset, limit);
-        return repository.findAll(pageable);
+        return repository.findByOrganizations_Id(pageable, orgId);
     }
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)

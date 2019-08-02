@@ -3,17 +3,20 @@ package fr.thomah.valyou.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.thomah.valyou.generator.StringGenerator;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
-public class User extends AuditEntity {
+public class User extends AuditEntity implements UserDetails {
 
     private static final long serialVersionUID = 6210782306288115135L;
 
@@ -58,7 +61,10 @@ public class User extends AuditEntity {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    private List<Authority> authorities = new ArrayList<>();
+    private List<Authority> userAuthorities = new ArrayList<>();
+
+    @Transient
+    private Collection<GrantedAuthority> authorities = new ArrayList<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -79,6 +85,38 @@ public class User extends AuditEntity {
     public User(String email, String password) {
         this.email = email;
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+    }
+
+    public User(Long id,
+                String username,
+                @NotNull String password,
+                @NotNull String email,
+                String firstname,
+                String lastname,
+                String color,
+                String avatarUrl,
+                @NotNull Boolean enabled,
+                @NotNull Date lastPasswordResetDate,
+                Collection<GrantedAuthority> authorities,
+                List<Organization> organizations,
+                List<Budget> budgets,
+                List<Project> projects,
+                List<Donation> donations) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.color = color;
+        this.avatarUrl = avatarUrl;
+        this.enabled = enabled;
+        this.lastPasswordResetDate = lastPasswordResetDate;
+        this.authorities = authorities;
+        this.organizations = organizations;
+        this.budgets = budgets;
+        this.projects = projects;
+        this.donations = donations;
     }
 
     public Long getId() {
@@ -164,12 +202,53 @@ public class User extends AuditEntity {
         this.lastPasswordResetDate = lastPasswordResetDate;
     }
 
-    public List<Authority> getAuthorities() {
+    public List<Authority> getUserAuthorities() {
+        return userAuthorities;
+    }
+
+    public void setUserAuthorities(List<Authority> userAuthorities) {
+        this.userAuthorities = userAuthorities;
+    }
+
+    @Override
+    public Collection<GrantedAuthority> getAuthorities() {
         return authorities;
     }
 
-    public void setAuthorities(List<Authority> authorities) {
+    public void setAuthorities(Collection<GrantedAuthority> authorities) {
         this.authorities = authorities;
+    }
+
+    public List<Organization> getOrganizations() {
+        return organizations;
+    }
+
+    public void setOrganizations(List<Organization> organizations) {
+        this.organizations = organizations;
+    }
+
+    public List<Budget> getBudgets() {
+        return budgets;
+    }
+
+    public void setBudgets(List<Budget> budgets) {
+        this.budgets = budgets;
+    }
+
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<Project> projects) {
+        this.projects = projects;
+    }
+
+    public List<Donation> getDonations() {
+        return donations;
+    }
+
+    public void setDonations(List<Donation> donations) {
+        this.donations = donations;
     }
 
     @Override
@@ -184,6 +263,29 @@ public class User extends AuditEntity {
                 ", enabled=" + enabled +
                 ", lastPasswordResetDate=" + lastPasswordResetDate +
                 '}';
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public void addAuthority(Authority authority) {
