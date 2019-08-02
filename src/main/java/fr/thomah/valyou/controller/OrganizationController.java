@@ -2,7 +2,8 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
-import fr.thomah.valyou.model.Organization;
+import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.OrganizationAuthorityRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,23 +17,29 @@ import org.springframework.web.bind.annotation.*;
 public class OrganizationController {
 
     @Autowired
+    private OrganizationAuthorityRepository organizationAuthorityRepository;
+
+    @Autowired
     private OrganizationRepository repository;
 
-    @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<Organization> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return repository.findAll(pageable);
     }
 
-    @RequestMapping(value = "/api/organization", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void create(@RequestBody Organization org) {
-        repository.save(OrganizationGenerator.newOrganization(org));
+        org = repository.save(OrganizationGenerator.newOrganization(org));
+        for(AuthorityName authorityName : AuthorityName.values()) {
+            organizationAuthorityRepository.save(new OrganizationAuthority(org.getMembers(), authorityName));
+        }
     }
 
-    @RequestMapping(value = "/api/organization/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public void save(@PathVariable("id") String id, @RequestBody Organization org) {
         Organization orgInDb = repository.findById(Long.valueOf(id)).orElse(null);
         if (orgInDb == null) {
@@ -42,9 +49,9 @@ public class OrganizationController {
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") String id) {
         repository.deleteById(Long.valueOf(id));
     }

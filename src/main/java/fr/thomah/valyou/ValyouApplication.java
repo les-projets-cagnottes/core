@@ -5,6 +5,7 @@ import fr.thomah.valyou.model.Authority;
 import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
+import fr.thomah.valyou.repository.OrganizationAuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.generator.StringGenerator;
 import org.slf4j.Logger;

@@ -63,6 +63,13 @@ public class User extends AuditEntity implements UserDetails {
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
     private List<Authority> userAuthorities = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_authority_organizations",
+            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
+    private List<OrganizationAuthority> userOrganizationAuthorities = new ArrayList<>();
+
     @Transient
     private Collection<GrantedAuthority> authorities = new ArrayList<>();
 
@@ -210,6 +217,14 @@ public class User extends AuditEntity implements UserDetails {
         this.userAuthorities = userAuthorities;
     }
 
+    public List<OrganizationAuthority> getUserOrganizationAuthorities() {
+        return userOrganizationAuthorities;
+    }
+
+    public void setUserOrganizationAuthorities(List<OrganizationAuthority> userOrganizationAuthorities) {
+        this.userOrganizationAuthorities = userOrganizationAuthorities;
+    }
+
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
         return authorities;
@@ -289,10 +304,14 @@ public class User extends AuditEntity implements UserDetails {
     }
 
     public void addAuthority(Authority authority) {
-        authorities.add(authority);
+        userAuthorities.add(authority);
     }
 
+    public void addOrganizationAuthority(OrganizationAuthority authority) {
+        userOrganizationAuthorities.add(authority);
+    }
     public void generateColor() {
         this.color = StringGenerator.randomColor();
     }
+
 }
