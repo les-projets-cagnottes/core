@@ -18,7 +18,7 @@ public class ProjectController {
     @Autowired
     private ProjectRepository repository;
 
-    @PreAuthorize("isMember(#orgId)")
+    @PreAuthorize("hasRoleInOrg(#orgId, 'MEMBER')")
     @RequestMapping(value = "/api/{orgId}/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit, @PathVariable long orgId) {
         Pageable pageable = PageRequest.of(offset, limit);

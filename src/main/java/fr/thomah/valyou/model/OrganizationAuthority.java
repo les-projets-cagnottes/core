@@ -11,12 +11,15 @@ import java.util.List;
 @Table(name = "organizations_authorities")
 public class OrganizationAuthority extends AuditEntity {
 
+    private static final long serialVersionUID = -5098047340982969186L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    @JsonIgnore
     private Organization organization;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
@@ -26,13 +29,13 @@ public class OrganizationAuthority extends AuditEntity {
     @Column(length = 50)
     @NotNull
     @Enumerated(EnumType.STRING)
-    private AuthorityName name;
+    private OrganizationAuthorityName name;
 
     public OrganizationAuthority() {
     }
 
-    public OrganizationAuthority(List<User> users, AuthorityName name) {
-        this.users = users;
+    public OrganizationAuthority(Organization organization, OrganizationAuthorityName name) {
+        this.organization = organization;
         this.name = name;
     }
 
@@ -60,11 +63,11 @@ public class OrganizationAuthority extends AuditEntity {
         this.users = users;
     }
 
-    public AuthorityName getName() {
+    public OrganizationAuthorityName getName() {
         return name;
     }
 
-    public void setName(AuthorityName name) {
+    public void setName(OrganizationAuthorityName name) {
         this.name = name;
     }
 }

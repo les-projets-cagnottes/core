@@ -24,42 +24,42 @@ public class UserController {
     @Autowired
     private UserRepository repository;
 
-    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     @PreAuthorize("hasRole('ADMIN')")
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return repository.findAll(pageable);
     }
 
-    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"email"})
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"email"})
     public User findByEmail(@RequestParam("email") String email) {
         User user = repository.findByEmail(email);
         user.setPassword("");
         return user;
     }
 
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
     public void create(@RequestBody User user) {
         repository.save(UserGenerator.newUser(user));
     }
 
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
     public void save(@PathVariable("id") String id, @RequestBody User user) {
         User userInDb = repository.findById(Long.valueOf(id)).orElse(null);
         if (userInDb == null) {
             throw new NotFoundException();
         } else {
             userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
-            repository.save(user);
+            repository.save(userInDb);
         }
     }
 
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") String id) {
         repository.deleteById(Long.valueOf(id));
     }

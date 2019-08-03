@@ -1,6 +1,7 @@
 package fr.thomah.valyou.security;
 
 import fr.thomah.valyou.model.Organization;
+import fr.thomah.valyou.model.OrganizationAuthority;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.security.access.expression.SecurityExpressionRoot;
@@ -27,6 +28,14 @@ class CustomMethodSecurityExpressionRoot
 
     public boolean isMember(Long OrganizationId) {
         User user = (User) this.getPrincipal();
+        List<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
+        Organization orgUser = orgs.stream().filter(organization -> organization.getId().equals(OrganizationId)).findFirst().orElse(null);
+        return orgUser != null;
+    }
+
+    public boolean hasRoleInOrg(Long OrganizationId, String role) {
+        User user = (User) this.getPrincipal();
+        List<OrganizationAuthority> userOrganizationAuthorities = user.getUserOrganizationAuthorities();
         List<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
         Organization orgUser = orgs.stream().filter(organization -> organization.getId().equals(OrganizationId)).findFirst().orElse(null);
         return orgUser != null;
