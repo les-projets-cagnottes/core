@@ -28,7 +28,13 @@ public class Project extends AuditEntity {
     @Column(name = "long_description")
     private String longDescription;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @Column(name = "donations_required")
+    private Float donationsRequired;
+
+    @Column(name = "peopleRequired")
+    private Integer peopleRequired;
+
+    @ManyToOne
     private User leader;
 
     @Column(name = "funding_deadline")
@@ -89,6 +95,22 @@ public class Project extends AuditEntity {
         this.longDescription = longDescription;
     }
 
+    public Float getDonationsRequired() {
+        return donationsRequired;
+    }
+
+    public void setDonationsRequired(Float donationsRequired) {
+        this.donationsRequired = donationsRequired;
+    }
+
+    public Integer getPeopleRequired() {
+        return peopleRequired;
+    }
+
+    public void setPeopleRequired(Integer peopleRequired) {
+        this.peopleRequired = peopleRequired;
+    }
+
     public User getLeader() {
         return leader;
     }
@@ -136,6 +158,8 @@ public class Project extends AuditEntity {
                 ", title='" + title + '\'' +
                 ", shortDescription='" + shortDescription + '\'' +
                 ", longDescription='" + longDescription + '\'' +
+                ", donationsRequired=" + donationsRequired +
+                ", peopleRequired=" + peopleRequired +
                 ", leader=" + leader +
                 ", fundingDeadline=" + fundingDeadline +
                 '}';
