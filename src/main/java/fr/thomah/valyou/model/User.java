@@ -78,12 +78,15 @@ public class User extends AuditEntity implements UserDetails {
     private List<Organization> organizations;
 
     @OneToMany(mappedBy = "sponsor")
+    @JsonIgnore
     private List<Budget> budgets = new ArrayList<>();
 
     @OneToMany(mappedBy = "leader")
+    @JsonIgnore
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "contributor")
+    @JsonIgnore
     private List<Donation> donations = new ArrayList<>();
 
     public User() {

@@ -33,7 +33,6 @@ public class Organization extends AuditEntity {
 
     @OneToMany(
             mappedBy = "organization",
-            cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Budget> budgets;
 

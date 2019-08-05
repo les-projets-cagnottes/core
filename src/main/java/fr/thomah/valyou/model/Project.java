@@ -44,7 +44,6 @@ public class Project extends AuditEntity {
 
     @OneToMany(
             mappedBy = "project",
-            cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Donation> donations = new ArrayList<>();
 

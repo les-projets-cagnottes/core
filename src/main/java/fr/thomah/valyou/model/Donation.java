@@ -15,10 +15,10 @@ public class Donation extends AuditEntity {
     @NotNull
     private Float amount;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User contributor;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Project project;
 
 }

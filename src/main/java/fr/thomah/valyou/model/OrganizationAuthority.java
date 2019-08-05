@@ -17,7 +17,7 @@ public class OrganizationAuthority extends AuditEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     @JsonIgnore
     private Organization organization;

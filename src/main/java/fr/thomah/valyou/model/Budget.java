@@ -15,10 +15,10 @@ public class Budget extends AuditEntity {
     @NotNull
     private Float amountPerMember;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Organization organization;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User sponsor;
 
 }
