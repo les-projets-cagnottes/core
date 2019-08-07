@@ -3,6 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.ProjectGenerator;
 import fr.thomah.valyou.model.Project;
+import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,12 @@ public class ProjectController {
     public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return repository.findAll(pageable);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Project findById(@PathVariable("id") Long id) {
+        return repository.findById(id).orElse(null);
     }
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)

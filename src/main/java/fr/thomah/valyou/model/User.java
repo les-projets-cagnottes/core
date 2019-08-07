@@ -314,7 +314,7 @@ public class User extends AuditEntity implements UserDetails {
         userOrganizationAuthorities.add(authority);
     }
     public void generateColor() {
-        this.color = StringGenerator.randomColor();
+        this.color = "6CBFBB";
     }
 
 }
