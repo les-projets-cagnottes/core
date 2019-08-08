@@ -1,12 +1,8 @@
 package fr.thomah.valyou;
 
 import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.model.Authority;
-import fr.thomah.valyou.model.AuthorityName;
-import fr.thomah.valyou.model.User;
-import fr.thomah.valyou.repository.AuthorityRepository;
-import fr.thomah.valyou.repository.OrganizationAuthorityRepository;
-import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.generator.StringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -31,6 +28,15 @@ public class ValyouApplication {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private OrganizationRepository organizationRepository;
+
+	@Autowired
+	private OrganizationAuthorityRepository organizationAuthorityRepository;
+
+	@Autowired
+	private BudgetRepository budgetRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(ValyouApplication.class, args);
@@ -49,13 +55,32 @@ public class ValyouApplication {
 			}
 			userGenerator.init(); // Refresh authorities
 
+			Organization organization = new Organization();
+			organization.setName("Valyou");
+			organization = organizationRepository.save(organization);
+
+			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
+				organizationAuthorityRepository.save(new OrganizationAuthority(organization, authorityName));
+			}
+
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();
 			admin = UserGenerator.newUser(email, generatedPassword);
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
-			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
+			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
+			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_OWNER));
+			admin.addOrganization(organization);
 			userRepository.save(admin);
+
+			Budget budget = new Budget();
+			budget.setName("My budget");
+			budget.setAmountPerMember(250f);
+			budget.setOrganization(organization);
+			budget.setSponsor(admin);
+			budgetRepository.save(budget);
+
+			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
 		}
 	}
 

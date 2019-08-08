@@ -52,7 +52,15 @@ public class UserController {
         if (userInDb == null) {
             throw new NotFoundException();
         } else {
+            userInDb.setUsername(user.getUsername());
             userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+            userInDb.setEmail(user.getEmail());
+            userInDb.setFirstname(user.getFirstname());
+            userInDb.setLastname(user.getLastname());
+            userInDb.setColor(user.getColor());
+            userInDb.setAvatarUrl(user.getAvatarUrl());
+            userInDb.setEnabled(user.getEnabled());
+            userInDb.setLastPasswordResetDate(user.getLastPasswordResetDate());
             repository.save(userInDb);
         }
     }

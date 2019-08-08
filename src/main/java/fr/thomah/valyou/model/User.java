@@ -75,7 +75,7 @@ public class User extends AuditEntity implements UserDetails {
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Organization> organizations;
+    private List<Organization> organizations = new ArrayList<>();
 
     @OneToMany(mappedBy = "sponsor")
     @JsonIgnore
@@ -309,6 +309,10 @@ public class User extends AuditEntity implements UserDetails {
     public void addAuthority(Authority authority) {
         userAuthorities.add(authority);
     }
+
+    public void addOrganization(Organization organization) {
+        organizations.add(organization);
+    };
 
     public void addOrganizationAuthority(OrganizationAuthority authority) {
         userOrganizationAuthorities.add(authority);

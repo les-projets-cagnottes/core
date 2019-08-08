@@ -32,5 +32,6 @@ public abstract class AuditEntity implements Serializable {
     public Date getCreatedAt() {
         return createdAt;
     }
+
 }
 
