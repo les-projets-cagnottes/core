@@ -1,5 +1,7 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ public class Organization extends AuditEntity {
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
+    @JsonIgnore
     private List<Budget> budgets;
 
     public Long getId() {
