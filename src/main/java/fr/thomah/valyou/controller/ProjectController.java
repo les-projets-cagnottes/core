@@ -1,23 +1,31 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.ProjectGenerator;
 import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.ProjectRepository;
+import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 public class ProjectController {
 
     @Autowired
     private ProjectRepository repository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -54,6 +62,25 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") String id) {
         repository.deleteById(Long.valueOf(id));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project/{id}/join", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Project join(@PathVariable("id") Long id, Principal user) {
+        Project projectInDb = repository.findById(id).orElse(null);
+        if (projectInDb == null) {
+            throw new NotFoundException();
+        } else {
+            UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) user;
+            final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
+            User userInPeopleGivingTime = projectInDb.getPeopleGivingTime().stream().filter(userGivingTime -> userLoggedIn.getId().equals(userGivingTime.getId())).findFirst().orElse(null);
+            if(userInPeopleGivingTime == null) {
+                projectInDb.addPeopleGivingTime(userLoggedIn);
+            } else {
+                projectInDb.getPeopleGivingTime().remove(userInPeopleGivingTime);
+            }
+            return repository.save(projectInDb);
+        }
     }
 
 }

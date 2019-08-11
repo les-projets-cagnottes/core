@@ -25,7 +25,7 @@ public class Project extends AuditEntity {
     @Column(name = "short_description")
     private String shortDescription;
 
-    @Column(name = "long_description")
+    @Column(name = "long_description", columnDefinition = "TEXT")
     private String longDescription;
 
     @Column(name = "donations_required")
@@ -162,5 +162,9 @@ public class Project extends AuditEntity {
                 ", leader=" + leader +
                 ", fundingDeadline=" + fundingDeadline +
                 '}';
+    }
+
+    public void addPeopleGivingTime(User user) {
+        this.peopleGivingTime.add(user);
     }
 }

@@ -42,7 +42,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void create(@RequestBody User user) {
-        repository.save(UserGenerator.newUser(user));
+        user = UserGenerator.newUser(user);
+        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        repository.save(user);
     }
 
     @PreAuthorize("hasRole('USER')")

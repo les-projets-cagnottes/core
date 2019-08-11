@@ -3,6 +3,7 @@ package fr.thomah.valyou.model;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -21,6 +22,14 @@ public class Budget extends AuditEntity {
     @Column(name = "amount_per_member")
     @NotNull
     private Float amountPerMember;
+
+    @Column(name = "start_date")
+    @NotNull
+    private Date startDate;
+
+    @Column(name = "end_date")
+    @NotNull
+    private Date endDate;
 
     @ManyToOne
     private Organization organization;
@@ -53,6 +62,22 @@ public class Budget extends AuditEntity {
 
     public void setAmountPerMember(Float amountPerMember) {
         this.amountPerMember = amountPerMember;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 
     public Organization getOrganization() {

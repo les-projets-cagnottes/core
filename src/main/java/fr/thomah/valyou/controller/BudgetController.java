@@ -2,7 +2,6 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.Budget;
-import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.BudgetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +35,8 @@ public class BudgetController {
                 throw new NotFoundException();
             } else {
                 budgetInDb.setName(budget.getName());
+                budgetInDb.setStartDate(budget.getStartDate());
+                budgetInDb.setEndDate(budget.getEndDate());
                 budgetInDb.setAmountPerMember(budget.getAmountPerMember());
                 repository.save(budgetInDb);
             }

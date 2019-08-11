@@ -14,6 +14,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.Month;
+
 @SpringBootApplication
 @EnableJpaAuditing
 public class ValyouApplication {
@@ -76,6 +80,8 @@ public class ValyouApplication {
 			Budget budget = new Budget();
 			budget.setName("My budget");
 			budget.setAmountPerMember(250f);
+			budget.setStartDate(Date.valueOf(LocalDate.of(2019, Month.JANUARY, 1)));
+			budget.setEndDate(Date.valueOf(LocalDate.of(2019, Month.DECEMBER, 31)));
 			budget.setOrganization(organization);
 			budget.setSponsor(admin);
 			budgetRepository.save(budget);
