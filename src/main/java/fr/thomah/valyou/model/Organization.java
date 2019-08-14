@@ -29,8 +29,8 @@ public class Organization extends AuditEntity {
     @ManyToMany
     @JoinTable(
             name = "project_organizations",
-            joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")})
+            joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(
