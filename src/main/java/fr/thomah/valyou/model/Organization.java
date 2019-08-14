@@ -24,7 +24,7 @@ public class Organization extends AuditEntity {
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    private List<User> members;
+    private List<User> members = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
@@ -37,7 +37,7 @@ public class Organization extends AuditEntity {
             mappedBy = "organization",
             orphanRemoval = true)
     @JsonIgnore
-    private List<Budget> budgets;
+    private List<Budget> budgets = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -77,5 +77,13 @@ public class Organization extends AuditEntity {
 
     public void setProjects(List<Project> projects) {
         this.projects = projects;
+    }
+
+    public void addProject(Project project) {
+        this.projects.add(project);
+    }
+
+    public void addMember(User user) {
+        this.members.add(user);
     }
 }

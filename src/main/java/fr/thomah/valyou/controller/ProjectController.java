@@ -3,8 +3,11 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.ProjectGenerator;
+import fr.thomah.valyou.model.Budget;
+import fr.thomah.valyou.model.Organization;
 import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +20,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 public class ProjectController {
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Autowired
     private ProjectRepository repository;
@@ -37,13 +44,40 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Project findById(@PathVariable("id") Long id) {
-        return repository.findById(id).orElse(null);
+        Project project = repository.findById(id).orElse(null);
+        if(project == null) {
+            throw new NotFoundException();
+        } else {
+            return project;
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Organization> findByIdOrganizations(@PathVariable("id") Long id) {
+        Project project = findById(id);
+        return project.getOrganizations();
     }
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void create(@RequestBody Project project) {
-        repository.save(ProjectGenerator.newProject(project));
+    public Project create(@RequestBody Project project) {
+        return repository.save(ProjectGenerator.newProject(project));
+    }
+
+    @RequestMapping(value = "/api/project/{id}/organizations", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public void createOrganizations(@PathVariable("id") Long id, @RequestBody List<Organization> organizations) {
+        Project project = findById(id);
+        for(Organization organization : organizations) {
+            Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
+            if(organizationInDb == null) {
+                throw new NotFoundException();
+            } else {
+                organizationInDb.addProject(project);
+                organizationRepository.save(organizationInDb);
+            }
+        }
     }
 
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -24,6 +25,16 @@ public class BudgetController {
     public Page<Budget> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return repository.findAll(pageable);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"isActive"})
+    public List<Budget> getByIsActive(@RequestParam("isActive") boolean isActive) {
+        if(isActive) {
+            return repository.findByEndDateGreaterThan(new Date());
+        } else {
+            return repository.findByEndDateLessThan(new Date());
+        }
     }
 
     @PreAuthorize("hasRole('USER')")

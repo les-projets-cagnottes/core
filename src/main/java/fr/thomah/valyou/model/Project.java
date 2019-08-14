@@ -45,6 +45,7 @@ public class Project extends AuditEntity {
     @OneToMany(
             mappedBy = "project",
             orphanRemoval = true)
+    @JsonIgnore
     private List<Donation> donations = new ArrayList<>();
 
     @ManyToMany

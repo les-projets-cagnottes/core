@@ -77,6 +77,9 @@ public class ValyouApplication {
 			admin.addOrganization(organization);
 			userRepository.save(admin);
 
+			organization.addMember(admin);
+			organization = organizationRepository.save(organization);
+
 			Budget budget = new Budget();
 			budget.setName("My budget");
 			budget.setAmountPerMember(250f);

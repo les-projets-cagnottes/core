@@ -3,6 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
 import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.OrganizationAuthorityRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.UserRepository;
@@ -16,10 +17,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 public class OrganizationController {
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;

@@ -1,5 +1,7 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -38,6 +40,7 @@ public class Budget extends AuditEntity {
     private User sponsor;
 
     @OneToMany(mappedBy = "budget")
+    @JsonIgnore
     private List<Donation> donations = new ArrayList<>();
 
     public Long getId() {

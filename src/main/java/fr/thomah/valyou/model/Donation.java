@@ -24,7 +24,6 @@ public class Donation extends AuditEntity {
     private Project project;
 
     @ManyToOne
-    @JsonIgnore
     private Budget budget;
 
     public Long getId() {
