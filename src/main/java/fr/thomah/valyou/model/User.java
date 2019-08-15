@@ -1,7 +1,9 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import fr.thomah.valyou.generator.StringGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +18,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
+@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class User extends AuditEntity implements UserDetails {
 
     private static final long serialVersionUID = 6210782306288115135L;
@@ -74,19 +77,15 @@ public class User extends AuditEntity implements UserDetails {
     private Collection<GrantedAuthority> authorities = new ArrayList<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
-    @JsonIgnore
     private List<Organization> organizations = new ArrayList<>();
 
     @OneToMany(mappedBy = "sponsor")
-    @JsonIgnore
     private List<Budget> budgets = new ArrayList<>();
 
     @OneToMany(mappedBy = "leader")
-    @JsonIgnore
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "contributor")
-    @JsonIgnore
     private List<Donation> donations = new ArrayList<>();
 
     public User() {

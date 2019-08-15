@@ -1,6 +1,8 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -12,7 +14,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "projects")
+@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Project extends AuditEntity {
+
+    private static final long serialVersionUID = -661039969628937779L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -42,26 +47,23 @@ public class Project extends AuditEntity {
     @NotNull
     private Date fundingDeadline = new Date();
 
+    private Float totalDonations;
+
     @OneToMany(
             mappedBy = "project",
             orphanRemoval = true)
-    @JsonIgnore
     private List<Donation> donations = new ArrayList<>();
 
     @ManyToMany
     @LazyCollection(LazyCollectionOption.FALSE)
     @JoinTable(
             name = "project_users_time",
-            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+            joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     private List<User> peopleGivingTime = new ArrayList<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Organization> organizations;
-
-    public Project() {
-    }
+    private List<Organization> organizations = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -127,6 +129,10 @@ public class Project extends AuditEntity {
         this.fundingDeadline = fundingDeadline;
     }
 
+    public void setTotalDonations(Float totalDonations) {
+        this.totalDonations = totalDonations;
+    }
+
     public List<Donation> getDonations() {
         return donations;
     }
@@ -165,7 +171,19 @@ public class Project extends AuditEntity {
                 '}';
     }
 
+    public Float getTotalDonations() {
+        totalDonations = 0f;
+        for (Donation donation : donations) {
+            totalDonations += donation.getAmount();
+        }
+        return totalDonations;
+    }
+
     public void addPeopleGivingTime(User user) {
         this.peopleGivingTime.add(user);
+    }
+
+    public void addOrganization(Organization organization) {
+        this.organizations.add(organization);
     }
 }

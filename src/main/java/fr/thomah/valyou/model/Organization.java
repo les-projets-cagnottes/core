@@ -1,6 +1,8 @@
 package fr.thomah.valyou.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -9,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizations")
+@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Organization extends AuditEntity {
 
     @Id
@@ -36,7 +39,6 @@ public class Organization extends AuditEntity {
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnore
     private List<Budget> budgets = new ArrayList<>();
 
     public Long getId() {

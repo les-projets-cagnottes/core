@@ -1,13 +1,17 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "donations")
+@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Donation extends AuditEntity {
+
+    private static final long serialVersionUID = 1027005872559980809L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

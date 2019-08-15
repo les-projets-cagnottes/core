@@ -1,9 +1,6 @@
 package fr.thomah.valyou.controller;
 
-import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.generator.ProjectGenerator;
-import fr.thomah.valyou.model.Budget;
 import fr.thomah.valyou.model.Organization;
 import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
@@ -62,22 +59,19 @@ public class ProjectController {
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public Project create(@RequestBody Project project) {
-        return repository.save(ProjectGenerator.newProject(project));
-    }
-
-    @RequestMapping(value = "/api/project/{id}/organizations", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
-    public void createOrganizations(@PathVariable("id") Long id, @RequestBody List<Organization> organizations) {
-        Project project = findById(id);
-        for(Organization organization : organizations) {
-            Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
+        List<Organization> organizations = project.getOrganizations();
+        int organizationsSize = organizations.size();
+        for(int k = 0 ; k < organizationsSize ; k++) {
+            Organization organizationInDb = organizationRepository.findById(organizations.get(k).getId()).orElse(null);
             if(organizationInDb == null) {
                 throw new NotFoundException();
             } else {
                 organizationInDb.addProject(project);
-                organizationRepository.save(organizationInDb);
+                organizations.set(k, organizationInDb);
             }
         }
+        project.setOrganizations(organizations);
+        return repository.save(project);
     }
 
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
