@@ -31,10 +31,16 @@ public class BudgetController {
     @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"isActive"})
     public List<Budget> getByIsActive(@RequestParam("isActive") boolean isActive) {
         if(isActive) {
-            return repository.findByEndDateGreaterThan(new Date());
+            return repository.findAllByEndDateGreaterThan(new Date());
         } else {
-            return repository.findByEndDateLessThan(new Date());
+            return repository.findAllByEndDateLessThan(new Date());
         }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
+    public List<Budget> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
+        return repository.findAllByOrganizationId(organizationId);
     }
 
     @PreAuthorize("hasRole('USER')")

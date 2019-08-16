@@ -10,7 +10,8 @@ import java.util.List;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     Page<Budget> findAll(Pageable pageable);
-    List<Budget> findAllByOrganization(Long aLong);
-    List<Budget> findByEndDateGreaterThan(Date date);
-    List<Budget> findByEndDateLessThan(Date date);
+    List<Budget> findAllByOrganizationId(Long aLong);
+    List<Budget> findAllByEndDateGreaterThan(Date date);
+    List<Budget> findAllByEndDateLessThan(Date date);
+
 }

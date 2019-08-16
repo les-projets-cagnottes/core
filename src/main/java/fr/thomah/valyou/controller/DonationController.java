@@ -40,6 +40,12 @@ public class DonationController {
         return repository.findAllByProjectId(projectId);
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
+    public List<Donation> getByContributorId(@RequestParam("contributorId") long contributorId) {
+        return repository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
+    }
+
 
 
 }

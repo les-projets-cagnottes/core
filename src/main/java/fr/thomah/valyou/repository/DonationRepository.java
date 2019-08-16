@@ -10,4 +10,5 @@ import java.util.List;
 public interface DonationRepository extends JpaRepository<Donation, Long> {
     Page<Donation> findAll(Pageable pageable);
     List<Donation> findAllByProjectId(long projectId);
+    List<Donation> findAllByContributorIdOrderByBudgetIdAsc(long contributorId);
 }
