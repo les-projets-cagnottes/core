@@ -2,6 +2,7 @@ package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
@@ -11,7 +12,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizations_authorities")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class OrganizationAuthority extends AuditEntity {
 
     private static final long serialVersionUID = -5098047340982969186L;
@@ -22,9 +22,11 @@ public class OrganizationAuthority extends AuditEntity {
 
     @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    @JsonIgnoreProperties({"members", "projects", "budgets"})
     private Organization organization;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private List<User> users;
 
     @Column(length = 50)

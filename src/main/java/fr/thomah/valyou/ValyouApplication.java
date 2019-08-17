@@ -69,7 +69,7 @@ public class ValyouApplication {
 
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();
-			admin = UserGenerator.newUser(email, generatedPassword);
+			admin = UserGenerator.newUser(email, "admin");
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
@@ -77,7 +77,7 @@ public class ValyouApplication {
 			admin.addOrganization(organization);
 			userRepository.save(admin);
 
-			organization.addMember(admin);
+			organization.getMembers().add(admin);
 			organization = organizationRepository.save(organization);
 
 			Budget budget = new Budget();

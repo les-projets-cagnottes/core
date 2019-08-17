@@ -1,6 +1,7 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
+import fr.thomah.valyou.model.Budget;
 import fr.thomah.valyou.model.Organization;
 import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
@@ -36,6 +37,15 @@ public class ProjectController {
     public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
         return repository.findAll(pageable);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"memberId"})
+    public List<Project> getByMemberId(@RequestParam("memberId") Long memberId) {
+        List<Project> projectsByLeader = repository.findAllByLeaderId(memberId);
+        List<Project> projectsByPeopleGivingTime = repository.findAllByPeopleGivingTime_Id(memberId);
+        projectsByLeader.addAll(projectsByPeopleGivingTime);
+        return projectsByLeader;
     }
 
     @PreAuthorize("hasRole('USER')")

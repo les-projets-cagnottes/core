@@ -43,6 +43,17 @@ public class OrganizationController {
     }
 
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Organization getById(@PathVariable("id") Long id) {
+        Organization org = repository.findById(id).orElse(null);
+        if(org == null) {
+            throw new NotFoundException();
+        } else {
+            return org;
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"member_id"})
     public List<Organization> getUserOrganizations(Principal authUserToken, @RequestParam("member_id") Long memberId) {
         return repository.findByMembers_Id(memberId);
@@ -74,6 +85,8 @@ public class OrganizationController {
         if (orgInDb == null) {
             throw new NotFoundException();
         } else {
+            orgInDb.setName(org.getName());
+            orgInDb.setMembers(org.getMembers());
             repository.save(org);
         }
     }

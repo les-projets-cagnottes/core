@@ -2,6 +2,7 @@ package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -10,9 +11,10 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Entity
-@Table(name = "AUTHORITY")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
+@Table(name = "authorities")
 public class Authority implements GrantedAuthority {
+
+    private static final long serialVersionUID = -8193848589240726612L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -24,6 +26,7 @@ public class Authority implements GrantedAuthority {
     private AuthorityName name;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private List<User> users;
 
     public Authority() {

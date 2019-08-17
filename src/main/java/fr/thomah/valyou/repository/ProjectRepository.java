@@ -5,7 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Page<Project> findAll(Pageable pageable);
-    Page<Project> findByOrganizations_Id(Pageable pageable, Long orgId);
+    List<Project> findAllByLeaderId(Long memberId);
+    List<Project> findAllByPeopleGivingTime_Id(Long memberId);
 }

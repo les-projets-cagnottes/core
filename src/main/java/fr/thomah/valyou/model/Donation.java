@@ -1,6 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
@@ -8,7 +9,6 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "donations")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Donation extends AuditEntity {
 
     private static final long serialVersionUID = 1027005872559980809L;
@@ -22,12 +22,15 @@ public class Donation extends AuditEntity {
     private Float amount;
 
     @ManyToOne
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private User contributor;
 
     @ManyToOne
+    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
     private Project project;
 
     @ManyToOne
+    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
     private Budget budget;
 
     public Long getId() {

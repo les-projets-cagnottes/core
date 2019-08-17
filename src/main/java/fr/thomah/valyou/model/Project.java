@@ -1,7 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
@@ -14,7 +14,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "projects")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Project extends AuditEntity {
 
     private static final long serialVersionUID = -661039969628937779L;
@@ -40,6 +39,7 @@ public class Project extends AuditEntity {
     private Integer peopleRequired;
 
     @ManyToOne
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private User leader;
 
     @Column(name = "funding_deadline")
@@ -52,6 +52,7 @@ public class Project extends AuditEntity {
     @OneToMany(
             mappedBy = "project",
             orphanRemoval = true)
+    @JsonIgnoreProperties({"budget"})
     private List<Donation> donations = new ArrayList<>();
 
     @ManyToMany
@@ -60,9 +61,11 @@ public class Project extends AuditEntity {
             name = "project_users_time",
             joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private List<User> peopleGivingTime = new ArrayList<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"members", "projects", "budgets"})
     private List<Organization> organizations = new ArrayList<>();
 
     public Long getId() {

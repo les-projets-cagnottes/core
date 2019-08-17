@@ -1,8 +1,6 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -11,8 +9,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizations")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Organization extends AuditEntity {
+
+    private static final long serialVersionUID = -6671779784632800305L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,6 +26,7 @@ public class Organization extends AuditEntity {
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private List<User> members = new ArrayList<>();
 
     @ManyToMany
@@ -34,11 +34,13 @@ public class Organization extends AuditEntity {
             name = "project_organizations",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
+    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
     private List<Budget> budgets = new ArrayList<>();
 
     public Long getId() {
@@ -85,7 +87,4 @@ public class Organization extends AuditEntity {
         this.projects.add(project);
     }
 
-    public void addMember(User user) {
-        this.members.add(user);
-    }
 }

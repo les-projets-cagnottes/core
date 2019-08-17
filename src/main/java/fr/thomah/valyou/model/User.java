@@ -1,10 +1,7 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import fr.thomah.valyou.generator.StringGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -18,7 +15,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class User extends AuditEntity implements UserDetails {
 
     private static final long serialVersionUID = 6210782306288115135L;
@@ -64,6 +60,7 @@ public class User extends AuditEntity implements UserDetails {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"users"})
     private List<Authority> userAuthorities = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -71,6 +68,7 @@ public class User extends AuditEntity implements UserDetails {
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"organization", "userAuthorities"})
     private List<OrganizationAuthority> userOrganizationAuthorities = new ArrayList<>();
 
     @Transient
@@ -80,12 +78,15 @@ public class User extends AuditEntity implements UserDetails {
     private List<Organization> organizations = new ArrayList<>();
 
     @OneToMany(mappedBy = "sponsor")
+    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
     private List<Budget> budgets = new ArrayList<>();
 
     @OneToMany(mappedBy = "leader")
+    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "contributor")
+    @JsonIgnoreProperties({"budget"})
     private List<Donation> donations = new ArrayList<>();
 
     public User() {
