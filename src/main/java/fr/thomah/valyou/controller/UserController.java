@@ -1,7 +1,6 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.model.AuthorityName;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.AuthorityRepository;

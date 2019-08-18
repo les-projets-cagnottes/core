@@ -1,7 +1,6 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.Budget;
 import fr.thomah.valyou.model.Organization;
 import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 public class ProjectController {
@@ -41,9 +41,9 @@ public class ProjectController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"memberId"})
-    public List<Project> getByMemberId(@RequestParam("memberId") Long memberId) {
-        List<Project> projectsByLeader = repository.findAllByLeaderId(memberId);
-        List<Project> projectsByPeopleGivingTime = repository.findAllByPeopleGivingTime_Id(memberId);
+    public Set<Project> getByMemberId(@RequestParam("memberId") Long memberId) {
+        Set<Project> projectsByLeader = repository.findAllByLeaderId(memberId);
+        Set<Project> projectsByPeopleGivingTime = repository.findAllByPeopleGivingTime_Id(memberId);
         projectsByLeader.addAll(projectsByPeopleGivingTime);
         return projectsByLeader;
     }
@@ -61,7 +61,7 @@ public class ProjectController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Organization> findByIdOrganizations(@PathVariable("id") Long id) {
+    public Set<Organization> findByIdOrganizations(@PathVariable("id") Long id) {
         Project project = findById(id);
         return project.getOrganizations();
     }
@@ -69,17 +69,17 @@ public class ProjectController {
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public Project create(@RequestBody Project project) {
-        List<Organization> organizations = project.getOrganizations();
+        Set<Organization> organizations = project.getOrganizations();
         int organizationsSize = organizations.size();
-        for(int k = 0 ; k < organizationsSize ; k++) {
-            Organization organizationInDb = organizationRepository.findById(organizations.get(k).getId()).orElse(null);
+        organizations.forEach(organization -> {
+            Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
             if(organizationInDb == null) {
                 throw new NotFoundException();
             } else {
                 organizationInDb.addProject(project);
-                organizations.set(k, organizationInDb);
+                organization = organizationInDb;
             }
-        }
+        });
         project.setOrganizations(organizations);
         return repository.save(project);
     }

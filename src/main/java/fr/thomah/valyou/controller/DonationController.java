@@ -1,10 +1,8 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.model.Donation;
-import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.DonationRepository;
-import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -13,7 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
+import java.util.Set;
 
 @RestController
 public class DonationController {
@@ -36,13 +34,13 @@ public class DonationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
-    public List<Donation> getByProjectId(@RequestParam("projectId") long projectId) {
+    public Set<Donation> getByProjectId(@RequestParam("projectId") long projectId) {
         return repository.findAllByProjectId(projectId);
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
-    public List<Donation> getByContributorId(@RequestParam("contributorId") long contributorId) {
+    public Set<Donation> getByContributorId(@RequestParam("contributorId") long contributorId) {
         return repository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
     }
 

@@ -1,16 +1,12 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "projects")
@@ -53,7 +49,7 @@ public class Project extends AuditEntity {
             mappedBy = "project",
             orphanRemoval = true)
     @JsonIgnoreProperties({"budget"})
-    private List<Donation> donations = new ArrayList<>();
+    private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToMany
     @LazyCollection(LazyCollectionOption.FALSE)
@@ -62,11 +58,11 @@ public class Project extends AuditEntity {
             joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private List<User> peopleGivingTime = new ArrayList<>();
+    private Set<User> peopleGivingTime = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"members", "projects", "budgets"})
-    private List<Organization> organizations = new ArrayList<>();
+    private Set<Organization> organizations = new LinkedHashSet<>();
 
     public Long getId() {
         return id;
@@ -136,27 +132,27 @@ public class Project extends AuditEntity {
         this.totalDonations = totalDonations;
     }
 
-    public List<Donation> getDonations() {
+    public Set<Donation> getDonations() {
         return donations;
     }
 
-    public void setDonations(List<Donation> donations) {
+    public void setDonations(Set<Donation> donations) {
         this.donations = donations;
     }
 
-    public List<User> getPeopleGivingTime() {
+    public Set<User> getPeopleGivingTime() {
         return peopleGivingTime;
     }
 
-    public void setPeopleGivingTime(List<User> peopleGivingTime) {
+    public void setPeopleGivingTime(Set<User> peopleGivingTime) {
         this.peopleGivingTime = peopleGivingTime;
     }
 
-    public List<Organization> getOrganizations() {
+    public Set<Organization> getOrganizations() {
         return organizations;
     }
 
-    public void setOrganizations(List<Organization> organizations) {
+    public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
     }
 

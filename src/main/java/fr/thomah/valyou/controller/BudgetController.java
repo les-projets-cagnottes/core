@@ -2,7 +2,9 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.Budget;
+import fr.thomah.valyou.model.Organization;
 import fr.thomah.valyou.repository.BudgetRepository;
+import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,12 +15,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 public class BudgetController {
 
     @Autowired
     private BudgetRepository repository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -29,7 +35,7 @@ public class BudgetController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"isActive"})
-    public List<Budget> getByIsActive(@RequestParam("isActive") boolean isActive) {
+    public Set<Budget> getByIsActive(@RequestParam("isActive") boolean isActive) {
         if(isActive) {
             return repository.findAllByEndDateGreaterThan(new Date());
         } else {
@@ -39,7 +45,7 @@ public class BudgetController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
-    public List<Budget> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
+    public Set<Budget> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
         return repository.findAllByOrganizationId(organizationId);
     }
 

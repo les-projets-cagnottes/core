@@ -17,8 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 @RestController
 public class OrganizationController {
@@ -55,27 +54,32 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"member_id"})
-    public List<Organization> getUserOrganizations(Principal authUserToken, @RequestParam("member_id") Long memberId) {
+    public Set<Organization> getUserOrganizations(Principal authUserToken, @RequestParam("member_id") Long memberId) {
         return repository.findByMembers_Id(memberId);
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void create(@RequestBody Organization org, Principal owner) {
+    public Organization create(@RequestBody Organization org, Principal owner) {
         org = repository.save(OrganizationGenerator.newOrganization(org));
         for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
             organizationAuthorityRepository.save(new OrganizationAuthority(org, authorityName));
         }
         OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_MEMBER);
         for(User member : org.getMembers()) {
-            member.addOrganizationAuthority(memberOrganizationAuthority);
-            userRepository.save(member);
+            member = userRepository.findById(member.getId()).orElse(null);
+            if(member != null) {
+                member.addOrganizationAuthority(memberOrganizationAuthority);
+                userRepository.save(member);
+            }
         }
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) owner;
         User userOwner = (User) token.getPrincipal();
         userOwner = userRepository.findByEmail(userOwner.getEmail());
         userOwner.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_OWNER));
         userRepository.save(userOwner);
+
+        return org;
     }
 
     @PreAuthorize("hasRole('USER')")

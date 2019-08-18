@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "organizations")
@@ -27,7 +27,7 @@ public class Organization extends AuditEntity {
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private List<User> members = new ArrayList<>();
+    private Set<User> members = new LinkedHashSet<>();
 
     @ManyToMany
     @JoinTable(
@@ -35,13 +35,17 @@ public class Organization extends AuditEntity {
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
-    private List<Project> projects = new ArrayList<>();
+    private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
-    private List<Budget> budgets = new ArrayList<>();
+    @JsonIgnoreProperties({"organization", "sponsor"})
+    private Set<Budget> budgets = new LinkedHashSet<>();
+
+    @OneToMany
+    @JsonIgnoreProperties({"organization", "users"})
+    private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
 
     public Long getId() {
         return id;
@@ -59,28 +63,36 @@ public class Organization extends AuditEntity {
         this.name = name;
     }
 
-    public List<User> getMembers() {
+    public Set<User> getMembers() {
         return members;
     }
 
-    public void setMembers(List<User> members) {
+    public void setMembers(Set<User> members) {
         this.members = members;
     }
 
-    public List<Budget> getBudgets() {
-        return budgets;
-    }
-
-    public void setBudgets(List<Budget> budgets) {
-        this.budgets = budgets;
-    }
-
-    public List<Project> getProjects() {
+    public Set<Project> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(Set<Project> projects) {
         this.projects = projects;
+    }
+
+    public Set<Budget> getBudgets() {
+        return budgets;
+    }
+
+    public void setBudgets(Set<Budget> budgets) {
+        this.budgets = budgets;
+    }
+
+    public Set<OrganizationAuthority> getOrganizationAuthorities() {
+        return organizationAuthorities;
+    }
+
+    public void setOrganizationAuthorities(Set<OrganizationAuthority> organizationAuthorities) {
+        this.organizationAuthorities = organizationAuthorities;
     }
 
     public void addProject(Project project) {

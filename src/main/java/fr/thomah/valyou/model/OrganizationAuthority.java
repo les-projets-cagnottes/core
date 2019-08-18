@@ -1,14 +1,10 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "organizations_authorities")
@@ -20,14 +16,13 @@ public class OrganizationAuthority extends AuditEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    @ManyToOne
     @JsonIgnoreProperties({"members", "projects", "budgets"})
     private Organization organization;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private List<User> users;
+    private Set<User> users;
 
     @Column(length = 50)
     @NotNull
@@ -58,11 +53,11 @@ public class OrganizationAuthority extends AuditEntity {
         this.organization = organization;
     }
 
-    public List<User> getUsers() {
+    public Set<User> getUsers() {
         return users;
     }
 
-    public void setUsers(List<User> users) {
+    public void setUsers(Set<User> users) {
         this.users = users;
     }
 

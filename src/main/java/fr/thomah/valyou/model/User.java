@@ -8,10 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -61,7 +58,7 @@ public class User extends AuditEntity implements UserDetails {
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"users"})
-    private List<Authority> userAuthorities = new ArrayList<>();
+    private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -69,25 +66,25 @@ public class User extends AuditEntity implements UserDetails {
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"organization", "userAuthorities"})
-    private List<OrganizationAuthority> userOrganizationAuthorities = new ArrayList<>();
+    private Set<OrganizationAuthority> userOrganizationAuthorities = new LinkedHashSet<>();
 
     @Transient
-    private Collection<GrantedAuthority> authorities = new ArrayList<>();
+    private Collection<GrantedAuthority> authorities = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
-    private List<Organization> organizations = new ArrayList<>();
+    private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")
     @JsonIgnoreProperties({"organization", "sponsor", "donations"})
-    private List<Budget> budgets = new ArrayList<>();
+    private Set<Budget> budgets = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "leader")
     @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
-    private List<Project> projects = new ArrayList<>();
+    private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")
     @JsonIgnoreProperties({"budget"})
-    private List<Donation> donations = new ArrayList<>();
+    private Set<Donation> donations = new LinkedHashSet<>();
 
     public User() {
     }
@@ -108,10 +105,10 @@ public class User extends AuditEntity implements UserDetails {
                 @NotNull Boolean enabled,
                 @NotNull Date lastPasswordResetDate,
                 Collection<GrantedAuthority> authorities,
-                List<Organization> organizations,
-                List<Budget> budgets,
-                List<Project> projects,
-                List<Donation> donations) {
+                Set<Organization> organizations,
+                Set<Budget> budgets,
+                Set<Project> projects,
+                Set<Donation> donations) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -212,19 +209,19 @@ public class User extends AuditEntity implements UserDetails {
         this.lastPasswordResetDate = lastPasswordResetDate;
     }
 
-    public List<Authority> getUserAuthorities() {
+    public Set<Authority> getUserAuthorities() {
         return userAuthorities;
     }
 
-    public void setUserAuthorities(List<Authority> userAuthorities) {
+    public void setUserAuthorities(Set<Authority> userAuthorities) {
         this.userAuthorities = userAuthorities;
     }
 
-    public List<OrganizationAuthority> getUserOrganizationAuthorities() {
+    public Set<OrganizationAuthority> getUserOrganizationAuthorities() {
         return userOrganizationAuthorities;
     }
 
-    public void setUserOrganizationAuthorities(List<OrganizationAuthority> userOrganizationAuthorities) {
+    public void setUserOrganizationAuthorities(Set<OrganizationAuthority> userOrganizationAuthorities) {
         this.userOrganizationAuthorities = userOrganizationAuthorities;
     }
 
@@ -237,35 +234,35 @@ public class User extends AuditEntity implements UserDetails {
         this.authorities = authorities;
     }
 
-    public List<Organization> getOrganizations() {
+    public Set<Organization> getOrganizations() {
         return organizations;
     }
 
-    public void setOrganizations(List<Organization> organizations) {
+    public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
     }
 
-    public List<Budget> getBudgets() {
+    public Set<Budget> getBudgets() {
         return budgets;
     }
 
-    public void setBudgets(List<Budget> budgets) {
+    public void setBudgets(Set<Budget> budgets) {
         this.budgets = budgets;
     }
 
-    public List<Project> getProjects() {
+    public Set<Project> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(Set<Project> projects) {
         this.projects = projects;
     }
 
-    public List<Donation> getDonations() {
+    public Set<Donation> getDonations() {
         return donations;
     }
 
-    public void setDonations(List<Donation> donations) {
+    public void setDonations(Set<Donation> donations) {
         this.donations = donations;
     }
 

@@ -1,15 +1,10 @@
 package fr.thomah.valyou.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "budgets")
@@ -37,6 +32,7 @@ public class Budget extends AuditEntity {
     private Date endDate;
 
     @ManyToOne
+    @JsonIgnoreProperties({"members", "projects", "budgets"})
     private Organization organization;
 
     @ManyToOne
@@ -45,7 +41,7 @@ public class Budget extends AuditEntity {
 
     @OneToMany(mappedBy = "budget")
     @JsonIgnoreProperties({"budget"})
-    private List<Donation> donations = new ArrayList<>();
+    private Set<Donation> donations = new LinkedHashSet<>();
 
     public Long getId() {
         return id;
@@ -103,11 +99,11 @@ public class Budget extends AuditEntity {
         this.sponsor = sponsor;
     }
 
-    public List<Donation> getDonations() {
+    public Set<Donation> getDonations() {
         return donations;
     }
 
-    public void setDonations(List<Donation> donations) {
+    public void setDonations(Set<Donation> donations) {
         this.donations = donations;
     }
 }

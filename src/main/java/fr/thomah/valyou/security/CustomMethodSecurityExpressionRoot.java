@@ -8,7 +8,7 @@ import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
 import org.springframework.security.core.Authentication;
 
-import java.util.List;
+import java.util.Set;
 
 class CustomMethodSecurityExpressionRoot
         extends SecurityExpressionRoot implements MethodSecurityExpressionOperations {
@@ -28,15 +28,15 @@ class CustomMethodSecurityExpressionRoot
 
     public boolean isMember(Long OrganizationId) {
         User user = (User) this.getPrincipal();
-        List<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
+        Set<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
         Organization orgUser = orgs.stream().filter(organization -> organization.getId().equals(OrganizationId)).findFirst().orElse(null);
         return orgUser != null;
     }
 
     public boolean hasRoleInOrg(Long OrganizationId, String role) {
         User user = (User) this.getPrincipal();
-        List<OrganizationAuthority> userOrganizationAuthorities = user.getUserOrganizationAuthorities();
-        List<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
+        Set<OrganizationAuthority> userOrganizationAuthorities = user.getUserOrganizationAuthorities();
+        Set<Organization> orgs = organizationRepository.findByMembers_Id(user.getId());
         Organization orgUser = orgs.stream().filter(organization -> organization.getId().equals(OrganizationId)).findFirst().orElse(null);
         return orgUser != null;
     }
