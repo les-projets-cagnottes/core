@@ -82,7 +82,7 @@ public class ValyouApplication {
 
 			Budget budget = new Budget();
 			budget.setName("My budget");
-			budget.setAmountPerMember(250f);
+			budget.setAmountPerMember(150f);
 			budget.setStartDate(Date.valueOf(LocalDate.of(2019, Month.JANUARY, 1)));
 			budget.setEndDate(Date.valueOf(LocalDate.of(2019, Month.DECEMBER, 31)));
 			budget.setOrganization(organization);

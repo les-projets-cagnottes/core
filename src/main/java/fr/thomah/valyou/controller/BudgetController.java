@@ -1,8 +1,8 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.Budget;
-import fr.thomah.valyou.model.Organization;
+import fr.thomah.valyou.generator.OrganizationGenerator;
+import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +52,12 @@ public class BudgetController {
     }
 
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void create(@RequestBody Budget budget, Principal owner) {
+        repository.save(budget);
+    }
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public void save(@RequestBody List<Budget> budgets) {
         for(Budget budget : budgets) {
@@ -64,6 +72,26 @@ public class BudgetController {
                 repository.save(budgetInDb);
             }
         }
+    }
+
+    @RequestMapping(value = "/api/budget/{id}/distribute", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @PreAuthorize("hasRole('USER')")
+    public void distribute(@PathVariable("id") Long id) {
+        Budget budget = repository.findById(id).orElse(null);
+        if(budget == null) {
+            throw new NotFoundException();
+        } else {
+            budget.setDistributed(!budget.getDistributed());
+            repository.save(budget);
+        }
+    }
+
+    @RequestMapping(value = "/api/budget/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @PreAuthorize("hasRole('USER')")
+    public void delete(@PathVariable("id") Long id) {
+        repository.deleteById(id);
     }
 
 }

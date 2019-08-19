@@ -23,6 +23,10 @@ public class Budget extends AuditEntity {
     @NotNull
     private Float amountPerMember;
 
+    @Column(name = "is_distributed")
+    @NotNull
+    private Boolean isDistributed = false;
+
     @Column(name = "start_date")
     @NotNull
     private Date startDate;
@@ -65,6 +69,14 @@ public class Budget extends AuditEntity {
 
     public void setAmountPerMember(Float amountPerMember) {
         this.amountPerMember = amountPerMember;
+    }
+
+    public Boolean getDistributed() {
+        return isDistributed;
+    }
+
+    public void setDistributed(Boolean distributed) {
+        isDistributed = distributed;
     }
 
     public Date getStartDate() {
