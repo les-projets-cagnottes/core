@@ -3,6 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.model.Donation;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.DonationRepository;
+import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -20,6 +21,9 @@ public class DonationController {
     private DonationRepository repository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @RequestMapping(value = "/api/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -29,6 +33,7 @@ public class DonationController {
         User userPrincipal = (User) token.getPrincipal();
         userPrincipal = userRepository.findByEmail(userPrincipal.getEmail());
         donation.setContributor(userPrincipal);
+        donation.setProject(projectRepository.findById(donation.getProject().getId()).orElse(null));
         repository.save(donation);
     }
 
@@ -44,6 +49,11 @@ public class DonationController {
         return repository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId", "budgetId"})
+    public Set<Donation> getByContributorIdAndBudgetId(@RequestParam("contributorId") long contributorId, @RequestParam("budgetId") long budgetId) {
+        return repository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
+    }
 
 
 }
