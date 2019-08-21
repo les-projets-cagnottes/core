@@ -22,6 +22,11 @@ public class Project extends AuditEntity {
     @NotNull
     private String title;
 
+    @Column(length = 50)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus status;
+
     @Column(name = "short_description")
     private String shortDescription;
 
@@ -45,9 +50,7 @@ public class Project extends AuditEntity {
 
     private Float totalDonations;
 
-    @OneToMany(
-            mappedBy = "project",
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "project")
     @JsonIgnoreProperties({"budget"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
@@ -78,6 +81,14 @@ public class Project extends AuditEntity {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public ProjectStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ProjectStatus status) {
+        this.status = status;
     }
 
     public String getShortDescription() {

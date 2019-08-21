@@ -1,9 +1,8 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.Organization;
-import fr.thomah.valyou.model.Project;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.DonationRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
@@ -12,16 +11,24 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RestController
+@Transactional
 public class ProjectController {
+
+    @Autowired
+    private DonationRepository donationRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -121,4 +128,22 @@ public class ProjectController {
         }
     }
 
+    @Scheduled(cron = "0 0 0 1/1 * ?")
+    public void processProjectStatus() {
+        Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.IN_PROGRESS, new Date());
+        projects.forEach(project -> {
+            Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
+            float totalDonations = 0f;
+            for (Donation donation : donations) {
+                totalDonations += donation.getAmount();
+            }
+            if(totalDonations >= project.getDonationsRequired()
+                && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
+                project.setStatus(ProjectStatus.READY);
+            } else {
+                project.setStatus(ProjectStatus.AVORTED);
+                donationRepository.deleteByProjectId(project.getId());
+            }
+        });
+    }
 }

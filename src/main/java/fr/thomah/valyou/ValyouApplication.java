@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -20,6 +20,7 @@ import java.time.Month;
 
 @SpringBootApplication
 @EnableJpaAuditing
+@EnableScheduling
 public class ValyouApplication {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ValyouApplication.class);
