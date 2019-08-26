@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "organizations_authorities")
-public class OrganizationAuthority extends AuditEntity {
+public class OrganizationAuthority extends AuditEntity<String>{
 
     private static final long serialVersionUID = -5098047340982969186L;
 

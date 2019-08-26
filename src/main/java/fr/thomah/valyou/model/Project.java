@@ -10,7 +10,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "projects")
-public class Project extends AuditEntity {
+public class Project extends AuditEntity<String>{
 
     private static final long serialVersionUID = -661039969628937779L;
 

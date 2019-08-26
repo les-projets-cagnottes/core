@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "donations")
-public class Donation extends AuditEntity {
+public class Donation extends AuditEntity<String>{
 
     private static final long serialVersionUID = 1027005872559980809L;
 

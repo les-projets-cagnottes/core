@@ -8,7 +8,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "budgets")
-public class Budget extends AuditEntity {
+public class Budget extends AuditEntity<String>{
 
     private static final long serialVersionUID = -8233663715686887295L;
 

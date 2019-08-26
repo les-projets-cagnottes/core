@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.time.Month;
 
 @SpringBootApplication
-@EnableJpaAuditing
 @EnableScheduling
 public class ValyouApplication {
 
