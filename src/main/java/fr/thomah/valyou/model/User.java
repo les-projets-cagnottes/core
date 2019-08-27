@@ -2,6 +2,9 @@ package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -10,9 +13,11 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
+@Setter(AccessLevel.PUBLIC)
+@Getter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "users")
-public class User extends AuditEntity implements UserDetails {
+public class User extends AuditEntity<String> implements UserDetails {
 
     private static final long serialVersionUID = 6210782306288115135L;
 
@@ -36,9 +41,6 @@ public class User extends AuditEntity implements UserDetails {
 
     @Column(name = "lastname")
     private String lastname = "";
-
-    @Column(name = "color")
-    private String color = "";
 
     @Column(name = "avatarUrl")
     private String avatarUrl;
@@ -100,7 +102,6 @@ public class User extends AuditEntity implements UserDetails {
                 @NotNull String email,
                 String firstname,
                 String lastname,
-                String color,
                 String avatarUrl,
                 @NotNull Boolean enabled,
                 @NotNull Date lastPasswordResetDate,
@@ -115,7 +116,6 @@ public class User extends AuditEntity implements UserDetails {
         this.email = email;
         this.firstname = firstname;
         this.lastname = lastname;
-        this.color = color;
         this.avatarUrl = avatarUrl;
         this.enabled = enabled;
         this.lastPasswordResetDate = lastPasswordResetDate;
@@ -123,146 +123,6 @@ public class User extends AuditEntity implements UserDetails {
         this.organizations = organizations;
         this.budgets = budgets;
         this.projects = projects;
-        this.donations = donations;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
-    }
-
-    public String getLastname() {
-        return lastname;
-    }
-
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public String getAvatarUrl() {
-        if (avatarUrl == null || avatarUrl.equals("")) {
-            return "https://ui-avatars.com/api/?name=" + firstname + "+" + lastname + "&background=" + color;
-        }
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Date getLastPasswordResetDate() {
-        return lastPasswordResetDate;
-    }
-
-    public void setLastPasswordResetDate(Date lastPasswordResetDate) {
-        this.lastPasswordResetDate = lastPasswordResetDate;
-    }
-
-    public Set<Authority> getUserAuthorities() {
-        return userAuthorities;
-    }
-
-    public void setUserAuthorities(Set<Authority> userAuthorities) {
-        this.userAuthorities = userAuthorities;
-    }
-
-    public Set<OrganizationAuthority> getUserOrganizationAuthorities() {
-        return userOrganizationAuthorities;
-    }
-
-    public void setUserOrganizationAuthorities(Set<OrganizationAuthority> userOrganizationAuthorities) {
-        this.userOrganizationAuthorities = userOrganizationAuthorities;
-    }
-
-    @Override
-    public Collection<GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
-    public void setAuthorities(Collection<GrantedAuthority> authorities) {
-        this.authorities = authorities;
-    }
-
-    public Set<Organization> getOrganizations() {
-        return organizations;
-    }
-
-    public void setOrganizations(Set<Organization> organizations) {
-        this.organizations = organizations;
-    }
-
-    public Set<Budget> getBudgets() {
-        return budgets;
-    }
-
-    public void setBudgets(Set<Budget> budgets) {
-        this.budgets = budgets;
-    }
-
-    public Set<Project> getProjects() {
-        return projects;
-    }
-
-    public void setProjects(Set<Project> projects) {
-        this.projects = projects;
-    }
-
-    public Set<Donation> getDonations() {
-        return donations;
-    }
-
-    public void setDonations(Set<Donation> donations) {
         this.donations = donations;
     }
 
@@ -313,9 +173,6 @@ public class User extends AuditEntity implements UserDetails {
 
     public void addOrganizationAuthority(OrganizationAuthority authority) {
         userOrganizationAuthorities.add(authority);
-    }
-    public void generateColor() {
-        this.color = "6CBFBB";
     }
 
 }

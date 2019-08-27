@@ -1,15 +1,20 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Set;
 
+@Getter(AccessLevel.PUBLIC)
+@Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "authorities")
-public class Authority implements GrantedAuthority {
+public class Authority extends AuditEntity<String> implements GrantedAuthority {
 
     private static final long serialVersionUID = -8193848589240726612L;
 
@@ -31,30 +36,6 @@ public class Authority implements GrantedAuthority {
 
     public Authority(AuthorityName authorityName) {
         this.name = authorityName;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public AuthorityName getName() {
-        return name;
-    }
-
-    public void setName(AuthorityName name) {
-        this.name = name;
-    }
-
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Set<User> users) {
-        this.users = users;
     }
 
     @Override

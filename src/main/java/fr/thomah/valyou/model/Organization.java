@@ -9,9 +9,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "organizations")
-public class Organization extends AuditEntity {
-
-    private static final long serialVersionUID = -6671779784632800305L;
+public class Organization extends AuditEntity<String>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

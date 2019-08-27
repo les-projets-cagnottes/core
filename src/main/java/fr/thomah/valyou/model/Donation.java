@@ -1,15 +1,18 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+@Getter(AccessLevel.PUBLIC)
+@Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "donations")
-public class Donation extends AuditEntity {
-
-    private static final long serialVersionUID = 1027005872559980809L;
+public class Donation extends AuditEntity<String>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -31,43 +34,4 @@ public class Donation extends AuditEntity {
     @JsonIgnoreProperties({"organization", "sponsor", "donations"})
     private Budget budget;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Float getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Float amount) {
-        this.amount = amount;
-    }
-
-    public User getContributor() {
-        return contributor;
-    }
-
-    public void setContributor(User contributor) {
-        this.contributor = contributor;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public Budget getBudget() {
-        return budget;
-    }
-
-    public void setBudget(Budget budget) {
-        this.budget = budget;
-    }
 }

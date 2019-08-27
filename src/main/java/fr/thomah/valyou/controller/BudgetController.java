@@ -82,7 +82,7 @@ public class BudgetController {
         if(budget == null) {
             throw new NotFoundException();
         } else {
-            budget.setDistributed(!budget.getDistributed());
+            budget.setIsDistributed(!budget.getIsDistributed());
             repository.save(budget);
         }
     }
