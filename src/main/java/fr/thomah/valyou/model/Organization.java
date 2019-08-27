@@ -11,8 +11,6 @@ import java.util.Set;
 @Table(name = "organizations")
 public class Organization extends AuditEntity<String>{
 
-    private static final long serialVersionUID = -6671779784632800305L;
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

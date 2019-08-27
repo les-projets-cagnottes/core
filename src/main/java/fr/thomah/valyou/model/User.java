@@ -42,9 +42,6 @@ public class User extends AuditEntity<String> implements UserDetails {
     @Column(name = "lastname")
     private String lastname = "";
 
-    @Column(name = "color")
-    private String color = "";
-
     @Column(name = "avatarUrl")
     private String avatarUrl;
 
@@ -105,7 +102,6 @@ public class User extends AuditEntity<String> implements UserDetails {
                 @NotNull String email,
                 String firstname,
                 String lastname,
-                String color,
                 String avatarUrl,
                 @NotNull Boolean enabled,
                 @NotNull Date lastPasswordResetDate,
@@ -120,7 +116,6 @@ public class User extends AuditEntity<String> implements UserDetails {
         this.email = email;
         this.firstname = firstname;
         this.lastname = lastname;
-        this.color = color;
         this.avatarUrl = avatarUrl;
         this.enabled = enabled;
         this.lastPasswordResetDate = lastPasswordResetDate;
@@ -129,13 +124,6 @@ public class User extends AuditEntity<String> implements UserDetails {
         this.budgets = budgets;
         this.projects = projects;
         this.donations = donations;
-    }
-
-    public String getAvatarUrl() {
-        if (avatarUrl == null || avatarUrl.equals("")) {
-            return "https://ui-avatars.com/api/?name=" + firstname + "+" + lastname + "&background=" + color;
-        }
-        return avatarUrl;
     }
 
     @Override
@@ -185,9 +173,6 @@ public class User extends AuditEntity<String> implements UserDetails {
 
     public void addOrganizationAuthority(OrganizationAuthority authority) {
         userOrganizationAuthorities.add(authority);
-    }
-    public void generateColor() {
-        this.color = "6CBFBB";
     }
 
 }

@@ -58,7 +58,6 @@ public class UserController {
             userInDb.setEmail(user.getEmail());
             userInDb.setFirstname(user.getFirstname());
             userInDb.setLastname(user.getLastname());
-            userInDb.setColor(user.getColor());
             userInDb.setAvatarUrl(user.getAvatarUrl());
             userInDb.setEnabled(user.getEnabled());
             userInDb.setLastPasswordResetDate(user.getLastPasswordResetDate());

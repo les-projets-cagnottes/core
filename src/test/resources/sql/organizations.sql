@@ -1,1 +1,0 @@
-insert into organizations (id, name) values (1, 'Youfeed');
