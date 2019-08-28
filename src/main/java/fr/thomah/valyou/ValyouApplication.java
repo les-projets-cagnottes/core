@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 
 @SpringBootApplication
 @EnableScheduling
@@ -48,10 +49,9 @@ public class ValyouApplication {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
-		User admin = userRepository.findByEmail("admin@valyou.fr");
 
 		// First launch of App
-		if(admin == null) {
+		if(userRepository.count() == 0) {
 
 			// Creation of every roles in database
 			for(AuthorityName authorityName : AuthorityName.values()) {
@@ -69,7 +69,7 @@ public class ValyouApplication {
 
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();
-			admin = UserGenerator.newUser(email, "admin");
+			User admin = UserGenerator.newUser(email, "admin");
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
