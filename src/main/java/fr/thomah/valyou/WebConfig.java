@@ -100,6 +100,7 @@ public class WebConfig extends WebSecurityConfigurerAdapter implements WebMvcCon
                 // Un-secure H2 Database
                 .antMatchers("/h2-console/**/**").permitAll()
                 .antMatchers("/api/auth/login**").permitAll()
+                .antMatchers("/api/auth/login/slack**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
