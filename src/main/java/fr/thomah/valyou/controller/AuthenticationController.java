@@ -1,10 +1,23 @@
 package fr.thomah.valyou.controller;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import fr.thomah.valyou.exception.BadRequestException;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.exception.UnauthaurizedException;
+import fr.thomah.valyou.generator.UserGenerator;
+import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +30,16 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.web.bind.annotation.*;
 import fr.thomah.valyou.security.JwtTokenUtil;
-import fr.thomah.valyou.model.AuthenticationResponse;
 
 @RestController
 public class AuthenticationController {
+
+    private static final String HTTP_PROXY = System.getenv("HTTP_PROXY");
+    private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
+    private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
 
     private static final String TOKEN_HEADER = "Authorization";
 
@@ -35,6 +48,9 @@ public class AuthenticationController {
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Autowired
     private UserRepository repository;
@@ -68,6 +84,58 @@ public class AuthenticationController {
         String token = request.getHeader(TOKEN_HEADER).substring(7);
         String email = jwtTokenUtil.getEmailFromToken(token);
         return repository.findByEmail(email);
+    }
+
+    @RequestMapping(value = "/api/auth/login/slack", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public AuthenticationResponse slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
+        HttpClient httpClient;
+        if(HTTP_PROXY != null) {
+            String[] proxy = HTTP_PROXY.replace("http://", "").replace("https://", "").split(":");
+            httpClient = HttpClient.newBuilder()
+                    .proxy(ProxySelector.of(new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1]))))
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+        } else {
+            httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+        }
+        String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+        HttpResponse response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            if (json.get("user") != null && json.get("team") != null) {
+                Organization organization = organizationRepository.findBySlackTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
+                if(organization != null) {
+                    JsonObject jsonUser = json.get("user").getAsJsonObject();
+                    User user = repository.findByEmail(jsonUser.get("email").getAsString());
+                    if(user == null) {
+                        user = new User();
+                        user.setFirstname(jsonUser.get("name").getAsString());
+                        user.setEmail(jsonUser.get("email").getAsString());
+                        user.setAvatarUrl(jsonUser.get("image_192").getAsString());
+                        user.setPassword(BCrypt.hashpw(jsonUser.get("email").getAsString(), BCrypt.gensalt()));
+                        user = repository.save(UserGenerator.newUser(user));
+                        organization.getMembers().add(user);
+                        organizationRepository.save(organization);
+                    }
+                    return new AuthenticationResponse(jwtTokenUtil.generateToken(user));
+                } else {
+                    throw new UnauthaurizedException();
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @ExceptionHandler({AuthenticationException.class})

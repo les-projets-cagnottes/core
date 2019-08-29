@@ -1,12 +1,17 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Getter(AccessLevel.PUBLIC)
+@Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "organizations")
 public class Organization extends AuditEntity<String>{
@@ -18,6 +23,9 @@ public class Organization extends AuditEntity<String>{
     @Column(name = "name")
     @NotNull
     private String name;
+
+    @Column(name = "slack_team_id", unique=true)
+    private String slackTeamId;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -44,54 +52,6 @@ public class Organization extends AuditEntity<String>{
     @OneToMany
     @JsonIgnoreProperties({"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Set<User> getMembers() {
-        return members;
-    }
-
-    public void setMembers(Set<User> members) {
-        this.members = members;
-    }
-
-    public Set<Project> getProjects() {
-        return projects;
-    }
-
-    public void setProjects(Set<Project> projects) {
-        this.projects = projects;
-    }
-
-    public Set<Budget> getBudgets() {
-        return budgets;
-    }
-
-    public void setBudgets(Set<Budget> budgets) {
-        this.budgets = budgets;
-    }
-
-    public Set<OrganizationAuthority> getOrganizationAuthorities() {
-        return organizationAuthorities;
-    }
-
-    public void setOrganizationAuthorities(Set<OrganizationAuthority> organizationAuthorities) {
-        this.organizationAuthorities = organizationAuthorities;
-    }
 
     public void addProject(Project project) {
         this.projects.add(project);
