@@ -17,7 +17,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 public class OrganizationController {
@@ -100,6 +102,48 @@ public class OrganizationController {
     @ResponseBody
     public void delete(@PathVariable("id") String id) {
         repository.deleteById(Long.valueOf(id));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/members", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public Page<User> getMembers(@PathVariable("id") long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        return userRepository.findByOrganizations_idOrderByIdAsc(id, pageable);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/members", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void addMember(@PathVariable long id, @RequestBody long userId) {
+        Organization org = repository.findById(id).orElse(null);
+        User newMember = userRepository.findById(userId).orElse(null);
+        if(org == null || newMember == null) {
+            throw new NotFoundException();
+        } else {
+            OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_MEMBER);
+            newMember.addOrganizationAuthority(memberOrganizationAuthority);
+            org.getMembers().add(newMember);
+
+            repository.save(org);
+            userRepository.save(newMember);
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/members", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void removeMember(@PathVariable long id, @RequestParam long userId) {
+        Organization org = repository.findById(id).orElse(null);
+        User member = userRepository.findById(userId).orElse(null);
+        if(org == null || member == null) {
+            throw new NotFoundException();
+        } else {
+            Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
+            member.getUserOrganizationAuthorities().stream().filter(organizationAuthority -> organizationAuthority.getOrganization().getId() == id).forEach(organizationAuthorities::add);
+            member.getUserOrganizationAuthorities().removeAll(organizationAuthorities);
+            userRepository.save(member);
+
+            org.getMembers().remove(member);
+            repository.save(org);
+        }
     }
 
 }

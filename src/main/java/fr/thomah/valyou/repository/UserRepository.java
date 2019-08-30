@@ -9,4 +9,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long count();
     Page<User> findAll(Pageable pageable);
     User findByEmail(String email);
+    Page<User> findByOrganizations_idOrderByIdAsc(long id, Pageable pageable);
 }
