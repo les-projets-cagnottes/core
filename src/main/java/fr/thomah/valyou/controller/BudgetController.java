@@ -66,9 +66,11 @@ public class BudgetController {
                 throw new NotFoundException();
             } else {
                 budgetInDb.setName(budget.getName());
-                budgetInDb.setStartDate(budget.getStartDate());
-                budgetInDb.setEndDate(budget.getEndDate());
-                budgetInDb.setAmountPerMember(budget.getAmountPerMember());
+                if(!budget.getIsDistributed()) {
+                    budgetInDb.setStartDate(budget.getStartDate());
+                    budgetInDb.setEndDate(budget.getEndDate());
+                    budgetInDb.setAmountPerMember(budget.getAmountPerMember());
+                }
                 repository.save(budgetInDb);
             }
         }
