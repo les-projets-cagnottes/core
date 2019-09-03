@@ -1,9 +1,13 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.generator.UserGenerator;
+import fr.thomah.valyou.model.Organization;
+import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.AuthorityRepository;
+import fr.thomah.valyou.repository.OrganizationRepository;
+import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,11 +18,19 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 public class UserController {
 
     @Autowired
     private AuthorityRepository authorityRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private UserRepository repository;
@@ -68,8 +80,23 @@ public class UserController {
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
-    public void delete(@PathVariable("id") String id) {
-        repository.deleteById(Long.valueOf(id));
+    public void delete(@PathVariable("id") long id) {
+        User user = repository.findById(id).orElse(null);
+        if(user == null) {
+            throw new NotFoundException();
+        } else {
+            Set<Organization> organizations = organizationRepository.findByMembers_Id(id);
+            organizations.forEach(organization -> {
+                organization.getMembers().remove(user);
+                organizationRepository.save(organization);
+            });
+            Set<Project> projects = projectRepository.findAllByPeopleGivingTime_Id(id);
+            projects.forEach(project -> {
+                project.getPeopleGivingTime().remove(user);
+                projectRepository.save(project);
+            });
+            repository.deleteById(id);
+        }
     }
 
 }
