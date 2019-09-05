@@ -59,7 +59,7 @@ public class ProjectController {
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Project findById(@PathVariable("id") Long id) {
         Project project = repository.findById(id).orElse(null);
-        if(project == null) {
+        if (project == null) {
             throw new NotFoundException();
         } else {
             return project;
@@ -80,7 +80,7 @@ public class ProjectController {
         int organizationsSize = organizations.size();
         organizations.forEach(organization -> {
             Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
-            if(organizationInDb == null) {
+            if (organizationInDb == null) {
                 throw new NotFoundException();
             } else {
                 organizationInDb.addProject(project);
@@ -89,6 +89,39 @@ public class ProjectController {
         });
         project.setOrganizations(organizations);
         return repository.save(project);
+    }
+
+    @RequestMapping(value = "/api/project", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public Project update(@RequestBody Project project) {
+        Project projectInDb = repository.findById(project.getId()).orElse(null);
+        if (projectInDb == null) {
+            throw new NotFoundException();
+        } else {
+            Set<Organization> organizations = project.getOrganizations();
+            int organizationsSize = organizations.size();
+            organizations.forEach(organization -> {
+                Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
+                if (organizationInDb == null) {
+                    throw new NotFoundException();
+                } else {
+                    if (organizationInDb.getProjects().stream().noneMatch(prj -> projectInDb.getId().equals(prj.getId()))) {
+                        organizationInDb.addProject(project);
+                    }
+                    organization = organizationInDb;
+                }
+            });
+            projectInDb.setOrganizations(organizations);
+            projectInDb.setTitle(project.getTitle());
+            projectInDb.setShortDescription(project.getShortDescription());
+            projectInDb.setLongDescription(project.getLongDescription());
+            projectInDb.setLeader(project.getLeader());
+            projectInDb.setPeopleRequired(project.getPeopleRequired());
+            if(project.getDonationsRequired() > projectInDb.getDonationsRequired()) {
+                projectInDb.setDonationsRequired(project.getDonationsRequired());
+            }
+            return repository.save(projectInDb);
+        }
     }
 
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -119,7 +152,7 @@ public class ProjectController {
             UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) user;
             final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
             User userInPeopleGivingTime = projectInDb.getPeopleGivingTime().stream().filter(userGivingTime -> userLoggedIn.getId().equals(userGivingTime.getId())).findFirst().orElse(null);
-            if(userInPeopleGivingTime == null) {
+            if (userInPeopleGivingTime == null) {
                 projectInDb.addPeopleGivingTime(userLoggedIn);
             } else {
                 projectInDb.getPeopleGivingTime().remove(userInPeopleGivingTime);
@@ -144,8 +177,8 @@ public class ProjectController {
             for (Donation donation : donations) {
                 totalDonations += donation.getAmount();
             }
-            if(totalDonations >= project.getDonationsRequired()
-                && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
+            if (totalDonations >= project.getDonationsRequired()
+                    && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
                 project.setStatus(ProjectStatus.READY);
             } else {
                 project.setStatus(ProjectStatus.AVORTED);
