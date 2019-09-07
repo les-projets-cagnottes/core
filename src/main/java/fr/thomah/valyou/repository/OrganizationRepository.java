@@ -13,4 +13,5 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Optional<Organization> findById(Long id);
     Set<Organization> findByMembers_Id(Long userId);
     Organization findBySlackTeamId(String asString);
+    Organization findByBudgets_id(long budgetId);
 }

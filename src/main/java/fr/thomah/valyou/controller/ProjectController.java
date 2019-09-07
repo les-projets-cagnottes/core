@@ -73,6 +73,18 @@ public class ProjectController {
         return project.getOrganizations();
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
+    public Page<Project> getByBudgetId(@RequestParam("budgetId") long budgetId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+        Organization organization = organizationRepository.findByBudgets_id(budgetId);
+        if(organization == null) {
+            throw new NotFoundException();
+        } else {
+            Pageable pageable = PageRequest.of(offset, limit);
+            return repository.findByOrganizations_idOrderByIdDesc(organization.getId(), pageable);
+        }
+    }
+
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public Project create(@RequestBody Project project) {

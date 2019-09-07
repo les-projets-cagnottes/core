@@ -5,9 +5,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Set;
+
 public interface UserRepository extends JpaRepository<User, Long> {
     long count();
     Page<User> findAll(Pageable pageable);
     User findByEmail(String email);
+    Set<User> findByOrganizations_idOrderByIdAsc(long id);
     Page<User> findByOrganizations_idOrderByIdAsc(long id, Pageable pageable);
 }

@@ -51,6 +51,12 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
+    public Set<User> getByOrganizationId(@RequestParam("organizationId") long organizationId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+        return repository.findByOrganizations_idOrderByIdAsc(organizationId);
+    }
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void create(@RequestBody User user) {
         user = UserGenerator.newUser(user);

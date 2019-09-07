@@ -14,4 +14,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Set<Project> findAllByLeaderId(Long memberId);
     Set<Project> findAllByPeopleGivingTime_Id(Long memberId);
     Set<Project> findAllByStatusAndFundingDeadlineLessThan(ProjectStatus inProgress, Date date);
+    Page<Project> findByOrganizations_idOrderByIdDesc(Long organizationId, Pageable pageable);
 }
