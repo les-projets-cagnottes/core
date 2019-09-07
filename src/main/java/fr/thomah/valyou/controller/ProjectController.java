@@ -180,7 +180,7 @@ public class ProjectController {
         return donationRepository.findByProject_idOrderByIdAsc(id, pageable);
     }
 
-    @Scheduled(cron = "0 0 0 1/1 * ?")
+    @Scheduled(cron = "0 */10 * * * *")
     public void processProjectStatus() {
         Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.IN_PROGRESS, new Date());
         projects.forEach(project -> {
