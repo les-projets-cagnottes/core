@@ -61,6 +61,7 @@ public class ValyouApplication {
 
 			Organization organization = new Organization();
 			organization.setName("Valyou");
+			organization.setSlackTeamId("TMW0TDJKZ");
 			organization = organizationRepository.save(organization);
 
 			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {

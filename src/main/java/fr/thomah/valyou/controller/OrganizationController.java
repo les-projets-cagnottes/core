@@ -92,8 +92,8 @@ public class OrganizationController {
             throw new NotFoundException();
         } else {
             orgInDb.setName(org.getName());
-            orgInDb.setMembers(org.getMembers());
-            repository.save(org);
+            orgInDb.setSlackTeamId(org.getSlackTeamId());
+            repository.save(orgInDb);
         }
     }
 

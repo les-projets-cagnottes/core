@@ -40,7 +40,7 @@ public class Organization extends AuditEntity<String>{
             name = "project_organizations",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(

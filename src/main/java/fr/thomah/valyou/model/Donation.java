@@ -27,7 +27,7 @@ public class Donation extends AuditEntity<String>{
     private User contributor;
 
     @ManyToOne
-    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Project project;
 
     @ManyToOne

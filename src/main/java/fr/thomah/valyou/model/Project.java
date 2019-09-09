@@ -54,7 +54,7 @@ public class Project extends AuditEntity<String> {
     private Float totalDonations;
 
     @OneToMany(mappedBy = "project")
-    @JsonIgnoreProperties({"budget"})
+    @JsonIgnoreProperties({"budget", "project"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToMany
@@ -65,6 +65,10 @@ public class Project extends AuditEntity<String> {
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private Set<User> peopleGivingTime = new LinkedHashSet<>();
+
+    @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
+    private Set<Budget> budgets = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"members", "projects", "budgets"})

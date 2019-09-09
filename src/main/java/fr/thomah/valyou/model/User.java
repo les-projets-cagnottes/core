@@ -81,12 +81,14 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "leader")
-    @JsonIgnoreProperties({"leader", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")
     @JsonIgnoreProperties({"budget"})
     private Set<Donation> donations = new LinkedHashSet<>();
+
+    private Float totalBudgetDonations;
 
     public User() {
     }

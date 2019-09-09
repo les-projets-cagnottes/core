@@ -2,10 +2,7 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
-import fr.thomah.valyou.repository.DonationRepository;
-import fr.thomah.valyou.repository.OrganizationRepository;
-import fr.thomah.valyou.repository.ProjectRepository;
-import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +23,9 @@ import java.util.Set;
 @RestController
 @Transactional
 public class ProjectController {
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private DonationRepository donationRepository;
@@ -76,20 +76,14 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
     public Page<Project> getByBudgetId(@RequestParam("budgetId") long budgetId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-        Organization organization = organizationRepository.findByBudgets_id(budgetId);
-        if(organization == null) {
-            throw new NotFoundException();
-        } else {
-            Pageable pageable = PageRequest.of(offset, limit);
-            return repository.findByOrganizations_idOrderByIdDesc(organization.getId(), pageable);
-        }
+        Pageable pageable = PageRequest.of(offset, limit);
+        return repository.findByBudgets_idOrderByIdDesc(budgetId, pageable);
     }
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public Project create(@RequestBody Project project) {
         Set<Organization> organizations = project.getOrganizations();
-        int organizationsSize = organizations.size();
         organizations.forEach(organization -> {
             Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
             if (organizationInDb == null) {
@@ -100,6 +94,19 @@ public class ProjectController {
             }
         });
         project.setOrganizations(organizations);
+
+        Set<Budget> budgets = project.getBudgets();
+        budgets.forEach(budget -> {
+            Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
+            if (budgetInDb == null) {
+                throw new NotFoundException();
+            } else {
+                budgetInDb.getProjects().add(project);
+                budget = budgetInDb;
+            }
+        });
+        project.setBudgets(budgets);
+
         return repository.save(project);
     }
 
@@ -111,7 +118,6 @@ public class ProjectController {
             throw new NotFoundException();
         } else {
             Set<Organization> organizations = project.getOrganizations();
-            int organizationsSize = organizations.size();
             organizations.forEach(organization -> {
                 Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
                 if (organizationInDb == null) {
@@ -124,6 +130,22 @@ public class ProjectController {
                 }
             });
             projectInDb.setOrganizations(organizations);
+
+            Set<Budget> budgets = project.getBudgets();
+            budgets.forEach(budget -> {
+                Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
+                if (budgetInDb == null) {
+                    throw new NotFoundException();
+                } else {
+                    budgetInDb.getProjects().add(project);
+                    if (budgetInDb.getProjects().stream().noneMatch(prj -> projectInDb.getId().equals(prj.getId()))) {
+                        budgetInDb.getProjects().add(project);
+                    }
+                    budget = budgetInDb;
+                }
+            });
+            project.setBudgets(budgets);
+
             projectInDb.setTitle(project.getTitle());
             projectInDb.setShortDescription(project.getShortDescription());
             projectInDb.setLongDescription(project.getLongDescription());

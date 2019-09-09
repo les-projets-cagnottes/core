@@ -38,6 +38,14 @@ public class Budget extends AuditEntity<String>{
     @NotNull
     private Date endDate;
 
+    @ManyToMany
+    @JoinTable(
+            name = "project_budgets",
+            joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
+    private Set<Project> projects = new LinkedHashSet<>();
+
     @ManyToOne
     @JsonIgnoreProperties({"members", "projects", "budgets"})
     private Organization organization;

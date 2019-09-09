@@ -18,7 +18,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RestController
 public class UserController {
@@ -51,9 +54,25 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId", "offset", "limit"})
     public Set<User> getByOrganizationId(@RequestParam("organizationId") long organizationId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         return repository.findByOrganizations_idOrderByIdAsc(organizationId);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
+    public Page<User> getByBudgetId(@RequestParam("budgetId") long budgetId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        Page<User> users = repository.findByBudgetIdWithPagination(budgetId, pageable);
+        Page<Float> totalBudgetDonations = repository.sumTotalBudgetDonationsByBudgetIdWithPagination(budgetId, pageable);
+        final List<Float> totalBudgetDonationsArray = totalBudgetDonations.get().collect(Collectors.toList());
+        List<User> userList = users.get().collect(Collectors.toList());
+        IntStream
+                .range(0, (int) users.get().count())
+                .forEach(index -> {
+                    userList.get(index).setTotalBudgetDonations(totalBudgetDonationsArray.get(index));
+                });
+        return users;
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -88,7 +107,7 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") long id) {
         User user = repository.findById(id).orElse(null);
-        if(user == null) {
+        if (user == null) {
             throw new NotFoundException();
         } else {
             Set<Organization> organizations = organizationRepository.findByMembers_Id(id);
