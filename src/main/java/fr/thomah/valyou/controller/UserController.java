@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -91,13 +92,14 @@ public class UserController {
             throw new NotFoundException();
         } else {
             userInDb.setUsername(user.getUsername());
-            userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+            if(user.getPassword() != null && !user.getPassword().equals("")) {
+                userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+                userInDb.setLastPasswordResetDate(new Date());
+            }
             userInDb.setEmail(user.getEmail());
             userInDb.setFirstname(user.getFirstname());
             userInDb.setLastname(user.getLastname());
             userInDb.setAvatarUrl(user.getAvatarUrl());
-            userInDb.setEnabled(user.getEnabled());
-            userInDb.setLastPasswordResetDate(user.getLastPasswordResetDate());
             repository.save(userInDb);
         }
     }
