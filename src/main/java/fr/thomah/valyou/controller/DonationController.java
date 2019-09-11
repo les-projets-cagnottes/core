@@ -1,6 +1,9 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.Donation;
+import fr.thomah.valyou.model.Project;
+import fr.thomah.valyou.model.ProjectStatus;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.DonationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
@@ -59,7 +62,12 @@ public class DonationController {
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") Long id) {
-        repository.deleteById(id);
+        Donation donation = repository.findById(id).orElse(null);
+        if(donation == null) {
+            throw new NotFoundException();
+        } else if(donation.getProject().getStatus() == ProjectStatus.IN_PROGRESS) {
+            repository.deleteById(id);
+        }
     }
 
 
