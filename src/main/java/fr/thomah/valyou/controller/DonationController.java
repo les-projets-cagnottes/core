@@ -55,5 +55,12 @@ public class DonationController {
         return repository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
     }
 
+    @RequestMapping(value = "/api/donation/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @PreAuthorize("hasRole('USER')")
+    public void delete(@PathVariable("id") Long id) {
+        repository.deleteById(id);
+    }
+
 
 }
