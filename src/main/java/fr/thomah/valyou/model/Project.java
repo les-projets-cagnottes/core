@@ -23,7 +23,7 @@ public class Project extends AuditEntity<String> {
 
     @Column(name = "title")
     @NotNull
-    private String title;
+    private String title = "";
 
     @Column(length = 50)
     @NotNull

@@ -137,7 +137,6 @@ public class ProjectController {
                 if (budgetInDb == null) {
                     throw new NotFoundException();
                 } else {
-                    budgetInDb.getProjects().add(project);
                     if (budgetInDb.getProjects().stream().noneMatch(prj -> projectInDb.getId().equals(prj.getId()))) {
                         budgetInDb.getProjects().add(project);
                     }
