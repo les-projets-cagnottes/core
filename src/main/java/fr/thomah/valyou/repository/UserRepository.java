@@ -20,13 +20,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByOrganizations_idOrderByIdAsc(long id, Pageable pageable);
 
-    @Query(value = "select users.* as totalBudgetDonations from users left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id ORDER BY users.id",
-            countQuery = "select count(*) from users left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
+    @Query(value = "select users.* as totalBudgetDonations from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id ORDER BY users.id",
+            countQuery = "select count(*) from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
             nativeQuery = true)
     Page<User> findByBudgetIdWithPagination(@Param("budget_id") long budgetId, Pageable pageable);
 
-    @Query(value = "select sum(donations.amount) as totalBudgetDonations from users left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id ORDER BY users.id",
-            countQuery = "select count(*) from users left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
+    @Query(value = "select sum(donations.amount) as totalBudgetDonations from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id ORDER BY users.id",
+            countQuery = "select count(*) from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
             nativeQuery = true)
     Page<Float> sumTotalBudgetDonationsByBudgetIdWithPagination(@Param("budget_id") long budgetId, Pageable pageable);
 }
