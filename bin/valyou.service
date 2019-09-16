@@ -1,0 +1,11 @@
+[Unit]
+Description=Valyou daemon
+
+[Service]
+Type=forking
+ExecStart=/opt/valyou-api/valyou.sh start
+ExecStop=/opt/valyou-api/valyou.sh stop
+ExecReload=/opt/valyou-api/valyou.sh reload
+
+[Install]
+WantedBy=multi-user.target
