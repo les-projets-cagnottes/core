@@ -5,7 +5,7 @@ function d_start ()
 	echo "Valyou: starting service"
 	BASEDIR=$(dirname "$0")/..
 	cd "$BASEDIR" &&
-	. bin/setenv.sh &&
+	. setenv.sh &&
 	nohup java -Dconfig.location=application.properties -jar valyou-api.jar > logs/valyou-api.log 2>&1 & echo $! > /var/run/valyou-api.pid & sleep 5
 }
 
