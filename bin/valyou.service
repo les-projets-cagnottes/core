@@ -3,9 +3,9 @@ Description=Valyou daemon
 
 [Service]
 Type=forking
-ExecStart=/home/ubuntu/valyou-api/valyou.sh start
-ExecStop=/home/ubuntu/valyou-api/valyou.sh stop
-ExecReload=/home/ubuntu/valyou-api/valyou.sh reload
+ExecStart=/opt/valyou-api/valyou.sh start
+ExecStop=/opt/valyou-api/valyou.sh stop
+ExecReload=/opt/valyou-api/valyou.sh reload
 
 [Install]
 WantedBy=multi-user.target
