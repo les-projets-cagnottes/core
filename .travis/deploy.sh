@@ -22,7 +22,7 @@ ssh -p $PORT apps@$IP -o StrictHostKeyChecking=no "$( cat <<EOT
     cd $DEPLOY_DIR
     sudo mv valyou.service /etc/systemd/system/valyou.service
     sudo systemctl daemon-reload
-    echo "$(date -u) Travis Deploy"  >> .logs/valyou-api.log
+    echo "$(date -u) Travis Deploy"  >> ./logs/valyou-api.log
     sudo service valyou start
     exit
 EOT
