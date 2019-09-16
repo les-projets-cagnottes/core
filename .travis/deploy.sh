@@ -13,13 +13,14 @@ ssh -p $PORT apps@$IP -o StrictHostKeyChecking=no "$( cat <<EOT
 EOT
 )"
 
-scp $TRAVIS_BUILD_DIR/bin/valyou.service apps@$IP:/etc/systemd/system/valyou.service
+scp $TRAVIS_BUILD_DIR/bin/valyou.service apps@$IP:$DEPLOY_DIR
 scp $TRAVIS_BUILD_DIR/bin/setenv.sh.template apps@$IP:$DEPLOY_DIR
 scp $TRAVIS_BUILD_DIR/bin/valyou.sh apps@$IP:$DEPLOY_DIR
 scp $TRAVIS_BUILD_DIR/target/valyou-*.jar apps@$IP:$DEPLOY_DIR
 
 ssh -p $PORT apps@$IP -o StrictHostKeyChecking=no "$( cat <<EOT
-    cd $$DEPLOY_DIR
+    cd $DEPLOY_DIR
+    sudo mv valyou.service /etc/systemd/system/valyou.service
     echo "$(date -u) Travis Deploy"  >> .logs/valyou-api.log
     sudo service valyou start
     exit
