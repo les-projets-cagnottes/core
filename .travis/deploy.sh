@@ -21,6 +21,7 @@ scp $TRAVIS_BUILD_DIR/target/valyou-*.jar apps@$IP:$DEPLOY_DIR/valyou.jar
 ssh -p $PORT apps@$IP -o StrictHostKeyChecking=no "$( cat <<EOT
     cd $DEPLOY_DIR
     sudo mv valyou.service /etc/systemd/system/valyou.service
+    sudo systemctl daemon-reload
     echo "$(date -u) Travis Deploy"  >> .logs/valyou-api.log
     sudo service valyou start
     exit
