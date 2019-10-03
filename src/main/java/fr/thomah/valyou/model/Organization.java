@@ -49,6 +49,14 @@ public class Organization extends AuditEntity<String>{
     @JsonIgnoreProperties({"organization", "sponsor"})
     private Set<Budget> budgets = new LinkedHashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "organizations_contents",
+            joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "content_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"organization"})
+    private Set<Content> contents = new LinkedHashSet<>();
+
     @OneToMany
     @JsonIgnoreProperties({"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
