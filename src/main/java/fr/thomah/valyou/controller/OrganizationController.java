@@ -3,10 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
 import fr.thomah.valyou.model.*;
-import fr.thomah.valyou.repository.BudgetRepository;
-import fr.thomah.valyou.repository.OrganizationAuthorityRepository;
-import fr.thomah.valyou.repository.OrganizationRepository;
-import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +23,9 @@ public class OrganizationController {
 
     @Autowired
     private BudgetRepository budgetRepository;
+
+    @Autowired
+    private ContentRepository contentRepository;
 
     @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;
@@ -143,6 +143,22 @@ public class OrganizationController {
 
             org.getMembers().remove(member);
             repository.save(org);
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/contents", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void removeContent(@PathVariable long id, @RequestParam long contentId) {
+        Organization org = repository.findById(id).orElse(null);
+        Content content = contentRepository.findById(contentId).orElse(null);
+        if(org == null || content == null) {
+            throw new NotFoundException();
+        } else {
+            org.getContents().remove(content);
+            repository.save(org);
+            if(content.getOrganizations().size() == 1) {
+                contentRepository.deleteById(contentId);
+            }
         }
     }
 

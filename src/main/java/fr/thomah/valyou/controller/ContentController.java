@@ -1,16 +1,21 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.NotFoundException;
+import fr.thomah.valyou.model.Budget;
 import fr.thomah.valyou.model.Content;
 import fr.thomah.valyou.model.Organization;
+import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.repository.ContentRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 @RestController
 public class ContentController {
@@ -32,6 +37,39 @@ public class ContentController {
                 organizationRepository.save(organization);
             }
         }
+    }
+
+    @RequestMapping(value = "/api/content", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public Content update(@RequestBody Content content) {
+        Content contentInDb = contentRepository.findById(content.getId()).orElse(null);
+        if (contentInDb == null) {
+            throw new NotFoundException();
+        } else {
+            Set<Organization> organizations = content.getOrganizations();
+            organizations.forEach(organization -> {
+                Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
+                if (organizationInDb == null) {
+                    throw new NotFoundException();
+                } else {
+                    if (organizationInDb.getContents().stream().noneMatch(prj -> contentInDb.getId().equals(prj.getId()))) {
+                        organizationInDb.getContents().add(content);
+                    }
+                    organization = organizationInDb;
+                }
+            });
+            contentInDb.setOrganizations(organizations);
+            contentInDb.setName(content.getName());
+            contentInDb.setValue(content.getValue());
+            return contentRepository.save(contentInDb);
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/content", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "organizationId"})
+    public Page<Content> getByOrganizationId(@RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("organizationId") Long organizationId) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        return contentRepository.findAllByOrganizations_Id(pageable, organizationId);
     }
 
 }

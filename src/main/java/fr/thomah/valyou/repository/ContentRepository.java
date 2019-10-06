@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ContentRepository extends JpaRepository<Content, Long> {
     Page<Content> findAll(Pageable pageable);
+    Page<Content> findAllByOrganizations_Id(Pageable pageable, Long organizationId);
 }

@@ -47,6 +47,10 @@ public class Budget extends AuditEntity<String>{
     private Set<Project> projects = new LinkedHashSet<>();
 
     @ManyToOne
+    @JsonIgnoreProperties({"organizations"})
+    private Content rules;
+
+    @ManyToOne
     @JsonIgnoreProperties({"members", "projects", "budgets"})
     private Organization organization;
 
