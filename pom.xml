@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>fr.thomah</groupId>
-    <artifactId>valyou</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
-    <name>valyou</name>
-    <description>Demo project for Spring Boot</description>
+    <artifactId>les-projets-cagnottes</artifactId>
+    <version>0.2.0</version>
+    <name>les-projets-cagnottes</name>
+    <description>Plateforme "Les Projets Cagnottes"</description>
 
     <properties>
         <java.version>1.8</java.version>
