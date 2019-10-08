@@ -10,7 +10,7 @@
     </parent>
     <groupId>fr.thomah</groupId>
     <artifactId>les-projets-cagnottes</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1-SNAPSHOT</version>
     <name>les-projets-cagnottes</name>
     <description>Plateforme "Les Projets Cagnottes"</description>
 
