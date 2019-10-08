@@ -24,7 +24,7 @@ public class Budget extends AuditEntity<String>{
 
     @Column(name = "amount_per_member")
     @NotNull
-    private Float amountPerMember = 0f;
+    private float amountPerMember = 0f;
 
     @Column(name = "is_distributed")
     @NotNull

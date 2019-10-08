@@ -20,7 +20,7 @@ public class Donation extends AuditEntity<String>{
 
     @Column(name = "amount")
     @NotNull
-    private Float amount;
+    private float amount;
 
     @ManyToOne
     @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
