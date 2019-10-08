@@ -20,11 +20,11 @@ public class Budget extends AuditEntity<String>{
     private Long id;
 
     @Column(name = "name")
-    private String name;
+    private String name = "";
 
     @Column(name = "amount_per_member")
     @NotNull
-    private Float amountPerMember;
+    private Float amountPerMember = 0f;
 
     @Column(name = "is_distributed")
     @NotNull
@@ -32,11 +32,11 @@ public class Budget extends AuditEntity<String>{
 
     @Column(name = "start_date")
     @NotNull
-    private Date startDate;
+    private Date startDate = new Date();
 
     @Column(name = "end_date")
     @NotNull
-    private Date endDate;
+    private Date endDate = new Date();
 
     @ManyToMany
     @JoinTable(

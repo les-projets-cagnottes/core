@@ -72,4 +72,10 @@ public class ContentController {
         return contentRepository.findAllByOrganizations_Id(pageable, organizationId);
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/content", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
+    public Set<Content> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
+        return contentRepository.findAllByOrganizations_Id(organizationId);
+    }
+
 }

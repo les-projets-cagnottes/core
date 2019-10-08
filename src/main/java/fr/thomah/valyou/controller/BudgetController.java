@@ -70,6 +70,7 @@ public class BudgetController {
                     budgetInDb.setStartDate(budget.getStartDate());
                     budgetInDb.setEndDate(budget.getEndDate());
                     budgetInDb.setAmountPerMember(budget.getAmountPerMember());
+                    budgetInDb.setRules(budget.getRules());
                 }
                 repository.save(budgetInDb);
             }
