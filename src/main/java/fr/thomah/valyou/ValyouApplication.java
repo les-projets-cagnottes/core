@@ -58,7 +58,7 @@ public class ValyouApplication {
 				authorityRepository.save(new Authority(authorityName));
 			}
 			userGenerator.init(); // Refresh authorities
-
+			/*
 			Organization organization = new Organization();
 			organization.setName("Valyou");
 			organization.setSlackTeamId("TMW0TDJKZ");
@@ -67,17 +67,17 @@ public class ValyouApplication {
 			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
 				organizationAuthorityRepository.save(new OrganizationAuthority(organization, authorityName));
 			}
-
+			*/
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();
 			User admin = UserGenerator.newUser(email, "admin");
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
-			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
-			admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_OWNER));
-			admin.addOrganization(organization);
+			//admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
+			//admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_OWNER));
+			//admin.addOrganization(organization);
 			userRepository.save(admin);
-
+			/*
 			organization.getMembers().add(admin);
 			organization = organizationRepository.save(organization);
 
@@ -89,7 +89,7 @@ public class ValyouApplication {
 			budget.setOrganization(organization);
 			budget.setSponsor(admin);
 			budgetRepository.save(budget);
-
+			*/
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
 		}
 	}
