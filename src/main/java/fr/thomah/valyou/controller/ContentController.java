@@ -68,6 +68,9 @@ public class ContentController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/content", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "organizationId"})
     public Page<Content> getByOrganizationId(@RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("organizationId") Long organizationId) {
+        if(offset < 0) {
+            offset = 0;
+        }
         Pageable pageable = PageRequest.of(offset, limit);
         return contentRepository.findAllByOrganizations_Id(pageable, organizationId);
     }
