@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
@@ -23,6 +24,9 @@ import java.util.Set;
 @RestController
 @Transactional
 public class ProjectController {
+
+    @Autowired
+    private Gson gson;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -82,7 +86,8 @@ public class ProjectController {
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public Project create(@RequestBody Project project) {
+    public Project create(@RequestBody String projectStr) {
+        Project project = gson.fromJson(projectStr, Project.class);
         Set<Organization> organizations = project.getOrganizations();
         organizations.forEach(organization -> {
             Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);

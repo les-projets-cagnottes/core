@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.Donation;
 import fr.thomah.valyou.model.Project;
@@ -21,6 +22,9 @@ import java.util.Set;
 public class DonationController {
 
     @Autowired
+    private Gson gson;
+
+    @Autowired
     private DonationRepository repository;
 
     @Autowired
@@ -31,7 +35,8 @@ public class DonationController {
 
     @RequestMapping(value = "/api/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void create(@RequestBody Donation donation, Principal principal) {
+    public void create(@RequestBody String donationStr, Principal principal) {
+        Donation donation = gson.fromJson(donationStr, Donation.class);
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         User userPrincipal = (User) token.getPrincipal();
         userPrincipal = userRepository.findByEmail(userPrincipal.getEmail());
