@@ -43,7 +43,7 @@ public class Project extends AuditEntity<String> {
     private Integer peopleRequired;
 
     @ManyToOne
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
     private User leader;
 
     @Column(name = "funding_deadline")
@@ -54,7 +54,7 @@ public class Project extends AuditEntity<String> {
     private Float totalDonations;
 
     @OneToMany(mappedBy = "project")
-    @JsonIgnoreProperties({"budget", "project"})
+    @JsonIgnoreProperties(value = {"budget", "project"}, allowSetters = true)
     private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToMany
@@ -67,11 +67,11 @@ public class Project extends AuditEntity<String> {
     private Set<User> peopleGivingTime = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
+    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"}, allowSetters = true)
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents"})
+    @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"}, allowSetters = true)
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @Override

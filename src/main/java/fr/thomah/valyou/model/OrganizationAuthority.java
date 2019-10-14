@@ -22,11 +22,11 @@ public class OrganizationAuthority extends AuditEntity<String>{
     private Long id;
 
     @ManyToOne
-    @JsonIgnoreProperties({"members", "projects", "budgets"})
+    @JsonIgnoreProperties(value = {"members", "projects", "budgets"}, allowSetters = true)
     private Organization organization;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
     private Set<User> users;
 
     @Column(length = 50)

@@ -43,7 +43,7 @@ public class Budget extends AuditEntity<String>{
             name = "project_budgets",
             joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"}, allowSetters = true)
     private Set<Project> projects = new LinkedHashSet<>();
 
     @ManyToOne
@@ -55,11 +55,11 @@ public class Budget extends AuditEntity<String>{
     private Organization organization;
 
     @ManyToOne
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
     private User sponsor;
 
     @OneToMany(mappedBy = "budget")
-    @JsonIgnoreProperties({"budget"})
+    @JsonIgnoreProperties(value = {"budget"}, allowSetters = true)
     private Set<Donation> donations = new LinkedHashSet<>();
 
 }

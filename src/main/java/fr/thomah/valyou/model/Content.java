@@ -26,7 +26,7 @@ public class Content extends AuditEntity<String> {
     private String value;
 
     @ManyToMany(mappedBy = "contents", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents"})
+    @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"}, allowSetters = true)
     private Set<Organization> organizations = new LinkedHashSet<>();
 
 }

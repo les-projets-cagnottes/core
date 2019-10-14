@@ -32,7 +32,7 @@ public class Organization extends AuditEntity<String>{
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
     private Set<User> members = new LinkedHashSet<>();
 
     @ManyToMany
@@ -40,13 +40,13 @@ public class Organization extends AuditEntity<String>{
             name = "project_organizations",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"}, allowSetters = true)
     private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties({"organization", "sponsor"})
+    @JsonIgnoreProperties(value = {"organization", "sponsor"}, allowSetters = true)
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @ManyToMany
@@ -54,11 +54,11 @@ public class Organization extends AuditEntity<String>{
             name = "organizations_contents",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "content_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"organization"})
+    @JsonIgnoreProperties(value = {"organization"}, allowSetters = true)
     private Set<Content> contents = new LinkedHashSet<>();
 
     @OneToMany
-    @JsonIgnoreProperties({"organization", "users"})
+    @JsonIgnoreProperties(value = {"organization", "users"}, allowSetters = true)
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
 
     public void addProject(Project project) {

@@ -59,7 +59,7 @@ public class User extends AuditEntity<String> implements UserDetails {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"users"})
+    @JsonIgnoreProperties(value = {"users"}, allowSetters = true)
     private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -67,7 +67,7 @@ public class User extends AuditEntity<String> implements UserDetails {
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"organization", "userAuthorities"})
+    @JsonIgnoreProperties(value = {"organization", "userAuthorities"}, allowSetters = true)
     private Set<OrganizationAuthority> userOrganizationAuthorities = new LinkedHashSet<>();
 
     @Transient
@@ -77,15 +77,15 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")
-    @JsonIgnoreProperties({"organization", "sponsor", "donations"})
+    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"}, allowSetters = true)
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "leader")
-    @JsonIgnoreProperties({"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"}, allowSetters = true)
     private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")
-    @JsonIgnoreProperties({"budget"})
+    @JsonIgnoreProperties(value = {"budget"}, allowSetters = true)
     private Set<Donation> donations = new LinkedHashSet<>();
 
     private Float totalBudgetDonations;
