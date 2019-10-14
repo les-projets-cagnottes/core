@@ -28,7 +28,7 @@ public class Authority extends AuditEntity<String> implements GrantedAuthority {
     private AuthorityName name;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private Set<User> users;
 
     public Authority() {

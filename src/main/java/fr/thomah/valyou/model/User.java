@@ -59,7 +59,7 @@ public class User extends AuditEntity<String> implements UserDetails {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"users"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"users"})
     private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -67,7 +67,7 @@ public class User extends AuditEntity<String> implements UserDetails {
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"organization", "userAuthorities"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"organization", "userAuthorities"})
     private Set<OrganizationAuthority> userOrganizationAuthorities = new LinkedHashSet<>();
 
     @Transient
@@ -77,15 +77,15 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")
-    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"organization", "projects", "sponsor", "donations"})
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "leader")
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Project> projects = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")
-    @JsonIgnoreProperties(value = {"budget"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"budget"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
     private Float totalBudgetDonations;

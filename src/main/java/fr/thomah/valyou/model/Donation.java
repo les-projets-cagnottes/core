@@ -23,15 +23,15 @@ public class Donation extends AuditEntity<String>{
     private float amount;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
     private User contributor;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Project project;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"})
     private Budget budget;
 
 }
