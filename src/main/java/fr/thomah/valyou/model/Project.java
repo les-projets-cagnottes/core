@@ -44,7 +44,7 @@ public class Project extends AuditEntity<String> {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private User leader;
+    private User leader = new User();
 
     @Column(name = "funding_deadline")
     @Temporal(TemporalType.TIMESTAMP)
@@ -54,7 +54,7 @@ public class Project extends AuditEntity<String> {
     private Float totalDonations;
 
     @OneToMany(mappedBy = "project")
-    @JsonIgnoreProperties(value = {"budget", "project"})
+    @JsonIgnoreProperties(value = {"contributor", "budget", "project"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToMany

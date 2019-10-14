@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
@@ -23,11 +24,11 @@ public class OrganizationAuthority extends AuditEntity<String>{
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"members", "projects", "budgets"})
-    private Organization organization;
+    private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private Set<User> users;
+    private Set<User> users = new LinkedHashSet<>();
 
     @Column(length = 50)
     @NotNull

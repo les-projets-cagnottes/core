@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
@@ -29,7 +30,7 @@ public class Authority extends AuditEntity<String> implements GrantedAuthority {
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private Set<User> users;
+    private Set<User> users = new LinkedHashSet<>();
 
     public Authority() {
     }

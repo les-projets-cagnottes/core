@@ -24,14 +24,14 @@ public class Donation extends AuditEntity<String>{
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
-    private User contributor;
+    private User contributor = new User();
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
-    private Project project;
+    private Project project = new Project();
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"})
-    private Budget budget;
+    private Budget budget = new Budget();
 
 }
