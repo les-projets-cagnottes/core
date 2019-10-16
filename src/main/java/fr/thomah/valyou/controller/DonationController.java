@@ -3,7 +3,6 @@ package fr.thomah.valyou.controller;
 import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.Donation;
-import fr.thomah.valyou.model.Project;
 import fr.thomah.valyou.model.ProjectStatus;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.DonationRepository;

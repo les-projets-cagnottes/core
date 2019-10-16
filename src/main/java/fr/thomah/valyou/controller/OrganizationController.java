@@ -57,7 +57,13 @@ public class OrganizationController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"member_id"})
     public Set<Organization> getUserOrganizations(Principal authUserToken, @RequestParam("member_id") Long memberId) {
-        return repository.findByMembers_Id(memberId);
+        Set<Organization> organizations = repository.findByMembers_Id(memberId);
+        for(Organization org : organizations) {
+            for(Budget b : org.getBudgets()) {
+                b.setTotalDonations(budgetRepository.getTotalDonations(b.getId()));
+            }
+        }
+        return organizations;
     }
 
     @PreAuthorize("hasRole('USER')")
