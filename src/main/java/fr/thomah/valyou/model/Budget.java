@@ -63,6 +63,7 @@ public class Budget extends AuditEntity<String>{
     @JsonIgnoreProperties(value = {"budget"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
+    @Transient
     private float totalDonations = 0f;
 
 }
