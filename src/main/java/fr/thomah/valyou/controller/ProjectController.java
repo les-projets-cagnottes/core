@@ -210,7 +210,7 @@ public class ProjectController {
         return donationRepository.findByProject_idOrderByIdAsc(id, pageable);
     }
 
-    @Scheduled(cron = "0 */2 * * * *")
+    @Scheduled(cron = "0 0 3 * * *")
     public void processProjectStatus() {
         LOGGER.info("[PFD] Start Project Funding Deadlines Processing");
         Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.IN_PROGRESS, new Date());
