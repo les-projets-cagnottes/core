@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,14 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RestController
 @Transactional
 public class ProjectController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
 
     @Autowired
     private Gson gson;
@@ -206,22 +210,31 @@ public class ProjectController {
         return donationRepository.findByProject_idOrderByIdAsc(id, pageable);
     }
 
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(cron = "0 */2 * * * *")
     public void processProjectStatus() {
+        LOGGER.info("[PFD] Start Project Funding Deadlines Processing");
         Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.IN_PROGRESS, new Date());
+        LOGGER.info("[PFD] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
             float totalDonations = 0f;
             for (Donation donation : donations) {
                 totalDonations += donation.getAmount();
             }
+            LOGGER.info("[PFD][" + project.getId() + "] Project : " + project.getTitle());
+            LOGGER.info("[PFD][" + project.getId() + "] Teammates : " + project.getPeopleGivingTime().size() + " / " + project.getPeopleRequired());
+            LOGGER.info("[PFD][" + project.getId() + "] Donations : " + totalDonations + " € / " + project.getDonationsRequired() + " €");
             if (totalDonations >= project.getDonationsRequired()
                     && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
                 project.setStatus(ProjectStatus.READY);
+                LOGGER.info("[PFD][" + project.getId() + "] Status => READY");
             } else {
                 project.setStatus(ProjectStatus.AVORTED);
+                LOGGER.info("[PFD][" + project.getId() + "] Status => AVORTED");
                 donationRepository.deleteByProjectId(project.getId());
+                LOGGER.info("[PFD][" + project.getId() + "] Donations deleted");
             }
         });
+        LOGGER.info("End Project Funding Deadlines Processing");
     }
 }
