@@ -215,7 +215,7 @@ public class ProjectController {
         }
     }
 
-    @RequestMapping(value = "/api/auth/login/slack", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/project/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public String slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         HttpClient httpClient;
         if(HTTP_PROXY != null) {
