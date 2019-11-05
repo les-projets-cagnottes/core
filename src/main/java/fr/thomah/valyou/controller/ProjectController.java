@@ -18,26 +18,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.security.Principal;
-import java.time.Duration;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Set;
 
 @RestController
 @Transactional
 public class ProjectController {
-
-    private static final String HTTP_PROXY = System.getenv("HTTP_PROXY");
-    private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
-    private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
 
@@ -215,40 +202,6 @@ public class ProjectController {
         }
     }
 
-    @RequestMapping(value = "/api/project/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-        HttpClient httpClient;
-        if(HTTP_PROXY != null) {
-            String[] proxy = HTTP_PROXY.replace("http://", "").replace("https://", "").split(":");
-            httpClient = HttpClient.newBuilder()
-                    .proxy(ProxySelector.of(new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1]))))
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        } else {
-            httpClient = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        }
-
-        String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
-                .header("Authorization", basicAuth(SLACK_CLIENT_ID, SLACK_CLIENT_SECRET))
-                .POST(HttpRequest.BodyPublishers.ofString("{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}"))
-                .build();
-        HttpResponse response;
-        try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug(response.body().toString());
-            return response.body().toString();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<Donation> getDonations(@PathVariable("id") long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
@@ -284,7 +237,4 @@ public class ProjectController {
         LOGGER.info("End Project Funding Deadlines Processing");
     }
 
-    private static String basicAuth(String username, String password) {
-        return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
-    }
 }

@@ -1,9 +1,12 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,13 +16,27 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.Principal;
+import java.time.Duration;
+import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 public class OrganizationController {
+
+    private static final String HTTP_PROXY = System.getenv("HTTP_PROXY");
+    private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
+    private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -166,6 +183,44 @@ public class OrganizationController {
                 contentRepository.deleteById(contentId);
             }
         }
+    }
+
+    @RequestMapping(value = "/api/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
+        HttpClient httpClient;
+        if(HTTP_PROXY != null) {
+            String[] proxy = HTTP_PROXY.replace("http://", "").replace("https://", "").split(":");
+            httpClient = HttpClient.newBuilder()
+                    .proxy(ProxySelector.of(new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1]))))
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+        } else {
+            httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+        }
+
+        String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json")
+                .header("Authorization", basicAuth(SLACK_CLIENT_ID, SLACK_CLIENT_SECRET))
+                .POST(HttpRequest.BodyPublishers.ofString("{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}"))
+                .build();
+        HttpResponse response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug(response.body().toString());
+            return response.body().toString();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static String basicAuth(String username, String password) {
+        return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
     }
 
 }
