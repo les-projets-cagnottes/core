@@ -1,10 +1,10 @@
 package fr.thomah.valyou.controller;
 
 import com.google.gson.Gson;
-import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.service.SlackClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +26,15 @@ import java.util.Set;
 @Transactional
 public class ProjectController {
 
+    private static final String WEB_URL = System.getenv("VALYOU_WEB_URL");
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
 
     @Autowired
     private Gson gson;
+
+    @Autowired
+    private SlackClientService slackClientService;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -89,7 +94,10 @@ public class ProjectController {
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public Project create(@RequestBody String projectStr) {
+    public Project create(Principal user, @RequestBody String projectStr) {
+        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) user;
+        final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
+
         Project project = gson.fromJson(projectStr, Project.class);
         Set<Organization> organizations = project.getOrganizations();
         organizations.forEach(organization -> {
@@ -114,6 +122,24 @@ public class ProjectController {
             }
         });
         project.setBudgets(budgets);
+
+        Project p = repository.save(project);
+
+        StringBuilder stringBuilder = new StringBuilder(":rocket: Le projet cagnotte *\"")
+                .append(p.getTitle())
+                .append("\"* vient d'être créé par ")
+                .append(userLoggedIn.getFirstname())
+                .append(" ")
+                .append(userLoggedIn.getLastname())
+                .append("\nDécouvrez le sur ")
+                .append(WEB_URL)
+                .append("/projects/")
+                .append(p.getId());
+
+        organizations.forEach(organization -> {
+            slackClientService.postMessage(organization.getSlackTeam(), stringBuilder.toString());
+        });
+
 
         return repository.save(project);
     }
@@ -158,7 +184,7 @@ public class ProjectController {
             projectInDb.setLongDescription(project.getLongDescription());
             projectInDb.setLeader(project.getLeader());
             projectInDb.setPeopleRequired(project.getPeopleRequired());
-            if(project.getDonationsRequired() > projectInDb.getDonationsRequired()) {
+            if (project.getDonationsRequired() > projectInDb.getDonationsRequired()) {
                 projectInDb.setDonationsRequired(project.getDonationsRequired());
             }
             return repository.save(projectInDb);

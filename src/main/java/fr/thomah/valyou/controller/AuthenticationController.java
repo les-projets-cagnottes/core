@@ -20,6 +20,9 @@ import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.exception.AuthenticationException;
+import fr.thomah.valyou.service.HttpClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -37,11 +40,15 @@ import fr.thomah.valyou.security.JwtTokenUtil;
 @RestController
 public class AuthenticationController {
 
-    private static final String HTTP_PROXY = System.getenv("HTTP_PROXY");
     private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
     private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
 
     private static final String TOKEN_HEADER = "Authorization";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationController.class);
+
+    @Autowired
+    private HttpClientService httpClientService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -88,19 +95,8 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/api/auth/login/slack", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponse slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-        HttpClient httpClient;
-        if(HTTP_PROXY != null) {
-            String[] proxy = HTTP_PROXY.replace("http://", "").replace("https://", "").split(":");
-            httpClient = HttpClient.newBuilder()
-                    .proxy(ProxySelector.of(new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1]))))
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        } else {
-            httpClient = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        }
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        LOGGER.debug("GET " + url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
@@ -109,7 +105,8 @@ public class AuthenticationController {
                 .build();
         HttpResponse response;
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("response : " + response.body().toString());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
             if (json.get("user") != null && json.get("team") != null) {

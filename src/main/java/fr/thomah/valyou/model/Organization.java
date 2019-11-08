@@ -24,9 +24,6 @@ public class Organization extends AuditEntity<String>{
     @NotNull
     private String name;
 
-    @Column(name = "slack_team_id", unique=true)
-    private String slackTeamId;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "organizations_users",
@@ -60,6 +57,11 @@ public class Organization extends AuditEntity<String>{
     @OneToMany
     @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
+
+    @OneToOne
+    @JoinColumn(name = "slack_team_id", referencedColumnName = "id")
+    @JsonIgnoreProperties(value = {"organization"})
+    private SlackTeam slackTeam;
 
     public void addProject(Project project) {
         this.projects.add(project);

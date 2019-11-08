@@ -1,10 +1,13 @@
 package fr.thomah.valyou.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.service.HttpClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Principal;
@@ -32,11 +32,13 @@ import java.util.Set;
 @RestController
 public class OrganizationController {
 
-    private static final String HTTP_PROXY = System.getenv("HTTP_PROXY");
     private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
     private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationController.class);
+
+    @Autowired
+    private HttpClientService httpClientService;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -51,7 +53,11 @@ public class OrganizationController {
     private OrganizationRepository repository;
 
     @Autowired
+    private SlackTeamRepository slackTeamRepository;
+
+    @Autowired
     private UserRepository userRepository;
+
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -115,7 +121,6 @@ public class OrganizationController {
             throw new NotFoundException();
         } else {
             orgInDb.setName(org.getName());
-            orgInDb.setSlackTeamId(org.getSlackTeamId());
             repository.save(orgInDb);
         }
     }
@@ -186,34 +191,47 @@ public class OrganizationController {
     }
 
     @RequestMapping(value = "/api/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-        HttpClient httpClient;
-        if(HTTP_PROXY != null) {
-            String[] proxy = HTTP_PROXY.replace("http://", "").replace("https://", "").split(":");
-            httpClient = HttpClient.newBuilder()
-                    .proxy(ProxySelector.of(new InetSocketAddress(proxy[0], Integer.parseInt(proxy[1]))))
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        } else {
-            httpClient = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
-        }
-
+    public String slack(@PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
+        LOGGER.debug("POST " + url);
+        LOGGER.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
                 .header("Content-Type", "application/json")
                 .header("Authorization", basicAuth(SLACK_CLIENT_ID, SLACK_CLIENT_SECRET))
-                .POST(HttpRequest.BodyPublishers.ofString("{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}"))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
         HttpResponse response;
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug(response.body().toString());
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("response : " + response.body().toString());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+                Organization organization = repository.findById(id).orElse(null);
+                if(organization != null) {
+                    SlackTeam slackTeam;
+                    if(organization.getSlackTeam() != null) {
+                        slackTeam = organization.getSlackTeam();
+                    } else {
+                        slackTeam = new SlackTeam();
+                    }
+                    JsonObject jsonBot = json.get("bot").getAsJsonObject();
+                    slackTeam.setAccessToken(json.get("access_token").getAsString());
+                    slackTeam.setTeamId(json.get("team_id").getAsString());
+                    slackTeam.setBotAccessToken(jsonBot.get("bot_access_token").getAsString());
+                    slackTeam.setBotUserId(jsonBot.get("bot_user_id").getAsString());
+                    slackTeam.setOrganization(organization);
+                    slackTeamRepository.save(slackTeam);
+                } else {
+                    throw new NotFoundException();
+                }
+            }
             return response.body().toString();
         } catch (IOException | InterruptedException e) {
+            LOGGER.error(e.getMessage());
             e.printStackTrace();
         }
         return null;

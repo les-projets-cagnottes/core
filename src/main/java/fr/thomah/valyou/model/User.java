@@ -90,6 +90,11 @@ public class User extends AuditEntity<String> implements UserDetails {
 
     private Float totalBudgetDonations;
 
+    @OneToOne
+    @JoinColumn(name = "slack_user_id", referencedColumnName = "id")
+    @JsonIgnoreProperties(value = {"user"})
+    private SlackUser slackUser;
+
     public User() {
     }
 
