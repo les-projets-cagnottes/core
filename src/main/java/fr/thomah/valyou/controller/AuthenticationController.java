@@ -18,6 +18,8 @@ import fr.thomah.valyou.exception.UnauthaurizedException;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.OrganizationRepository;
+import fr.thomah.valyou.repository.SlackTeamRepository;
+import fr.thomah.valyou.repository.SlackUserRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.service.HttpClientService;
@@ -58,6 +60,12 @@ public class AuthenticationController {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private SlackTeamRepository slackTeamRepository;
+
+    @Autowired
+    private SlackUserRepository slackUserRepository;
 
     @Autowired
     private UserRepository repository;
@@ -110,20 +118,33 @@ public class AuthenticationController {
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
             if (json.get("user") != null && json.get("team") != null) {
-                Organization organization = organizationRepository.findBySlackTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
-                if(organization != null) {
+                SlackTeam slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
+                if(slackTeam != null) {
                     JsonObject jsonUser = json.get("user").getAsJsonObject();
                     User user = repository.findByEmail(jsonUser.get("email").getAsString());
                     if(user == null) {
                         user = new User();
-                        user.setFirstname(jsonUser.get("name").getAsString());
-                        user.setEmail(jsonUser.get("email").getAsString());
-                        user.setAvatarUrl(jsonUser.get("image_192").getAsString());
-                        user.setPassword(BCrypt.hashpw(jsonUser.get("email").getAsString(), BCrypt.gensalt()));
-                        user = repository.save(UserGenerator.newUser(user));
-                        organization.getMembers().add(user);
-                        organizationRepository.save(organization);
                     }
+                    user.setFirstname(jsonUser.get("name").getAsString());
+                    user.setEmail(jsonUser.get("email").getAsString());
+                    user.setAvatarUrl(jsonUser.get("image_192").getAsString());
+                    user.setPassword("");
+                    user = repository.save(UserGenerator.newUser(user));
+
+                    String slackuserId = json.get("user_id").getAsString();
+                    SlackUser slackUser = slackUserRepository.findBySlackUserId(slackuserId);
+                    if(slackUser == null) {
+                        slackUser = new SlackUser();
+                        slackUser.setSlackUserId(slackuserId);
+                    }
+
+                    if(user.getSlackUser() == null) {
+                        slackTeam.getOrganization().getMembers().add(user);
+                        organizationRepository.save(slackTeam.getOrganization());
+                        slackUser.setUser(user);
+                        slackUserRepository.save(slackUser);
+                    }
+
                     return new AuthenticationResponse(jwtTokenUtil.generateToken(user));
                 } else {
                     throw new UnauthaurizedException();

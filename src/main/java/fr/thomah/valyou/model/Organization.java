@@ -58,8 +58,7 @@ public class Organization extends AuditEntity<String>{
     @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
 
-    @OneToOne
-    @JoinColumn(name = "slack_team_id", referencedColumnName = "id")
+    @OneToOne(mappedBy = "organization")
     @JsonIgnoreProperties(value = {"organization"})
     private SlackTeam slackTeam;
 

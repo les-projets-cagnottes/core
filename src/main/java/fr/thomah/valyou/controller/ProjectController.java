@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RestController
@@ -100,16 +101,17 @@ public class ProjectController {
 
         Project project = gson.fromJson(projectStr, Project.class);
         Set<Organization> organizations = project.getOrganizations();
+        Set<Organization> newOrganizations = new LinkedHashSet<>();
         organizations.forEach(organization -> {
             Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
             if (organizationInDb == null) {
                 throw new NotFoundException();
             } else {
                 organizationInDb.addProject(project);
-                organization = organizationInDb;
+                newOrganizations.add(organizationInDb);
             }
         });
-        project.setOrganizations(organizations);
+        project.setOrganizations(newOrganizations);
 
         Set<Budget> budgets = project.getBudgets();
         budgets.forEach(budget -> {
@@ -125,19 +127,20 @@ public class ProjectController {
 
         Project p = repository.save(project);
 
-        StringBuilder stringBuilder = new StringBuilder(":rocket: Le projet cagnotte *\"")
+        StringBuilder stringBuilder = new StringBuilder(":rocket: <@")
+                .append(userLoggedIn.getSlackUser().getSlackUserId())
+                .append("> vient de créer le projet cagnotte *")
                 .append(p.getTitle())
-                .append("\"* vient d'être créé par ")
-                .append(userLoggedIn.getFirstname())
-                .append(" ")
-                .append(userLoggedIn.getLastname())
-                .append("\nDécouvrez le sur ")
+                .append("* et vous êtes tous invités à y participer !")
+                .append("\nDécouvrez le vite sur ")
                 .append(WEB_URL)
                 .append("/projects/")
                 .append(p.getId());
 
-        organizations.forEach(organization -> {
-            slackClientService.postMessage(organization.getSlackTeam(), stringBuilder.toString());
+        newOrganizations.forEach(organization -> {
+            String channelId = slackClientService.joinChannel(organization.getSlackTeam());
+            slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
+            slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilder.toString());
         });
 
 

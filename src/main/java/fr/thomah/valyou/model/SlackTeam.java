@@ -17,7 +17,8 @@ public class SlackTeam extends AuditEntity<String> {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne(mappedBy = "slackTeam")
+    @OneToOne
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
     @JsonIgnoreProperties(value = {"slackTeam"})
     private Organization organization;
 
