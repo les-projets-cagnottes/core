@@ -69,9 +69,25 @@ public class JwtTokenUtil implements Serializable {
         return false;
     }
 
+    public String generateApiToken(User userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        return doGeneratePermanentToken(claims, userDetails.getEmail());
+    }
+
     public String generateToken(User userDetails) {
         Map<String, Object> claims = new HashMap<>();
         return doGenerateToken(claims, userDetails.getEmail());
+    }
+
+    private String doGeneratePermanentToken(Map<String, Object> claims, String subject) {
+        final Date createdDate = clock.now();
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(createdDate)
+                .signWith(SignatureAlgorithm.HS512, secret)
+                .compact();
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {

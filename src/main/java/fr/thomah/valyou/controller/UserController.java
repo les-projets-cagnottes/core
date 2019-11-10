@@ -1,23 +1,21 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.model.Organization;
-import fr.thomah.valyou.model.Project;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.repository.AuthorityRepository;
-import fr.thomah.valyou.repository.OrganizationRepository;
-import fr.thomah.valyou.repository.ProjectRepository;
-import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.security.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +24,9 @@ import java.util.stream.IntStream;
 
 @RestController
 public class UserController {
+
+    @Autowired
+    private ApiTokenRepository apiTokenRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;

@@ -94,6 +94,12 @@ public class User extends AuditEntity<String> implements UserDetails {
     @JsonIgnoreProperties(value = {"user"})
     private SlackUser slackUser;
 
+    @OneToMany(
+            mappedBy = "user",
+            orphanRemoval = true)
+    @JsonIgnoreProperties(value = {"user"})
+    private Set<AuthenticationResponse> apiTokens = new LinkedHashSet<>();
+
     public User() {
     }
 
