@@ -25,4 +25,10 @@ public class SlackUser extends AuditEntity<String> {
     @Column
     private String slackUserId;
 
+    @Column
+    private String email;
+
+    @Column
+    private String imId;
+
 }

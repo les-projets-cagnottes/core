@@ -69,9 +69,9 @@ public class JwtTokenUtil implements Serializable {
         return false;
     }
 
-    public String generateApiToken(User userDetails) {
+    public String generateApiToken(User userDetails, Date expiration) {
         Map<String, Object> claims = new HashMap<>();
-        return doGeneratePermanentToken(claims, userDetails.getEmail());
+        return doGenerateToken(claims, userDetails.getEmail(), expiration);
     }
 
     public String generateToken(User userDetails) {
@@ -79,13 +79,14 @@ public class JwtTokenUtil implements Serializable {
         return doGenerateToken(claims, userDetails.getEmail());
     }
 
-    private String doGeneratePermanentToken(Map<String, Object> claims, String subject) {
+    private String doGenerateToken(Map<String, Object> claims, String subject, Date expiration) {
         final Date createdDate = clock.now();
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(createdDate)
+                .setExpiration(expiration)
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }

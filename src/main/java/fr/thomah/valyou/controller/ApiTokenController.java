@@ -13,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -46,9 +48,15 @@ public class ApiTokenController {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         User user = (User) token.getPrincipal();
         user = userRepository.findByEmail(user.getEmail());
-        AuthenticationResponse authenticationResponse = new AuthenticationResponse(jwtTokenUtil.generateApiToken(user));
-        authenticationResponse.setExpiration(null);
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.YEAR, 1);
+        Date nextYear = cal.getTime();
+
+        AuthenticationResponse authenticationResponse = new AuthenticationResponse(jwtTokenUtil.generateApiToken(user, nextYear));
+        authenticationResponse.setExpiration(nextYear);
         authenticationResponse.setUser(user);
+
         return apiTokenRepository.save(authenticationResponse);
     }
 

@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     User findByEmail(String email);
 
+    User findBySlackUser_Id(Long slackUserId);
+
     Set<User> findByOrganizations_idOrderByIdAsc(long id);
 
     Page<User> findByOrganizations_idOrderByIdAsc(long id, Pageable pageable);
