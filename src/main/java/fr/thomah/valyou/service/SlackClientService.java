@@ -96,4 +96,32 @@ public class SlackClientService {
         return "";
     }
 
+    public String openDirectMessageChannel(SlackTeam slackTeam, String slackUserId) {
+        String url = "https://slack.com/api/im.open";
+        String body = "{\"user\": \"" + slackUserId + "\"}";
+        LOGGER.debug("POST " + url);
+        LOGGER.debug("body : " + body);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + slackTeam.getAccessToken())
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        HttpResponse response;
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("response : " + response.body().toString());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+                return json.get("channel").getAsJsonObject().get("id").getAsString();
+            }
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error(e.getMessage());
+            e.printStackTrace();
+        }
+        return "";
+    }
+
 }

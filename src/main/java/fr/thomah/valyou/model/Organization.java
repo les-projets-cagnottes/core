@@ -62,6 +62,10 @@ public class Organization extends AuditEntity<String>{
     @JsonIgnoreProperties(value = {"organization"})
     private SlackTeam slackTeam;
 
+    @OneToMany
+    @JsonIgnoreProperties(value = {"organization", "user"})
+    private Set<SlackUser> slackUsers = new LinkedHashSet<>();
+
     public void addProject(Project project) {
         this.projects.add(project);
     }
