@@ -105,7 +105,7 @@ public class SlackClientService {
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + slackTeam.getAccessToken())
+                .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
         HttpResponse response;
