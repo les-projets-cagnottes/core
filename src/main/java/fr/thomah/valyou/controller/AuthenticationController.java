@@ -140,7 +140,7 @@ public class AuthenticationController {
 
                     if(user.getSlackUser() == null) {
                         slackTeam.getOrganization().getMembers().add(user);
-                        organizationRepository.save(slackTeam.getOrganization());
+                        slackUser.setOrganization(organizationRepository.save(slackTeam.getOrganization()));
                         slackUser.setUser(user);
                         slackUserRepository.save(slackUser);
                     }
