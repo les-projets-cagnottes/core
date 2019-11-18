@@ -24,7 +24,7 @@ public class SlackUser extends AuditEntity<String> {
 
     @ManyToOne
     @JsonIgnoreProperties({"members", "projects", "budgets", "slackUsers"})
-    private Organization organization = new Organization();
+    private Organization organization;
 
     @Column
     private String slackUserId;
