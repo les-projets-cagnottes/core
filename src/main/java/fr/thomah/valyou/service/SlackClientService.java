@@ -1,8 +1,10 @@
 package fr.thomah.valyou.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.thomah.valyou.model.SlackTeam;
+import fr.thomah.valyou.model.SlackUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,8 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class SlackClientService {
@@ -64,7 +68,7 @@ public class SlackClientService {
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
-                channelId =  json.get("channel").getAsJsonObject().get("id").getAsString();
+                channelId = json.get("channel").getAsJsonObject().get("id").getAsString();
             }
         } catch (IOException | InterruptedException e) {
             LOGGER.error(e.getMessage());
@@ -73,7 +77,7 @@ public class SlackClientService {
         return channelId;
     }
 
-    public String inviteInChannel(SlackTeam slackTeam, String channelId) {
+    public void inviteInChannel(SlackTeam slackTeam, String channelId) {
         String url = "https://slack.com/api/channels.invite";
         String body = "{\"channel\":\"" + channelId + "\", \"user\": \"" + slackTeam.getBotUserId() + "\"}";
         LOGGER.debug("POST " + url);
@@ -93,7 +97,51 @@ public class SlackClientService {
             LOGGER.error(e.getMessage());
             e.printStackTrace();
         }
-        return "";
+    }
+
+    public List<SlackUser> listUsers(SlackTeam slackTeam) {
+        String url = "https://slack.com/api/users.list";
+        String body = "{}";
+        LOGGER.debug("POST " + url);
+        LOGGER.debug("body : " + body);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        HttpResponse response;
+        List<SlackUser> slackUsers = new ArrayList<>();
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("response : " + response.body().toString());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+
+                JsonArray membersJsonArray = json.get("members").getAsJsonArray();
+                membersJsonArray.forEach(memberJsonElement -> {
+                    JsonObject memberJson = memberJsonElement.getAsJsonObject();
+
+                    SlackUser slackUser = new SlackUser();
+                    slackUser.setSlackUserId(memberJson.get("id").getAsString());
+
+                    memberJson = memberJson.get("profile").getAsJsonObject();
+                    if(memberJson.get("email") != null) {
+                        slackUser.setEmail(memberJson.get("email").getAsString());
+                        slackUser.setName(memberJson.get("real_name").getAsString());
+                        slackUser.setImage_192(memberJson.get("image_192").getAsString());
+
+                        slackUsers.add(slackUser);
+                    }
+                });
+            }
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error(e.getMessage());
+            e.printStackTrace();
+        }
+        return slackUsers;
     }
 
     public String openDirectMessageChannel(SlackTeam slackTeam, String slackUserId) {

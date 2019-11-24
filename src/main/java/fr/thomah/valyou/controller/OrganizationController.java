@@ -5,9 +5,11 @@ import com.google.gson.JsonObject;
 import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
+import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.service.HttpClientService;
+import fr.thomah.valyou.service.SlackClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ import java.security.Principal;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -41,6 +44,9 @@ public class OrganizationController {
     private HttpClientService httpClientService;
 
     @Autowired
+    private SlackClientService slackClientService;
+
+    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -53,11 +59,13 @@ public class OrganizationController {
     private OrganizationRepository repository;
 
     @Autowired
+    private SlackUserRepository slackUserRepository;
+
+    @Autowired
     private SlackTeamRepository slackTeamRepository;
 
     @Autowired
     private UserRepository userRepository;
-
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -190,6 +198,7 @@ public class OrganizationController {
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public String slack(@PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
@@ -233,6 +242,46 @@ public class OrganizationController {
         } catch (IOException | InterruptedException e) {
             LOGGER.error(e.getMessage());
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/slack/sync", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String slackSync(@PathVariable long id) {
+        Organization organization = this.repository.findById(id).orElse(null);
+        if(organization == null) {
+            throw new NotFoundException();
+        } else {
+            List<SlackUser> slackUsers = slackClientService.listUsers(organization.getSlackTeam());
+            User user;
+            for(SlackUser slackUser : slackUsers) {
+                user = userRepository.findByEmail(slackUser.getEmail());
+                SlackUser slackUserInDb = slackUserRepository.findBySlackUserId(slackUser.getSlackUserId());
+                if(slackUserInDb != null) {
+                    slackUserInDb.setName(slackUser.getName());
+                    slackUserInDb.setImage_192(slackUser.getImage_192());
+                    slackUserInDb.setEmail(slackUser.getEmail());
+                } else {
+                    slackUserInDb = slackUser;
+                }
+                slackUserInDb.setImId(slackClientService.openDirectMessageChannel(organization.getSlackTeam(), slackUserInDb.getSlackUserId()));
+                slackUserInDb.setOrganization(organization);
+                if(user != null) {
+                    slackUserInDb.setUser(user);
+                    slackUserRepository.save(slackUserInDb);
+                } else {
+                    user = new User();
+                    user.setFirstname(slackUserInDb.getName());
+                    user.setEmail(slackUserInDb.getEmail());
+                    user.setAvatarUrl(slackUserInDb.getImage_192());
+                    user.setPassword("");
+                    userRepository.save(UserGenerator.newUser(user));
+
+                    organization.getMembers().add(user);
+                    repository.save(organization);
+                }
+            }
         }
         return null;
     }

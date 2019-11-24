@@ -255,6 +255,12 @@ public class ProjectController {
         return donationRepository.findByProject_idOrderByIdAsc(id, pageable);
     }
 
+    @RequestMapping(value = "/api/project/validate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public void validate() {
+        processProjectFundingDeadlines();
+    }
+
     @Scheduled(cron = "0 0 3 * * *")
     public void processProjectFundingDeadlines() {
         LOGGER.info("[PFD] Start Project Funding Deadlines Processing");
