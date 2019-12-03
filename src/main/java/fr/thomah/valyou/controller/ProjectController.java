@@ -19,9 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @Transactional
@@ -53,10 +51,17 @@ public class ProjectController {
     private UserRepository userRepository;
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+    @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filter"})
+    public Page<Project> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filter") List<String> filters) {
         Pageable pageable = PageRequest.of(offset, limit);
-        return repository.findAll(pageable);
+        Set<ProjectStatus> statuses = new LinkedHashSet<>();
+        for(String filter : filters) {
+            statuses.add(ProjectStatus.valueOf(filter));
+        }
+        if(statuses.isEmpty()) {
+            statuses.addAll(List.of(ProjectStatus.values()));
+        }
+        return repository.findAllByStatusInOrderByStatusDescFundingDeadlineAsc(statuses, pageable);
     }
 
     @PreAuthorize("hasRole('USER')")
