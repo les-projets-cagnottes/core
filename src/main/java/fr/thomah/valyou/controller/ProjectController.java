@@ -144,20 +144,23 @@ public class ProjectController {
 
         newOrganizations.forEach(organization -> {
 
-            StringBuilder stringBuilderUser = new StringBuilder(":rocket: ");
+            if(organization.getSlackTeam() != null) {
 
-            if(organization.getId() == userLoggedIn.getSlackUser().getOrganization().getId()) {
-                stringBuilderUser.append("<@")
-                        .append(userLoggedIn.getSlackUser().getSlackUserId())
-                        .append(">");
-            } else {
-                stringBuilderUser.append(defaultUser);
+                StringBuilder stringBuilderUser = new StringBuilder(":rocket: ");
+
+                if (userLoggedIn.getSlackUser() != null && organization.getId() == userLoggedIn.getSlackUser().getOrganization().getId()) {
+                    stringBuilderUser.append("<@")
+                            .append(userLoggedIn.getSlackUser().getSlackUserId())
+                            .append(">");
+                } else {
+                    stringBuilderUser.append(defaultUser);
+                }
+                stringBuilderUser.append(endMessage);
+
+                String channelId = slackClientService.joinChannel(organization.getSlackTeam());
+                slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
+                slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
             }
-            stringBuilderUser.append(endMessage);
-
-            String channelId = slackClientService.joinChannel(organization.getSlackTeam());
-            slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
-            slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
         });
 
 
