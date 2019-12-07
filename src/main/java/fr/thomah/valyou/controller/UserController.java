@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,7 +44,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-        Pageable pageable = PageRequest.of(offset, limit);
+        Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").and(Sort.by("lastname")));
         return repository.findAll(pageable);
     }
 
@@ -101,6 +102,7 @@ public class UserController {
             userInDb.setFirstname(user.getFirstname());
             userInDb.setLastname(user.getLastname());
             userInDb.setAvatarUrl(user.getAvatarUrl());
+            userInDb.setEnabled(user.getEnabled());
             repository.save(userInDb);
         }
     }
