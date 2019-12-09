@@ -16,7 +16,7 @@ EOT
 scp $TRAVIS_BUILD_DIR/bin/valyou.service apps@$IP:$DEPLOY_DIR
 scp $TRAVIS_BUILD_DIR/bin/setenv.sh.template apps@$IP:$DEPLOY_DIR
 scp $TRAVIS_BUILD_DIR/bin/valyou.sh apps@$IP:$DEPLOY_DIR
-scp $TRAVIS_BUILD_DIR/target/les-projets-cagnottes-*.jar apps@$IP:$DEPLOY_DIR/valyou-api.jar
+scp $TRAVIS_BUILD_DIR/target/core-*.jar apps@$IP:$DEPLOY_DIR/valyou-api.jar
 
 ssh -p $PORT apps@$IP -o StrictHostKeyChecking=no "$( cat <<EOT
     cd $DEPLOY_DIR
