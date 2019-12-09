@@ -18,9 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     User findBySlackUser_Id(Long slackUserId);
 
-    Set<User> findByOrganizations_idOrderByIdAsc(long id);
-
-    Page<User> findByOrganizations_idOrderByIdAsc(long id, Pageable pageable);
+    Page<User> findByOrganizations_id(long id, Pageable pageable);
 
     @Query(value = "select users.* as totalBudgetDonations from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id ORDER BY users.id",
             countQuery = "select count(*) from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
@@ -31,4 +29,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             countQuery = "select count(*) from users inner join organizations_users on organizations_users.user_id = users.id left join donations on users.id = donations.contributor_id where donations.budget_id = :budget_id or donations.id is null group by users.id",
             nativeQuery = true)
     Page<Float> sumTotalBudgetDonationsByBudgetIdWithPagination(@Param("budget_id") long budgetId, Pageable pageable);
+
 }

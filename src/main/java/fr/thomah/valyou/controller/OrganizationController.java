@@ -144,8 +144,8 @@ public class OrganizationController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}/members", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> getMembers(@PathVariable("id") long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-        Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").and(Sort.by("lastname")));
-        return userRepository.findByOrganizations_idOrderByIdAsc(id, pageable);
+        Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").ascending().and(Sort.by("lastname").ascending()));
+        return userRepository.findByOrganizations_id(id, pageable);
     }
 
     @PreAuthorize("hasRole('USER')")
