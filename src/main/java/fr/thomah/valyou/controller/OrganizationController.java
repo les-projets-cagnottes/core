@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Principal;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashSet;
@@ -249,13 +250,15 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}/slack/sync", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slackSync(@PathVariable long id) {
+    public String slackSync(@PathVariable long id) throws InterruptedException {
         Organization organization = this.repository.findById(id).orElse(null);
         if(organization == null) {
             throw new NotFoundException();
         } else {
             List<SlackUser> slackUsers = slackClientService.listUsers(organization.getSlackTeam());
             User user;
+            long delay = 0;
+            long tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
             for(SlackUser slackUser : slackUsers) {
                 user = userRepository.findByEmail(slackUser.getEmail());
                 SlackUser slackUserInDb = slackUserRepository.findBySlackUserId(slackUser.getSlackUserId());
@@ -266,7 +269,15 @@ public class OrganizationController {
                 } else {
                     slackUserInDb = slackUser;
                 }
+
+                delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterOpenIm;
+                if(delay > 600) {
+                    delay = 600;
+                }
+                Thread.sleep(600 - delay);
                 slackUserInDb.setImId(slackClientService.openDirectMessageChannel(organization.getSlackTeam(), slackUserInDb.getSlackUserId()));
+                tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
+
                 slackUserInDb.setOrganization(organization);
                 if(user != null) {
                     slackUserInDb.setUser(user);
