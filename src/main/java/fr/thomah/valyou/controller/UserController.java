@@ -1,10 +1,12 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.security.JwtTokenUtil;
+import fr.thomah.valyou.service.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +42,9 @@ public class UserController {
 
     @Autowired
     private UserRepository repository;
+
+    @Autowired
+    private JwtUserDetailsService jwtUserDetailsService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -98,6 +103,31 @@ public class UserController {
             userInDb.setAvatarUrl(user.getAvatarUrl());
             userInDb.setEnabled(user.getEnabled());
             repository.save(userInDb);
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user/profile", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void updateProfile(Principal principalLoggedIn, @RequestBody User user) {
+        User userLoggedIn = jwtUserDetailsService.getUserFromPrincipal(principalLoggedIn);
+        if(!userLoggedIn.getId().equals(user.getId())) {
+            throw new ForbiddenException();
+        } else {
+            User userInDb = repository.findById(user.getId()).orElse(null);
+            if (userInDb == null) {
+                throw new NotFoundException();
+            } else {
+                userInDb.setUsername(user.getUsername());
+                if(user.getPassword() != null && !user.getPassword().equals("")) {
+                    userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+                    userInDb.setLastPasswordResetDate(new Date());
+                }
+                userInDb.setEmail(user.getEmail());
+                userInDb.setFirstname(user.getFirstname());
+                userInDb.setLastname(user.getLastname());
+                userInDb.setAvatarUrl(user.getAvatarUrl());
+                repository.save(userInDb);
+            }
         }
     }
 

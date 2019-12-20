@@ -70,7 +70,7 @@ public class ValyouApplication {
 			*/
 			String email = "admin@valyou.fr";
 			String generatedPassword = StringGenerator.randomString();
-			User admin = UserGenerator.newUser(email, "admin");
+			User admin = UserGenerator.newUser(email, generatedPassword);
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			//admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
