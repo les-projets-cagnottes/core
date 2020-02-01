@@ -61,7 +61,7 @@ public class ProjectController {
         if(statuses.isEmpty()) {
             statuses.addAll(List.of(ProjectStatus.values()));
         }
-        return repository.findAllByStatusInOrderByStatusDescFundingDeadlineAsc(statuses, pageable);
+        return repository.findAllByStatusInOrderByStatusAscFundingDeadlineAsc(statuses, pageable);
     }
 
     @PreAuthorize("hasRole('USER')")

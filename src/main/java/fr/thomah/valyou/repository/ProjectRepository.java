@@ -11,7 +11,7 @@ import java.util.Set;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Page<Project> findAll(Pageable pageable);
-    Page<Project> findAllByStatusInOrderByStatusDescFundingDeadlineAsc(Set<ProjectStatus> status, Pageable pageable);
+    Page<Project> findAllByStatusInOrderByStatusAscFundingDeadlineAsc(Set<ProjectStatus> status, Pageable pageable);
     Set<Project> findAllByLeaderId(Long memberId);
     Set<Project> findAllByPeopleGivingTime_Id(Long memberId);
     Set<Project> findAllByStatusAndFundingDeadlineLessThan(ProjectStatus inProgress, Date date);
