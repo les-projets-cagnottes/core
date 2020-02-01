@@ -272,7 +272,7 @@ public class ProjectController {
     @Scheduled(cron = "0 0 3 * * *")
     public void processProjectFundingDeadlines() {
         LOGGER.info("[PFD] Start Project Funding Deadlines Processing");
-        Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.IN_PROGRESS, new Date());
+        Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.A_IN_PROGRESS, new Date());
         LOGGER.info("[PFD] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
@@ -285,11 +285,11 @@ public class ProjectController {
             LOGGER.info("[PFD][" + project.getId() + "] Donations : " + totalDonations + " € / " + project.getDonationsRequired() + " €");
             if (totalDonations >= project.getDonationsRequired()
                     && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
-                project.setStatus(ProjectStatus.READY);
-                LOGGER.info("[PFD][" + project.getId() + "] Status => READY");
+                project.setStatus(ProjectStatus.B_READY);
+                LOGGER.info("[PFD][" + project.getId() + "] Status => B_READY");
             } else {
-                project.setStatus(ProjectStatus.AVORTED);
-                LOGGER.info("[PFD][" + project.getId() + "] Status => AVORTED");
+                project.setStatus(ProjectStatus.C_AVORTED);
+                LOGGER.info("[PFD][" + project.getId() + "] Status => C_AVORTED");
                 donationRepository.deleteByProjectId(project.getId());
                 LOGGER.info("[PFD][" + project.getId() + "] Donations deleted");
             }

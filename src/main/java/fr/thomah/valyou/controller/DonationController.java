@@ -69,7 +69,7 @@ public class DonationController {
         Donation donation = repository.findById(id).orElse(null);
         if(donation == null) {
             throw new NotFoundException();
-        } else if(donation.getProject().getStatus() == ProjectStatus.IN_PROGRESS) {
+        } else if(donation.getProject().getStatus() == ProjectStatus.A_IN_PROGRESS) {
             repository.deleteById(id);
         }
     }
