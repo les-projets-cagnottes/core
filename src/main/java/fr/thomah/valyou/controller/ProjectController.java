@@ -136,6 +136,7 @@ public class ProjectController {
                 .append(userLoggedIn.getFirstname())
                 .append(" ")
                 .append(userLoggedIn.getLastname())
+                .append("*")
                 .toString();
 
         String endMessage = new StringBuilder(" vient de créer le projet cagnotte *")
