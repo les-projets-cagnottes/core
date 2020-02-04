@@ -124,11 +124,11 @@ public class AuthenticationController {
                     User user = repository.findByEmail(jsonUser.get("email").getAsString());
                     if(user == null) {
                         user = new User();
+                        user.setPassword("");
                     }
                     user.setFirstname(jsonUser.get("name").getAsString());
                     user.setEmail(jsonUser.get("email").getAsString());
                     user.setAvatarUrl(jsonUser.get("image_192").getAsString());
-                    user.setPassword("");
                     user = repository.save(UserGenerator.newUser(user));
 
                     String slackuserId = json.get("user_id").getAsString();
