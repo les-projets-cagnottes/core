@@ -125,9 +125,9 @@ public class AuthenticationController {
                     if(user == null) {
                         user = new User();
                         user.setPassword("");
+                        user.setFirstname(jsonUser.get("name").getAsString());
+                        user.setEmail(jsonUser.get("email").getAsString());
                     }
-                    user.setFirstname(jsonUser.get("name").getAsString());
-                    user.setEmail(jsonUser.get("email").getAsString());
                     user.setAvatarUrl(jsonUser.get("image_192").getAsString());
                     user = repository.save(UserGenerator.newUser(user));
 
