@@ -3,6 +3,7 @@ package fr.thomah.valyou.controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import fr.thomah.valyou.exception.AuthenticationException;
+import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
 import fr.thomah.valyou.generator.UserGenerator;
@@ -41,6 +42,9 @@ public class OrganizationController {
     private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationController.class);
+
+    @Autowired
+    private SlackController slackController;
 
     @Autowired
     private HttpClientService httpClientService;
@@ -202,7 +206,7 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slack(@PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
+    public String slack(Principal principal, @PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
         String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
         LOGGER.debug("POST " + url);
@@ -236,6 +240,8 @@ public class OrganizationController {
                     slackTeam.setBotUserId(jsonBot.get("bot_user_id").getAsString());
                     slackTeam.setOrganization(organization);
                     slackTeamRepository.save(slackTeam);
+
+                    slackController.hello(slackTeam);
                 } else {
                     throw new NotFoundException();
                 }
@@ -255,19 +261,20 @@ public class OrganizationController {
         if(organization == null) {
             throw new NotFoundException();
         } else {
+            SlackTeam slackTeam = organization.getSlackTeam();
             List<SlackUser> slackUsers = slackClientService.listUsers(organization.getSlackTeam());
             User user;
             long delay = 0;
             long tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
             for(SlackUser slackUser : slackUsers) {
                 user = userRepository.findByEmail(slackUser.getEmail());
-                SlackUser slackUserInDb = slackUserRepository.findBySlackUserId(slackUser.getSlackUserId());
-                if(slackUserInDb != null) {
-                    slackUserInDb.setName(slackUser.getName());
-                    slackUserInDb.setImage_192(slackUser.getImage_192());
-                    slackUserInDb.setEmail(slackUser.getEmail());
+                SlackUser slackUserEditted = slackUserRepository.findBySlackUserId(slackUser.getSlackUserId());
+                if(slackUserEditted != null) {
+                    slackUserEditted.setName(slackUser.getName());
+                    slackUserEditted.setImage_192(slackUser.getImage_192());
+                    slackUserEditted.setEmail(slackUser.getEmail());
                 } else {
-                    slackUserInDb = slackUser;
+                    slackUserEditted = slackUser;
                 }
 
                 delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterOpenIm;
@@ -275,27 +282,57 @@ public class OrganizationController {
                     delay = 600;
                 }
                 Thread.sleep(600 - delay);
-                slackUserInDb.setImId(slackClientService.openDirectMessageChannel(organization.getSlackTeam(), slackUserInDb.getSlackUserId()));
+                slackUserEditted.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUserEditted.getSlackUserId()));
                 tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
 
-                slackUserInDb.setOrganization(organization);
-                if(user != null) {
-                    slackUserInDb.setUser(user);
-                    slackUserRepository.save(slackUserInDb);
-                } else {
+                if(user == null) {
                     user = new User();
-                    user.setFirstname(slackUserInDb.getName());
-                    user.setEmail(slackUserInDb.getEmail());
-                    user.setAvatarUrl(slackUserInDb.getImage_192());
+                    user.setFirstname(slackUserEditted.getName());
+                    user.setEmail(slackUserEditted.getEmail());
+                    user.setAvatarUrl(slackUserEditted.getImage_192());
                     user.setPassword("");
-                    userRepository.save(UserGenerator.newUser(user));
-
-                    organization.getMembers().add(user);
-                    repository.save(organization);
+                    user = userRepository.save(UserGenerator.newUser(user));
                 }
+                final User userInDb = user;
+
+                slackUserEditted.setOrganization(organization);
+                slackUserEditted.setSlackTeam(slackTeam);
+                slackUserEditted.setUser(user);
+                final SlackUser slackUserInDb = slackUserRepository.save(slackUserEditted);
+
+                slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserInDb.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                slackTeamUser -> slackTeamUser = slackUserInDb,
+                                () -> slackTeam.getSlackUsers().add(slackUserInDb));
+                slackTeamRepository.save(slackTeam);
+
+                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                member -> member = userInDb,
+                                () -> organization.getMembers().add(userInDb)
+                        );
+                repository.save(organization);
             }
         }
         return null;
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/slack/{slackTeamId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void slackDisconnect(@PathVariable long id, @PathVariable long slackTeamId) {
+        Organization org = repository.findById(id).orElse(null);
+        SlackTeam slackTeam = slackTeamRepository.findById(slackTeamId).orElse(null);
+        if(org == null || slackTeam == null) {
+            throw new NotFoundException();
+        } else {
+            if(slackTeam.getOrganization().getId() != id) {
+                throw new BadRequestException();
+            } else {
+                slackTeamRepository.deleteById(slackTeamId);
+            }
+        }
     }
 
     private static String basicAuth(String username, String password) {
