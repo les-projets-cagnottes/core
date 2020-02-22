@@ -240,8 +240,6 @@ public class OrganizationController {
                     slackTeam.setBotUserId(jsonBot.get("bot_user_id").getAsString());
                     slackTeam.setOrganization(organization);
                     slackTeamRepository.save(slackTeam);
-
-                    slackController.hello(slackTeam);
                 } else {
                     throw new NotFoundException();
                 }

@@ -41,8 +41,8 @@ public class SlackController {
         User orgAdminUser = userRepository.findByEmail(slackTeam.getUpdatedBy());
 
         StringBuilder helloMessage = new StringBuilder("Bonjour à tous :wave:\n")
-                .append("Merci de tester *Les Projets Cagnottes* dans votre organisation. Vous vous demandez de quoi il s'agit ?\n")
-                .append("Eh bien c'est très simple : avec ces projets, chacun est libre de :\n")
+                .append("Connaissez-vous *Les Projets Cagnottes* ?\n")
+                .append("Avec ces projets, chacun est libre de :\n")
                 .append(":rocket: Lancer un projet\n")
                 .append(":handshake: Rejoindre un projet\n")
                 .append(":moneybag: Financer un projet avec sa part du budget de l'organisation\n\n")
