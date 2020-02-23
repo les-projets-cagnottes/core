@@ -74,6 +74,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Collection<GrantedAuthority> authorities = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"members", "projects", "budgets", "slackUsers"})
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")
