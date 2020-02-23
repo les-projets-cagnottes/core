@@ -40,7 +40,7 @@ public class SlackController {
     public void hello(SlackTeam slackTeam) {
         User orgAdminUser = userRepository.findByEmail(slackTeam.getUpdatedBy());
 
-        StringBuilder helloMessage = new StringBuilder("Bonjour à tous :wave:\n")
+        StringBuilder helloMessage = new StringBuilder("Bonjour à tous :wave:\n\n")
                 .append("Connaissez-vous *Les Projets Cagnottes* ?\n")
                 .append("Avec ces projets, chacun est libre de :\n")
                 .append(":rocket: Lancer un projet\n")
