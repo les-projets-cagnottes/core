@@ -26,9 +26,9 @@ public class SlackClientService {
     @Autowired
     private HttpClientService httpClientService;
 
-    public void postMessage(SlackTeam slackTeam, String channel, String text) {
+    public void postMessage(SlackTeam slackTeam, String channelId, String text) {
         String url = "https://slack.com/api/chat.postMessage";
-        String body = "{\"channel\":\"" + channel + "\", \"text\":\"" + text + "\"}";
+        String body = "{\"channel\":\"" + channelId + "\", \"text\":\"" + text + "\"}";
         LOGGER.debug("POST " + url);
         LOGGER.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
@@ -50,7 +50,7 @@ public class SlackClientService {
 
     public String joinChannel(SlackTeam slackTeam) {
         String url = "https://slack.com/api/channels.join";
-        String body = "{\"name\":\"general\"}";
+        String body = "{\"name\":\"" + slackTeam.getPublicationChannel() + "\"}";
         String channelId = "";
         LOGGER.debug("POST " + url);
         LOGGER.debug("body : " + body);

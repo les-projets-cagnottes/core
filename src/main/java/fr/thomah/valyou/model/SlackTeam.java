@@ -40,4 +40,7 @@ public class SlackTeam extends AuditEntity<String> {
 
     @Column(name = "bot_access_token")
     private String botAccessToken;
+
+    @Column(name = "publication_channel")
+    private String publicationChannel;
 }
