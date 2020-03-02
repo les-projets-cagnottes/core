@@ -126,6 +126,7 @@ public class SlackClientService {
 
                     SlackUser slackUser = new SlackUser();
                     slackUser.setSlackUserId(memberJson.get("id").getAsString());
+                    slackUser.setDeleted(memberJson.get("deleted").getAsBoolean());
 
                     memberJson = memberJson.get("profile").getAsJsonObject();
                     if(memberJson.get("email") != null) {

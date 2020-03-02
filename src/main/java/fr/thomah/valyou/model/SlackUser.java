@@ -45,4 +45,7 @@ public class SlackUser extends AuditEntity<String> {
     @Column
     private String image_192;
 
+    @Column
+    private Boolean deleted;
+
 }

@@ -291,9 +291,14 @@ public class OrganizationController {
                     user.setPassword("");
                     user = userRepository.save(UserGenerator.newUser(user));
                 }
+                user.setEnabled(!slackUser.getDeleted());
                 final User userInDb = user;
 
-                slackUserEditted.setOrganization(organization);
+                if(user.getEnabled()) {
+                    slackUserEditted.setOrganization(organization);
+                } else {
+                    slackUserEditted.setOrganization(null);
+                }
                 slackUserEditted.setSlackTeam(slackTeam);
                 slackUserEditted.setUser(user);
                 final SlackUser slackUserInDb = slackUserRepository.save(slackUserEditted);
@@ -305,13 +310,19 @@ public class OrganizationController {
                                 () -> slackTeam.getSlackUsers().add(slackUserInDb));
                 slackTeamRepository.save(slackTeam);
 
-                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                        .findAny()
-                        .ifPresentOrElse(
-                                member -> member = userInDb,
-                                () -> organization.getMembers().add(userInDb)
-                        );
-                repository.save(organization);
+                if(user.getEnabled()) {
+                    organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                            .findAny()
+                            .ifPresentOrElse(
+                                    member -> member = userInDb,
+                                    () -> organization.getMembers().add(userInDb)
+                            );
+                    repository.save(organization);
+                } else {
+                    organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                            .findAny()
+                            .ifPresent(member -> organization.getMembers().remove(member));
+                }
             }
         }
         return null;
