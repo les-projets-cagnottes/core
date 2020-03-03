@@ -154,9 +154,9 @@ public class ProjectController {
 
                 StringBuilder stringBuilderUser = new StringBuilder(":rocket: ");
 
-                if (userLoggedIn.getSlackUser() != null && organization.getId() == userLoggedIn.getSlackUser().getOrganization().getId()) {
+                if (userLoggedIn.getSlackUser() != null && organization.getId() == userLoggedIn.getSlackUser().getSlackTeam().getOrganization().getId()) {
                     stringBuilderUser.append("<@")
-                            .append(userLoggedIn.getSlackUser().getSlackUserId())
+                            .append(userLoggedIn.getSlackUser().getSlackId())
                             .append(">");
                 } else {
                     stringBuilderUser.append(defaultUser);

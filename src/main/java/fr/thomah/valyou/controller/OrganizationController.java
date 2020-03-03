@@ -266,7 +266,7 @@ public class OrganizationController {
             long tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
             for(SlackUser slackUser : slackUsers) {
                 user = userRepository.findByEmail(slackUser.getEmail());
-                SlackUser slackUserEditted = slackUserRepository.findBySlackUserId(slackUser.getSlackUserId());
+                SlackUser slackUserEditted = slackUserRepository.findBySlackId(slackUser.getSlackId());
                 if(slackUserEditted != null) {
                     slackUserEditted.setName(slackUser.getName());
                     slackUserEditted.setImage_192(slackUser.getImage_192());
@@ -280,7 +280,7 @@ public class OrganizationController {
                     delay = 600;
                 }
                 Thread.sleep(600 - delay);
-                slackUserEditted.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUserEditted.getSlackUserId()));
+                slackUserEditted.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUserEditted.getSlackId()));
                 tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
 
                 if(user == null) {
@@ -294,11 +294,6 @@ public class OrganizationController {
                 user.setEnabled(!slackUser.getDeleted());
                 final User userInDb = user;
 
-                if(user.getEnabled()) {
-                    slackUserEditted.setOrganization(organization);
-                } else {
-                    slackUserEditted.setOrganization(null);
-                }
                 slackUserEditted.setSlackTeam(slackTeam);
                 slackUserEditted.setUser(user);
                 final SlackUser slackUserInDb = slackUserRepository.save(slackUserEditted);

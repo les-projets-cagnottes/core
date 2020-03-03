@@ -132,15 +132,14 @@ public class AuthenticationController {
                     user = repository.save(UserGenerator.newUser(user));
 
                     String slackuserId = json.get("user_id").getAsString();
-                    SlackUser slackUser = slackUserRepository.findBySlackUserId(slackuserId);
+                    SlackUser slackUser = slackUserRepository.findBySlackId(slackuserId);
                     if(slackUser == null) {
                         slackUser = new SlackUser();
-                        slackUser.setSlackUserId(slackuserId);
+                        slackUser.setSlackId(slackuserId);
                     }
 
                     if(user.getSlackUser() == null) {
                         slackTeam.getOrganization().getMembers().add(user);
-                        slackUser.setOrganization(organizationRepository.save(slackTeam.getOrganization()));
                         slackUser.setUser(user);
                         slackUserRepository.save(slackUser);
                     }
