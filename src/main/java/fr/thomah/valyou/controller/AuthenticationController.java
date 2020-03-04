@@ -118,7 +118,7 @@ public class AuthenticationController {
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
             if (json.get("user") != null && json.get("team") != null) {
-                SlackTeam slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
+                final SlackTeam slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
                 if(slackTeam != null) {
                     JsonObject jsonUser = json.get("user").getAsJsonObject();
                     User user = repository.findByEmail(jsonUser.get("email").getAsString());
@@ -129,7 +129,7 @@ public class AuthenticationController {
                         user.setEmail(jsonUser.get("email").getAsString());
                     }
                     user.setAvatarUrl(jsonUser.get("image_192").getAsString());
-                    user = repository.save(UserGenerator.newUser(user));
+                    final User userInDb = repository.save(UserGenerator.newUser(user));
 
                     String slackuserId = json.get("user_id").getAsString();
                     SlackUser slackUser = slackUserRepository.findBySlackId(slackuserId);
@@ -137,12 +137,27 @@ public class AuthenticationController {
                         slackUser = new SlackUser();
                         slackUser.setSlackId(slackuserId);
                     }
+                    slackUser.setSlackTeam(slackTeam);
+                    slackUser.setUser(user);
+                    final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
 
-                    if(user.getSlackUser() == null) {
-                        slackTeam.getOrganization().getMembers().add(user);
-                        slackUser.setUser(user);
-                        slackUserRepository.save(slackUser);
-                    }
+                    // If the User doesnt have the SlackUser -> Add it
+                    // Else -> replace by the new one
+                    userInDb.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDb.getId()))
+                            .findAny()
+                            .ifPresentOrElse(
+                                    userSlackUser -> userSlackUser = slackUserInDb,
+                                    () -> userInDb.getSlackUsers().add(slackUserInDb));
+                    repository.save(userInDb);
+
+                    // If the SlackTeam doesnt have the SlackUser -> Add it
+                    // Else -> replace by the new one
+                    slackTeam.getSlackUsers().stream().filter(slackTeamSlackUser -> slackTeamSlackUser.getUser().getId().equals(userInDb.getId()))
+                            .findAny()
+                            .ifPresentOrElse(
+                                    slackTeamSlackUser -> slackTeamSlackUser = slackUserInDb,
+                                    () -> slackTeam.getSlackUsers().add(slackUserInDb));
+                    slackTeamRepository.save(slackTeam);
 
                     return new AuthenticationResponse(jwtTokenUtil.generateToken(user));
                 } else {

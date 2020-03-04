@@ -51,19 +51,20 @@ public class SlackController {
                 .append("\n\n")
                 .append("Pour toute question, vous pouvez contacter : ");
 
-        if(orgAdminUser.getSlackUser() != null) {
-            helloMessage.append("<@")
-                    .append(orgAdminUser.getSlackUser().getSlackId())
-                    .append(">");
-        } else {
-            String orgAdminFullname = new StringBuilder("*")
-                    .append(orgAdminUser.getFirstname())
-                    .append(" ")
-                    .append(orgAdminUser.getLastname())
-                    .append("*")
-                    .toString();
-            helloMessage.append(orgAdminFullname);
-        }
+        slackTeam.getSlackUsers().stream()
+                .filter(slackUser -> slackUser.getId() == orgAdminUser.getId())
+                .findAny()
+                .ifPresentOrElse(slackUser -> {
+                    helloMessage.append("<@")
+                            .append(slackUser.getSlackId())
+                            .append(">");
+                },() -> {
+                    helloMessage.append("*")
+                            .append(orgAdminUser.getFirstname())
+                            .append(" ")
+                            .append(orgAdminUser.getLastname())
+                            .append("*");
+                });
 
         String channelId = slackClientService.joinChannel(slackTeam);
         slackClientService.inviteInChannel(slackTeam, channelId);
@@ -97,56 +98,70 @@ public class SlackController {
             if (organization == null) {
                 throw new NotFoundException();
             } else {
-                SlackUser slackUser = slackUserRepository.findBySlackId(user.getSlackUser().getSlackId());
-                if (slackUser == null) {
-                    slackUser = user.getSlackUser();
-                    slackUser.setSlackTeam(slackTeam);
-                    slackUser = slackUserRepository.save(slackUser);
-                }
+                user.getSlackUsers().stream()
+                        .findFirst()
+                        .ifPresent(slackUser -> {
+                            SlackUser slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
+                            slackUserInDb.setEmail(slackUser.getEmail());
+                            slackUserInDb.setSlackTeam(slackTeam);
+                            slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
+                            final SlackUser slackUserFinal = slackUserRepository.save(slackUserInDb);
 
-                User userInDb = userRepository.findBySlackUser_Id(slackUser.getId());
-                if (userInDb == null) {
-                    userInDb = UserGenerator.newUser(user);
-                }
-                userInDb.setEmail(user.getEmail());
-                userInDb.setFirstname(user.getFirstname());
-                userInDb.setLastname(user.getLastname());
-                userInDb.setAvatarUrl(user.getAvatarUrl());
-                userInDb.setSlackUser(slackUser);
-                userInDb.setPassword("");
-                userInDb = userRepository.save(userInDb);
+                            // Create User if not exists in DB
+                            User userInDb = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
+                            if (userInDb == null) {
+                                userInDb = UserGenerator.newUser(user);
+                            }
+                            userInDb.setEmail(user.getEmail());
+                            userInDb.setFirstname(user.getFirstname());
+                            userInDb.setLastname(user.getLastname());
+                            userInDb.setAvatarUrl(user.getAvatarUrl());
+                            userInDb.setPassword("");
+                            final User userInDbFinal = userInDb;
 
-                slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
-                slackUser.setUser(userInDb);
-                final SlackUser slackUserInDb = slackUser = slackUserRepository.save(slackUser);
+                            // If the User doesnt have the SlackUser -> Add it
+                            // Else -> replace by the new one
+                            userInDbFinal.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDbFinal.getId()))
+                                    .findAny()
+                                    .ifPresentOrElse(
+                                            userSlackUser -> userSlackUser = slackUserFinal,
+                                            () -> userInDbFinal.getSlackUsers().add(slackUserFinal));
 
-                slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserInDb.getId()))
-                        .findAny()
-                        .ifPresentOrElse(
-                                slackTeamUser -> slackTeamUser = slackUserInDb,
-                                () -> slackTeam.getSlackUsers().add(slackUserInDb));
-                slackTeamRepository.save(slackTeam);
+                            userInDb = userRepository.save(userInDbFinal);
 
+                            // Complete SlackUser with user saved
+                            slackUserInDb.setUser(userInDb);
+                            final SlackUser slackUserFinal2 = slackUserRepository.save(slackUserInDb);
 
-                String welcomeMessage = new StringBuilder("Bienvenue sur le Slack ")
-                        .append(slackTeam.getOrganization().getName())
-                        .append(" ! :tada:\n\nVotre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?\n")
-                        .append("Eh bien c'est très simple : avec les projets cagnottes, chacun est libre de :\n")
-                        .append("- Lancer un projet\n")
-                        .append("- Rejoindre un projet\n")
-                        .append("- Financer un projet avec sa part du budget de l'organisation\n\n")
-                        .append("Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :\n")
-                        .append(WEB_URL)
-                        .toString();
+                            // If the SlackTeam doesnt have the SlackUser -> Add it
+                            // Else - replace by the new one
+                            slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
+                                    .findAny()
+                                    .ifPresentOrElse(
+                                            slackTeamUser -> slackTeamUser = slackUserFinal2,
+                                            () -> slackTeam.getSlackUsers().add(slackUserFinal2));
+                            slackTeamRepository.save(slackTeam);
 
-                slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
+                            String welcomeMessage = new StringBuilder("Bienvenue sur le Slack ")
+                                    .append(slackTeam.getOrganization().getName())
+                                    .append(" ! :tada:\n\nVotre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?\n")
+                                    .append("Eh bien c'est très simple : avec les projets cagnottes, chacun est libre de :\n")
+                                    .append("- Lancer un projet\n")
+                                    .append("- Rejoindre un projet\n")
+                                    .append("- Financer un projet avec sa part du budget de l'organisation\n\n")
+                                    .append("Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :\n")
+                                    .append(WEB_URL)
+                                    .toString();
 
-                OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER);
-                userInDb.addOrganizationAuthority(memberOrganizationAuthority);
-                organization.getMembers().add(userInDb);
+                            slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
 
-                organizationRepository.save(organization);
-                userRepository.save(userInDb);
+                            OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER);
+                            userInDb.addOrganizationAuthority(memberOrganizationAuthority);
+                            organization.getMembers().add(userInDb);
+
+                            organizationRepository.save(organization);
+                            userRepository.save(userInDb);
+                        });
             }
         }
         return null;
@@ -160,40 +175,40 @@ public class SlackController {
             if (organization == null) {
                 throw new NotFoundException();
             } else {
-                SlackUser slackUser = slackUserRepository.findBySlackId(user.getSlackUser().getSlackId());
-                if(slackUser != null) {
-                    User userEditted = userRepository.findBySlackUser_Id(slackUser.getId());
-                    userEditted.setEnabled(user.getEnabled());
-                    final User userInDb = userRepository.save(userEditted);
+                user.getSlackUsers().stream()
+                        .findFirst()
+                        .ifPresent(slackUser -> {
+                            SlackUser slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
 
-                    slackUser.setSlackTeam(slackTeam);
-                    slackUser = slackUserRepository.save(slackUser);
-                    slackUser.setUser(user);
+                            User userEditted = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
+                            userEditted.setEnabled(user.getEnabled());
+                            final User userInDb = userRepository.save(userEditted);
 
-                    final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
+                            slackUserInDb.setSlackTeam(slackTeam);
+                            slackUserInDb.setUser(user);
+                            final SlackUser slackUserFinal = slackUserRepository.save(slackUserInDb);
 
-                    if(user.getEnabled()) {
-                        slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserInDb.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                        slackTeamUser -> slackTeamUser = slackUserInDb,
-                                        () -> slackTeam.getSlackUsers().add(slackUserInDb));
-                        slackTeamRepository.save(slackTeam);
+                            if(user.getEnabled()) {
+                                slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal.getId()))
+                                        .findAny()
+                                        .ifPresentOrElse(
+                                                slackTeamUser -> slackTeamUser = slackUserFinal,
+                                                () -> slackTeam.getSlackUsers().add(slackUserFinal));
+                                slackTeamRepository.save(slackTeam);
 
-                        organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                        member -> member = userInDb,
-                                        () -> organization.getMembers().add(userInDb)
-                                );
-                    } else {
-                        organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                                .findAny()
-                                .ifPresent(member -> organization.getMembers().remove(member));
-                    }
-
-                    organizationRepository.save(organization);
-                }
+                                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                                        .findAny()
+                                        .ifPresentOrElse(
+                                                member -> member = userInDb,
+                                                () -> organization.getMembers().add(userInDb)
+                                        );
+                            } else {
+                                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                                        .findAny()
+                                        .ifPresent(member -> organization.getMembers().remove(member));
+                            }
+                            organizationRepository.save(organization);
+                        });
             }
         }
         return null;

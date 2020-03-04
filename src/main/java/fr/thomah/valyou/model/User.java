@@ -91,9 +91,9 @@ public class User extends AuditEntity<String> implements UserDetails {
 
     private Float totalBudgetDonations;
 
-    @OneToOne(mappedBy = "user")
+    @OneToMany(mappedBy = "user")
     @JsonIgnoreProperties(value = {"user"})
-    private SlackUser slackUser;
+    private Set<SlackUser> slackUsers = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "user",

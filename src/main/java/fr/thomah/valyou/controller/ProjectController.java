@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @Transactional
@@ -131,6 +132,7 @@ public class ProjectController {
         project.setBudgets(budgets);
 
         Project p = repository.save(project);
+        User leader = p.getLeader();
 
         String defaultUser = new StringBuilder("*")
                 .append(userLoggedIn.getFirstname())
@@ -149,28 +151,37 @@ public class ProjectController {
                 .toString();
 
         newOrganizations.forEach(organization -> {
-
             if(organization.getSlackTeam() != null) {
-
                 StringBuilder stringBuilderUser = new StringBuilder(":rocket: ");
+                organization.getMembers().stream()
+                        .filter(member -> member.getId() == leader.getId())
+                        .findAny()
+                        .ifPresentOrElse(member -> {
+                            organization.getSlackTeam().getSlackUsers().stream()
+                                    .filter(slackUser -> slackUser.getUser().getId() == leader.getId())
+                                    .findAny()
+                                    .ifPresentOrElse(slackUser -> {
+                                        stringBuilderUser.append("<@")
+                                                .append(slackUser.getSlackId())
+                                                .append(">");
+                                    }, () -> {
+                                        stringBuilderUser.append(defaultUser);
+                                    });
 
-                if (userLoggedIn.getSlackUser() != null && organization.getId() == userLoggedIn.getSlackUser().getSlackTeam().getOrganization().getId()) {
-                    stringBuilderUser.append("<@")
-                            .append(userLoggedIn.getSlackUser().getSlackId())
-                            .append(">");
-                } else {
-                    stringBuilderUser.append(defaultUser);
-                }
-                stringBuilderUser.append(endMessage);
-
+                            stringBuilderUser.append(endMessage);
+                        },() -> {
+                            stringBuilderUser.append(defaultUser)
+                                    .append(endMessage);
+                        });
+                LOGGER.info("[ProjectController][create][" + project.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
                 String channelId = slackClientService.joinChannel(organization.getSlackTeam());
                 slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
                 slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
+                LOGGER.info("[ProjectController][create][" + project.getId() + "] Slack Message Sent");
             }
         });
 
-
-        return repository.save(project);
+        return p;
     }
 
     @RequestMapping(value = "/api/project", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -272,30 +283,134 @@ public class ProjectController {
 
     @Scheduled(cron = "0 0 3 * * *")
     public void processProjectFundingDeadlines() {
-        LOGGER.info("[PFD] Start Project Funding Deadlines Processing");
+        LOGGER.info("[processProjectFundingDeadlines] Start Project Funding Deadlines Processing");
         Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.A_IN_PROGRESS, new Date());
-        LOGGER.info("[PFD] " + projects.size() + " project(s) found");
+        LOGGER.info("[processProjectFundingDeadlines] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
             float totalDonations = 0f;
             for (Donation donation : donations) {
                 totalDonations += donation.getAmount();
             }
-            LOGGER.info("[PFD][" + project.getId() + "] Project : " + project.getTitle());
-            LOGGER.info("[PFD][" + project.getId() + "] Teammates : " + project.getPeopleGivingTime().size() + " / " + project.getPeopleRequired());
-            LOGGER.info("[PFD][" + project.getId() + "] Donations : " + totalDonations + " € / " + project.getDonationsRequired() + " €");
+            LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Project : " + project.getTitle());
+            LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Teammates : " + project.getPeopleGivingTime().size() + " / " + project.getPeopleRequired());
+            LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Donations : " + totalDonations + " € / " + project.getDonationsRequired() + " €");
             if (totalDonations >= project.getDonationsRequired()
                     && project.getPeopleGivingTime().size() >= project.getPeopleRequired()) {
                 project.setStatus(ProjectStatus.B_READY);
-                LOGGER.info("[PFD][" + project.getId() + "] Status => B_READY");
+                LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Status => B_READY");
             } else {
                 project.setStatus(ProjectStatus.C_AVORTED);
-                LOGGER.info("[PFD][" + project.getId() + "] Status => C_AVORTED");
+                LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Status => C_AVORTED");
                 donationRepository.deleteByProjectId(project.getId());
-                LOGGER.info("[PFD][" + project.getId() + "] Donations deleted");
+                LOGGER.info("[processProjectFundingDeadlines][" + project.getId() + "] Donations deleted");
             }
         });
-        LOGGER.info("End Project Funding Deadlines Processing");
+        LOGGER.info("[processProjectFundingDeadlines] End Project Funding Deadlines Processing");
     }
 
+    @RequestMapping(value = "/api/project/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    @Scheduled(cron = "0 0 8 * * *")
+    public void notifyProjectsAlmostFinished() {
+        LOGGER.info("[notifyProjectsAlmostFinished] Start Notify Project Almost Finished");
+        Set<Project> projects = repository.findAllByStatus(ProjectStatus.A_IN_PROGRESS);
+        LOGGER.info("[notifyProjectsAlmostFinished] " + projects.size() + " project(s) found");
+        projects.forEach(project -> {
+            long diffInMillies = Math.abs(project.getFundingDeadline().getTime() - new Date().getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+
+            LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Project : " + project.getTitle());
+            LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Days until deadline : " + diff);
+
+            if(diff == 7 || diff == 1) {
+                notifyCountdownProject(project, diff);
+            }
+        });
+        LOGGER.info("[notifyProjectsAlmostFinished] End Notify Project Almost Finished");
+    }
+
+    public void notifyCountdownProject(Project project, long daysUntilDeadline) {
+
+        int teamMatesMissing = project.getPeopleRequired() - project.getPeopleGivingTime().size();
+        LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Teammates missing : " + teamMatesMissing);
+
+        Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
+        float totalDonations = 0f;
+        for (Donation donation : donations) {
+            totalDonations += donation.getAmount();
+        }
+        float donationsMissing = project.getDonationsRequired() - totalDonations;
+        LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Donations : " + donationsMissing + " €");
+
+        if(teamMatesMissing > 0 || donationsMissing > 0) {
+
+            User leader = project.getLeader();
+
+            String defaultUser = new StringBuilder("*")
+                    .append(leader.getFirstname())
+                    .append(" ")
+                    .append(leader.getLastname())
+                    .append("*")
+                    .toString();
+
+            StringBuilder endMessage = new StringBuilder(" a besoin de vous !\n")
+                    .append("Il reste *")
+                    .append(daysUntilDeadline)
+                    .append(" jour(s)* pour compléter la campagne du projet *")
+                    .append(project.getTitle())
+                    .append("* !\n\nA ce jour, il manque :\n");
+
+            if(teamMatesMissing > 0) {
+                endMessage.append(" - ")
+                        .append(teamMatesMissing)
+                        .append(" personne(s) dans l'équipe\n");
+            }
+            if(donationsMissing > 0) {
+                endMessage.append(" - ")
+                        .append(String.format("%.2f", donationsMissing))
+                        .append(" € de budget\n");
+            }
+
+            project.getOrganizations().forEach(organization -> {
+                if(organization.getSlackTeam() != null) {
+                    StringBuilder stringBuilderUser = new StringBuilder(":timer_clock: ");
+                    organization.getMembers().stream()
+                            .filter(member -> member.getId() == leader.getId())
+                            .findAny()
+                            .ifPresentOrElse(member -> {
+                                organization.getSlackTeam().getSlackUsers().stream()
+                                        .filter(slackUser -> slackUser.getUser().getId() == leader.getId())
+                                        .findAny()
+                                        .ifPresentOrElse(slackUser -> {
+                                            stringBuilderUser.append("<@")
+                                                    .append(slackUser.getSlackId())
+                                                    .append(">");
+                                        }, () -> {
+                                            stringBuilderUser.append(defaultUser);
+                                        });
+
+                                stringBuilderUser.append(endMessage.toString())
+                                        .append("\nRendez-vous à l'adresse suivante pour participer : \n")
+                                        .append(WEB_URL)
+                                        .append("/projects/")
+                                        .append(project.getId());
+                            },() -> {
+                                stringBuilderUser.append(defaultUser)
+                                        .append(endMessage.toString())
+                                        .append("\nRendez-vous à l'adresse suivante pour participer : \n")
+                                        .append(WEB_URL)
+                                        .append("/projects/")
+                                        .append(project.getId());
+                            });
+                    LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
+                    String channelId = slackClientService.joinChannel(organization.getSlackTeam());
+                    slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
+                    slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
+                    LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Slack Message Sent");
+                }
+            });
+
+        }
+    }
 }

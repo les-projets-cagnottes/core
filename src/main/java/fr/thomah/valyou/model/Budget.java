@@ -55,7 +55,7 @@ public class Budget extends AuditEntity<String>{
     private Organization organization = new Organization();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers"})
     private User sponsor = new User();
 
     @OneToMany(mappedBy = "budget")
