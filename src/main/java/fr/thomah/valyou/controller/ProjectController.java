@@ -311,7 +311,7 @@ public class ProjectController {
 
     @RequestMapping(value = "/api/project/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void notifyProjectsAlmostFinished() {
         LOGGER.info("[notifyProjectsAlmostFinished] Start Notify Project Almost Finished");
         Set<Project> projects = repository.findAllByStatus(ProjectStatus.A_IN_PROGRESS);
