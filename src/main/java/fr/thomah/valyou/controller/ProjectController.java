@@ -315,14 +315,14 @@ public class ProjectController {
         notifyProjectsAlmostFinished();
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 8 * * *")
     public void notifyProjectsAlmostFinished() {
         LOGGER.info("[notifyProjectsAlmostFinished] Start Notify Project Almost Finished");
         Set<Project> projects = repository.findAllByStatus(ProjectStatus.A_IN_PROGRESS);
         LOGGER.info("[notifyProjectsAlmostFinished] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             long diffInMillies = Math.abs(project.getFundingDeadline().getTime() - new Date().getTime());
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
 
             LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Project : " + project.getTitle());
             LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Days until deadline : " + diff);
