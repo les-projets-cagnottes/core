@@ -309,7 +309,7 @@ public class ProjectController {
         LOGGER.info("[processProjectFundingDeadlines] End Project Funding Deadlines Processing");
     }
 
-    @RequestMapping(value = "/api/project/validate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/project/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public void notifyProjectsAlmostFinished(Principal principal) {
         notifyProjectsAlmostFinished();
