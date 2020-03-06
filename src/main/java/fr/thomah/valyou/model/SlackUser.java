@@ -19,7 +19,7 @@ public class SlackUser extends AuditEntity<String> {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers"})
-    private User user;
+    private User user = new User();
 
     @ManyToOne
     @JsonIgnoreProperties({"organization", "slackUsers"})

@@ -92,7 +92,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Float totalBudgetDonations;
 
     @OneToMany(mappedBy = "user")
-    @JsonIgnoreProperties(value = {"user"})
+    @JsonIgnoreProperties(value = {"organization", "slackTeam", "user"})
     private Set<SlackUser> slackUsers = new LinkedHashSet<>();
 
     @OneToMany(
