@@ -328,16 +328,29 @@ public class ProjectController {
             LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Days until deadline : " + diff);
 
             if(diff == 7 || diff == 1) {
-                notifyCountdownProject(project, diff);
+                notifyProjectStatus(project, diff);
             }
         });
         LOGGER.info("[notifyProjectsAlmostFinished] End Notify Project Almost Finished");
     }
 
-    public void notifyCountdownProject(Project project, long daysUntilDeadline) {
+    @RequestMapping(value = "/api/project/{id}/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public void notifyProjectStatus(@PathVariable("id") long id) {
+        Project project = repository.findById(id).orElse(null);
+        if(project == null) {
+            throw new NotFoundException();
+        } else {
+            long diffInMillies = Math.abs(project.getFundingDeadline().getTime() - new Date().getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
+            notifyProjectStatus(project, diff);
+        }
+    }
+
+    public void notifyProjectStatus(Project project, long daysUntilDeadline) {
 
         int teamMatesMissing = project.getPeopleRequired() - project.getPeopleGivingTime().size();
-        LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Teammates missing : " + teamMatesMissing);
+        LOGGER.info("[notifyProjectStatus][" + project.getId() + "] Teammates missing : " + teamMatesMissing);
 
         Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
         float totalDonations = 0f;
@@ -407,11 +420,11 @@ public class ProjectController {
                                         .append("/projects/")
                                         .append(project.getId());
                             });
-                    LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
+                    LOGGER.info("[notifyProjectStatus][" + project.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
                     String channelId = slackClientService.joinChannel(organization.getSlackTeam());
                     slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
                     slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
-                    LOGGER.info("[notifyProjectsAlmostFinished][" + project.getId() + "] Slack Message Sent");
+                    LOGGER.info("[notifyProjectStatus][" + project.getId() + "] Slack Message Sent");
                 }
             });
 
