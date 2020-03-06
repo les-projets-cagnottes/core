@@ -22,8 +22,8 @@ public class SlackTeam extends AuditEntity<String> {
 
     @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
-    @JsonIgnoreProperties(value = {"slackTeam"})
-    private Organization organization;
+    @JsonIgnoreProperties({"members", "projects", "budgets", "slackTeam"})
+    private Organization organization = new Organization();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = {"organization", "slackTeam", "user"})
