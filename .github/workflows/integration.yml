@@ -49,6 +49,16 @@ jobs:
     
     - uses: actions/checkout@v2
 
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
+
     - uses: sjdonado/heroku@master
 
     - name: Tag the image
@@ -69,8 +79,11 @@ jobs:
 
     - uses: sjdonado/heroku@master
 
+    - name: Tag the image
+      run: docker pull docker.pkg.github.com/les-projets-cagnottes/core:latest
+    
     - name: Build the Docker image
-      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core/core:latest registry.heroku.com/valyou-api/web
+      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core:latest registry.heroku.com/valyou-api/web
     
     - name: Get Heroku Tools
       run: wget -qO- https://toolbelt.heroku.com/install.sh | sh
