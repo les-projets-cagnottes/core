@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
+  
+  publish-package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 13
+          server-id: github
+          settings-path: ${{ github.workspace }}
+
+      - name: Publish to GitHub Packages Apache Maven
+        run: ./mvnw deploy -s $GITHUB_WORKSPACE/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  publish-docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
+
+    - uses: sjdonado/heroku@master
+
+    - name: Tag the image
+      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
+    
+    - name: Login to Registry
+      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
+
+    - name: Publish to Registry
+      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v1
+
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Create temp directory to copy files
+      uses: appleboy/ssh-action@v0.0.6
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key : ${{ secrets.PRODUCTION_KEY }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: mkdir -p /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
+
+    - name: Copy content recursively to production
+      uses: garygrossgarten/github-action-scp@v0.5.3
+      with:
+        local: .
+        remote: /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        privateKey : ${{ secrets.PRODUCTION_KEY }}
+        
+    - name: Execute deployment remotely
+      uses: appleboy/ssh-action@v0.0.6
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key : ${{ secrets.PRODUCTION_KEY }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: (nohup /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}/bin/deploy.sh ${{ }} > console.log 2> console.err < /dev/null &) && exit 0
