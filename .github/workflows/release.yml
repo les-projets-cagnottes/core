@@ -22,24 +22,26 @@ jobs:
     - name: Build with Maven
       run: ./mvnw -B clean install --file pom.xml -P docker
   
-  publish-package:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-
-      - uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 13
-          server-id: github
-          settings-path: ${{ github.workspace }}
-
-      - name: Publish to GitHub Packages Apache Maven
-        run: ./mvnw deploy -s $GITHUB_WORKSPACE/settings.xml
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+# Do not publish package in SNAPSHOT
+# Or delete the previous one before
+#   publish-package:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     steps:
+#
+#     - uses: actions/checkout@v2
+# 
+#     - name: Set up JDK
+#       uses: actions/setup-java@v1
+#         with:
+#           java-version: 13
+#           server-id: github
+#           settings-path: ${{ github.workspace }}
+# 
+#       - name: Publish to GitHub Packages Apache Maven
+#         run: ./mvnw deploy -s $GITHUB_WORKSPACE/settings.xml
+#         env:
+#           GITHUB_TOKEN: ${{ github.token }}
 
   publish-docker:
     needs: build
