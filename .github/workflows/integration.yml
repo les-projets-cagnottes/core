@@ -62,13 +62,13 @@ jobs:
     - uses: sjdonado/heroku@master
 
     - name: Tag the image
-      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core:latest
+      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
     
     - name: Login to Registry
       run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
 
     - name: Publish to Registry
-      run: docker push docker.pkg.github.com/les-projets-cagnottes/core:latest
+      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
   
   deploy-heroku:
     needs: publish-docker
@@ -80,10 +80,10 @@ jobs:
     - uses: sjdonado/heroku@master
 
     - name: Tag the image
-      run: docker pull docker.pkg.github.com/les-projets-cagnottes/core:latest
+      run: docker pull docker.pkg.github.com/les-projets-cagnottes/core/core:latest
     
     - name: Build the Docker image
-      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core:latest registry.heroku.com/valyou-api/web
+      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core/core:latest registry.heroku.com/valyou-api/web
     
     - name: Get Heroku Tools
       run: wget -qO- https://toolbelt.heroku.com/install.sh | sh
