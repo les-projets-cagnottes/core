@@ -89,7 +89,7 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
-        script: mkdir -p /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
+        script: mkdir -p /opt/les-projets-cagnottes/core/deployment
 
     - name: Copy content recursively to production
       uses: appleboy/scp-action@v0.0.7
@@ -99,7 +99,8 @@ jobs:
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
         source: "bin/deploy.sh,bin/les-projets-cagnottes-core.service,bin/setenv.sh.template,bin/les-projets-cagnottes-core.sh,target/core-${{ steps.get_version.outputs.VERSION }}.jar"
-        target: /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
+        target: /opt/les-projets-cagnottes/core/deployment
+        rm: true
         
     - name: Execute deployment remotely
       uses: appleboy/ssh-action@v0.0.7
@@ -108,4 +109,4 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
-        script: (nohup /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}/bin/deploy.sh ${{ steps.get_version.outputs.VERSION }} > console.log 2> console.err < /dev/null &) && exit 0
+        script: (sudo chmod 755 /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh) && (nohup /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh ${{ steps.get_version.outputs.VERSION }} &>  /opt/les-projets-cagnottes/core/deployment/bin/console.log < /dev/null &) && exit 0
