@@ -121,6 +121,7 @@
                                                 <args>java</args>
                                                 <args>-jar</args>
                                                 <args>/maven/${project.artifactId}-${project.version}.jar</args>
+                                                <args>-XshowSettings:vm</args>
                                             </exec>
                                         </entryPoint>
                                         <assembly>
