@@ -81,7 +81,7 @@ jobs:
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
     - name: Create temp directory to copy files
-      uses: appleboy/ssh-action@v0.0.6
+      uses: appleboy/ssh-action@v0.0.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -90,16 +90,17 @@ jobs:
         script: mkdir -p /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
 
     - name: Copy content recursively to production
-      uses: garygrossgarten/github-action-scp@v0.5.3
+      uses: appleboy/scp-action@v0.0.7
       with:
-        local: .
-        remote: /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
-        privateKey : ${{ secrets.PRODUCTION_KEY }}
+        key : ${{ secrets.PRODUCTION_KEY }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        source: "bin/les-projets-cagnottes-core.service,bin/setenv.sh.template,bin/les-projets-cagnottes-core.sh,target/core-${{ steps.get_version.outputs.VERSION }}.jar"
+        target: /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
         
     - name: Execute deployment remotely
-      uses: appleboy/ssh-action@v0.0.6
+      uses: appleboy/ssh-action@v0.0.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
