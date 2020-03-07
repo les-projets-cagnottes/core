@@ -67,6 +67,11 @@
             <scope>test</scope>
             <version>1.4.199</version>
         </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>0.33.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,5 +90,51 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.33.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <images>
+                                <image>
+                                    <name>${project.artifactId}</name>
+                                    <build>
+                                        <from>openjdk:13-jdk-alpine</from>
+                                        <entryPoint>
+                                            <exec>
+                                                <args>java</args>
+                                                <args>-jar</args>
+                                                <args>/maven/${project.artifactId}-${project.version}.jar</args>
+                                            </exec>
+                                        </entryPoint>
+                                        <assembly>
+                                            <descriptorRef>artifact</descriptorRef>
+                                        </assembly>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

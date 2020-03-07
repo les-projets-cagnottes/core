@@ -3,22 +3,20 @@
 
 name: Build
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
+
     - uses: actions/checkout@v2
-    - name: Set up JDK 13
+
+    - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 13
+
     - name: Build with Maven
-      run: ./mvn -B package --file pom.xml
+      run: ./mvnw -B clean install --file pom.xml -P docker
