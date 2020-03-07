@@ -98,7 +98,7 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
-        source: "bin/les-projets-cagnottes-core.service,bin/setenv.sh.template,bin/les-projets-cagnottes-core.sh,target/core-${{ steps.get_version.outputs.VERSION }}.jar"
+        source: "bin/deploy.sh,bin/les-projets-cagnottes-core.service,bin/setenv.sh.template,bin/les-projets-cagnottes-core.sh,target/core-${{ steps.get_version.outputs.VERSION }}.jar"
         target: /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}
         
     - name: Execute deployment remotely
