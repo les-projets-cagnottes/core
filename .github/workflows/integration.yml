@@ -6,6 +6,7 @@ on:
       - master
 
 jobs:
+  
   build:
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +27,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 13
+          server-id: github
+          settings-path: ${{ github.workspace }}
+
       - name: Publish to GitHub Packages Apache Maven
         run: ./mvnw deploy -s $GITHUB_WORKSPACE/settings.xml
         env:
