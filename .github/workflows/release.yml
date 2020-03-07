@@ -104,4 +104,4 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
-        script: (nohup /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}/bin/deploy.sh ${{ }} > console.log 2> console.err < /dev/null &) && exit 0
+        script: (nohup /tmp/les-projets-cagnottes-core/${{ steps.get_version.outputs.VERSION }}/bin/deploy.sh ${{ steps.get_version.outputs.VERSION }} > console.log 2> console.err < /dev/null &) && exit 0
