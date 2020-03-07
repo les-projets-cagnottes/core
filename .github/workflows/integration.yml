@@ -79,6 +79,9 @@ jobs:
 
     - uses: sjdonado/heroku@master
 
+    - name: Login to Registry
+      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
+
     - name: Tag the image
       run: docker pull docker.pkg.github.com/les-projets-cagnottes/core/core:latest
     
