@@ -3,9 +3,9 @@ Description=Les Projets Cagnotte - Core Daemon
 
 [Service]
 Type=forking
-ExecStart=/opt/les-projets-cagnottes/core/les-projets-cagnottes-core.sh start
-ExecStop=/opt/les-projets-cagnottes/core/les-projets-cagnottes-core.sh stop
-ExecReload=/opt/les-projets-cagnottes/core/les-projets-cagnottes-core.sh reload
+ExecStart=/opt/les-projets-cagnottes/core/current/les-projets-cagnottes-core.sh start
+ExecStop=/opt/les-projets-cagnottes/core/current/les-projets-cagnottes-core.sh stop
+ExecReload=/opt/les-projets-cagnottes/core/current/les-projets-cagnottes-core.sh reload
 
 [Install]
 WantedBy=multi-user.target
