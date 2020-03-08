@@ -1,5 +1,5 @@
 [Unit]
-Description=Valyou daemon
+Description=Les Projets Cagnotte - Core Daemon
 
 [Service]
 Type=forking

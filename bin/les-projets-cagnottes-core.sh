@@ -6,7 +6,7 @@ function d_start ()
 	BASEDIR=$(dirname "$0")
 	cd "$BASEDIR" &&
 	. setenv.sh &&
-	nohup java -Dconfig.location=application.properties -jar les-projets-cagnottes-core.jar > logs/les-projets-cagnottes-core.log 2>&1 & echo $! > /var/run/les-projets-cagnottes-core.pid & sleep 5
+	nohup java -Dconfig.location=application.properties -jar les-projets-cagnottes-core.jar > console.log 2>&1 & echo $! > /var/run/les-projets-cagnottes-core.pid & sleep 5
 }
 
 function d_stop ()
