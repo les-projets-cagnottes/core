@@ -61,7 +61,7 @@ jobs:
     - name: Build with Maven
       run: ./mvnw -B clean install --file pom.xml -P docker
 
-    - uses: sjdonado/heroku@master
+    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
 
     - name: Tag the image
       run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
@@ -79,7 +79,7 @@ jobs:
     
     - uses: actions/checkout@v2
 
-    - uses: sjdonado/heroku@master
+    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
 
     - name: Login to Registry
       run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
