@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  build:
+  cucumber:
     runs-on: ubuntu-latest
     steps:
 
@@ -42,6 +42,9 @@ jobs:
 
     - name: Move inside publishing repository
       run: cd les-projets-cagnottes.github.io
+
+    - name: Config Git
+      run: git config user.email "${{ GIT_CONFIG_EMAIL }}" && git config user.name "${{ GIT_CONFIG_NAME }}"
 
     - name: Commit changes
       run: git commit --allow-empty -am "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
