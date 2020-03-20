@@ -54,12 +54,11 @@ public class Project extends AuditEntity<String> {
 
     private Float totalDonations;
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties(value = {"contributor", "budget", "project"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToMany
-    @LazyCollection(LazyCollectionOption.FALSE)
     @JoinTable(
             name = "project_users_time",
             joinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")},
@@ -89,16 +88,33 @@ public class Project extends AuditEntity<String> {
                 '}';
     }
 
-    public Float getTotalDonations() {
-        totalDonations = 0f;
-        for (Donation donation : donations) {
-            totalDonations += donation.getAmount();
-        }
-        return totalDonations;
-    }
-
     public void addPeopleGivingTime(User user) {
         this.peopleGivingTime.add(user);
+        user.getProjects().add(this);
     }
 
+    public void removePeopleGivingTime(User user) {
+        this.peopleGivingTime.remove(user);
+        user.getProjects().remove(this);
+    }
+
+    public void addBudget(Budget budget) {
+        this.budgets.add(budget);
+        budget.getProjects().add(this);
+    }
+
+    public void removeBudget(Budget budget) {
+        this.budgets.remove(budget);
+        budget.getProjects().remove(this);
+    }
+
+    public void addOrganization(Organization organization) {
+        this.organizations.add(organization);
+        organization.getProjects().add(this);
+    }
+
+    public void removeOrganization(Organization organization) {
+        this.organizations.remove(organization);
+        organization.getProjects().remove(this);
+    }
 }

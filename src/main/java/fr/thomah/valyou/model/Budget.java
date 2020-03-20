@@ -39,7 +39,7 @@ public class Budget extends AuditEntity<String> {
     @NotNull
     private Date endDate = new Date();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "project_budgets",
             joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},
@@ -65,5 +65,15 @@ public class Budget extends AuditEntity<String> {
 
     @Transient
     private float totalDonations = 0f;
+
+    public void addProject(Project project) {
+        this.projects.add(project);
+        project.getBudgets().add(this);
+    }
+
+    public void removeProject(Project project) {
+        this.projects.remove(project);
+        project.getBudgets().remove(this);
+    }
 
 }

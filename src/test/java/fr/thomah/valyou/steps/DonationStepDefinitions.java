@@ -2,9 +2,7 @@ package fr.thomah.valyou.steps;
 
 import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.DonationHttpClient;
-import fr.thomah.valyou.controller.AuthenticationController;
 import fr.thomah.valyou.controller.UserController;
-import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
 import io.cucumber.datatable.DataTable;
@@ -20,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.sql.Date;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -39,13 +38,10 @@ public class DonationStepDefinitions {
     private DonationHttpClient donationHttpClient;
 
     @Autowired
-    private AuthenticationController authenticationController;
-
-    @Autowired
-    private UserGenerator userGenerator;
-
-    @Autowired
     private AuthorityRepository authorityRepository;
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private ContentRepository contentRepository;
@@ -60,9 +56,6 @@ public class DonationStepDefinitions {
     private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
-    private BudgetRepository budgetRepository;
-
-    @Autowired
     private ProjectRepository projectRepository;
 
     @Autowired
@@ -75,8 +68,29 @@ public class DonationStepDefinitions {
     private Map<String, User> users = new HashMap<>();
     private Map<String, Content> contents = new HashMap<>();
     private Map<String, Budget> budgets = new HashMap<>();
+    private Map<String, Project> campaigns = new HashMap<>();
 
-    @Given("The following organizations are registered")
+    @Given("Empty database")
+    public void emptyDatabase() {
+        budgetRepository.findAll().forEach(budget -> {
+            budget.setProjects(new LinkedHashSet<>());
+            budgetRepository.save(budget);
+        });
+
+        projectRepository.deleteAll();
+        budgetRepository.deleteAll();
+        contentRepository.deleteAll();
+        userRepository.deleteAll();
+        organizationRepository.deleteAll();
+
+        campaigns = new HashMap<>();
+        budgets = new HashMap<>();
+        contents = new HashMap<>();
+        users = new HashMap<>();
+        organizations = new HashMap<>();
+    }
+
+    @And("The following organizations are registered")
     public void theFollowingOrganizationsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
@@ -114,6 +128,7 @@ public class DonationStepDefinitions {
             user = new User();
             user.setEmail(columns.get("email"));
             user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
+            user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
             user.setFirstname(columns.get("firstname"));
             user.setEnabled(true);
             user.getUserAuthorities().add(authorityRepository.findByName(AuthorityName.ROLE_USER));
@@ -146,8 +161,8 @@ public class DonationStepDefinitions {
         }
     }
 
-    @And("The following pots are available in the organization {string}")
-    public void theFollowingPotsAreAvailableInTheOrganization(String organizationName, DataTable table) {
+    @And("The following budgets are available in the organization {string}")
+    public void theFollowingBudgetsAreAvailableInTheOrganization(String organizationName, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
         // Get dates for budget
@@ -169,6 +184,60 @@ public class DonationStepDefinitions {
             budget.setEndDate(Date.valueOf(lastDay));
             budget.setOrganization(organization);
             budget.setIsDistributed(true);
+            budget = budgetRepository.save(budget);
+
+            // Save in Test Map
+            budgets.put(budget.getName(), budget);
+        }
+    }
+
+    @And("The following campaigns are running")
+    public void theFollowingCampaignsAreRunning(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Project campaign;
+        for (Map<String, String> columns : rows) {
+
+            // Create campaign
+            campaign = new Project();
+            campaign.setTitle(columns.get("title"));
+            campaign.setLeader(users.get(columns.get("leader")));
+            campaign.setStatus(ProjectStatus.valueOf(columns.get("status")));
+            campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
+            campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
+            campaign = projectRepository.save(campaign);
+
+            // Save in Test Map
+            campaigns.put(campaign.getTitle(), campaign);
+        }
+    }
+
+    @And("The following campaigns are associated to the {string} organization")
+    public void theFollowingCampaignsAreAssociatedToTheOrganization(String organizationName, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Project campaign;
+        for (Map<String, String> columns : rows) {
+
+            // Associate project to the organization
+            campaign = campaigns.get(columns.get("title"));
+            campaign.getOrganizations().add(organizations.get(organizationName));
+            campaign = projectRepository.save(campaign);
+
+            // Save in Test Map
+            campaigns.put(campaign.getTitle(), campaign);
+        }
+    }
+
+    @And("The following campaigns uses the {string} budget")
+    public void theFollowingCampaignsUsesTheBudget(String budgetName, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Budget budget = budgets.get(budgetName);
+        for (Map<String, String> columns : rows) {
+
+            // Add campaign to the budget
+            budget.getProjects().add(campaigns.get(columns.get("title")));
             budgetRepository.save(budget);
 
             // Save in Test Map
@@ -189,6 +258,37 @@ public class DonationStepDefinitions {
 
         authenticationHttpClient.setBearerAuth(response.getToken());
         donationHttpClient.setBearerAuth(response.getToken());
+    }
+
+    @When("{string} submit the following donations on the project {string}")
+    public void submitTheFollowingDonationsOnTheProject(String userFirstname, String projectTitle, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        // Create the simplest project for ID reference
+        Project campaign = new Project();
+        campaign.setId(campaigns.get(projectTitle).getId());
+
+        // Create the simplest user for ID reference
+        User user = new User();
+        user.setId(users.get(userFirstname).getId());
+
+        Donation donation;
+        for (Map<String, String> columns : rows) {
+
+            // Create donation
+            donation = new Donation();
+            donation.setAmount(Float.parseFloat(columns.get("amount")));
+            donation.setBudget(budgets.get(columns.get("budget")));
+            donation.setContributor(user);
+            donation.setProject(campaign);
+
+            // Submit donation
+            AuthenticationResponse response = authenticationHttpClient.refresh();
+            donationHttpClient.setBearerAuth(response.getToken());
+            int statusCode = donationHttpClient.post(donation);
+
+            assertThat(statusCode).isEqualTo(HttpStatus.SC_OK);
+        }
     }
 
     @When("{string} submit the following donations on a non-existing project")

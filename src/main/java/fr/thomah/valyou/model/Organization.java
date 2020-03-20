@@ -55,7 +55,7 @@ public class Organization extends AuditEntity<String> {
     @JsonIgnoreProperties(value = {"organization"})
     private Set<Content> contents = new LinkedHashSet<>();
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
 
