@@ -1,6 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

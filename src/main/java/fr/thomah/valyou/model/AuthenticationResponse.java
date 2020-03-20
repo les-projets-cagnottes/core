@@ -1,6 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +29,7 @@ public class AuthenticationResponse extends AuditEntity<String> implements Seria
     private String token = "";
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private User user = new User();
 
     public AuthenticationResponse() {

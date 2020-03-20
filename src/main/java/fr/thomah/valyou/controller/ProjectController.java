@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.SlackClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
-@Transactional
 public class ProjectController {
 
     private static final String WEB_URL = System.getenv("VALYOU_WEB_URL");
@@ -101,9 +101,10 @@ public class ProjectController {
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public Project create(Principal user, @RequestBody String projectStr) {
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) user;
-        final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
+    public Project create(Principal principal, @RequestBody String projectStr) {
+        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        final User userLoggedIn = userRepository.findByUsername(userPrincipal.getUsername());
 
         Project project = gson.fromJson(projectStr, Project.class);
         Set<Organization> organizations = project.getOrganizations();
@@ -251,13 +252,14 @@ public class ProjectController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}/join", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Project join(@PathVariable("id") Long id, Principal user) {
+    public Project join(@PathVariable("id") Long id, Principal principal) {
         Project projectInDb = repository.findById(id).orElse(null);
         if (projectInDb == null) {
             throw new NotFoundException();
         } else {
-            UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) user;
-            final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
+            UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
+            UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+            final User userLoggedIn = userRepository.findByUsername(userPrincipal.getUsername());
             User userInPeopleGivingTime = projectInDb.getPeopleGivingTime().stream().filter(userGivingTime -> userLoggedIn.getId().equals(userGivingTime.getId())).findFirst().orElse(null);
             if (userInPeopleGivingTime == null) {
                 projectInDb.addPeopleGivingTime(userLoggedIn);

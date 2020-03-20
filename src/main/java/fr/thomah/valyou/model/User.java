@@ -2,10 +2,12 @@ package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
@@ -71,7 +73,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     private Set<OrganizationAuthority> userOrganizationAuthorities = new LinkedHashSet<>();
 
     @Transient
-    private Collection<GrantedAuthority> authorities = new LinkedHashSet<>();
+    private Set<SimpleGrantedAuthority> authorities = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"members", "projects", "budgets", "slackTeam"})
@@ -107,36 +109,6 @@ public class User extends AuditEntity<String> implements UserDetails {
     public User(String email, String password) {
         this.email = email;
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
-    }
-
-    public User(Long id,
-                String username,
-                @NotNull String password,
-                @NotNull String email,
-                String firstname,
-                String lastname,
-                String avatarUrl,
-                @NotNull Boolean enabled,
-                @NotNull Date lastPasswordResetDate,
-                Collection<GrantedAuthority> authorities,
-                Set<Organization> organizations,
-                Set<Budget> budgets,
-                Set<Project> projects,
-                Set<Donation> donations) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.avatarUrl = avatarUrl;
-        this.enabled = enabled;
-        this.lastPasswordResetDate = lastPasswordResetDate;
-        this.authorities = authorities;
-        this.organizations = organizations;
-        this.budgets = budgets;
-        this.projects = projects;
-        this.donations = donations;
     }
 
     @Override

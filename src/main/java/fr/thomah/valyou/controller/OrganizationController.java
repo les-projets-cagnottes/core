@@ -6,9 +6,11 @@ import fr.thomah.valyou.exception.AuthenticationException;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.OrganizationGenerator;
+import fr.thomah.valyou.generator.StringGenerator;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.HttpClientService;
 import fr.thomah.valyou.service.SlackClientService;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -93,7 +96,7 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"member_id"})
-    public Set<Organization> getUserOrganizations(Principal authUserToken, @RequestParam("member_id") Long memberId) {
+    public Set<Organization> getUserOrganizations(@RequestParam("member_id") Long memberId) {
         Set<Organization> organizations = repository.findByMembers_Id(memberId);
         for(Organization org : organizations) {
             for(Budget b : org.getBudgets()) {
@@ -105,7 +108,7 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Organization create(@RequestBody Organization org, Principal owner) {
+    public Organization create(@RequestBody Organization org, Principal principal) {
         org = repository.save(OrganizationGenerator.newOrganization(org));
         for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
             organizationAuthorityRepository.save(new OrganizationAuthority(org, authorityName));
@@ -118,9 +121,9 @@ public class OrganizationController {
                 userRepository.save(member);
             }
         }
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) owner;
-        User userOwner = (User) token.getPrincipal();
-        userOwner = userRepository.findByEmail(userOwner.getEmail());
+        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        User userOwner = userRepository.findByUsername(userPrincipal.getUsername());
         userOwner.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_OWNER));
         userRepository.save(userOwner);
 
@@ -206,7 +209,7 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slack(Principal principal, @PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
+    public String slack(@PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
         String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
         LOGGER.debug("POST " + url);
@@ -286,9 +289,10 @@ public class OrganizationController {
                 if(user == null) {
                     user = new User();
                     user.setFirstname(slackUserEditted.getName());
+                    user.setUsername(slackUserEditted.getEmail());
                     user.setEmail(slackUserEditted.getEmail());
                     user.setAvatarUrl(slackUserEditted.getImage_192());
-                    user.setPassword("");
+                    user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                     user = userRepository.save(UserGenerator.newUser(user));
                 }
                 user.setEnabled(!slackUser.getDeleted());

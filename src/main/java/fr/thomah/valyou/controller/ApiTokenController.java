@@ -5,11 +5,15 @@ import fr.thomah.valyou.model.AuthenticationResponse;
 import fr.thomah.valyou.model.User;
 import fr.thomah.valyou.repository.ApiTokenRepository;
 import fr.thomah.valyou.repository.UserRepository;
-import fr.thomah.valyou.security.JwtTokenUtil;
+import fr.thomah.valyou.security.TokenProvider;
+import fr.thomah.valyou.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -21,20 +25,23 @@ import java.util.List;
 public class ApiTokenController {
 
     @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
     private ApiTokenRepository apiTokenRepository;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private TokenProvider jwtTokenUtil;
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/token", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AuthenticationResponse> list(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        User user = (User) token.getPrincipal();
-        user = userRepository.findByEmail(user.getEmail());
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        User user = userRepository.findByUsername(userPrincipal.getUsername());
         List<AuthenticationResponse> apiTokens = apiTokenRepository.findAllByUserId(user.getId());
         apiTokens.forEach(apiToken -> {
             apiToken.setToken("");
@@ -46,14 +53,21 @@ public class ApiTokenController {
     @RequestMapping(value = "/api/token", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponse generateApiToken(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        User user = (User) token.getPrincipal();
-        user = userRepository.findByEmail(user.getEmail());
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        User user = userRepository.findByUsername(userPrincipal.getUsername());
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, 1);
         Date nextYear = cal.getTime();
 
-        AuthenticationResponse authenticationResponse = new AuthenticationResponse(jwtTokenUtil.generateApiToken(user, nextYear));
+        final Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        user.getUsername(),
+                        user.getPassword()
+                )
+        );
+
+        AuthenticationResponse authenticationResponse = new AuthenticationResponse(jwtTokenUtil.generateToken(authentication, nextYear));
         authenticationResponse.setExpiration(nextYear);
         authenticationResponse.setUser(user);
 
@@ -64,8 +78,8 @@ public class ApiTokenController {
     @RequestMapping(value = "/api/token/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void delete(Principal principal, @PathVariable("id") long id) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        User user = (User) token.getPrincipal();
-        user = userRepository.findByEmail(user.getEmail());
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        User user = userRepository.findByUsername(userPrincipal.getUsername());
         AuthenticationResponse apiToken = apiTokenRepository.findByIdAndUserId(id, user.getId());
         if(apiToken == null) {
             throw new NotFoundException();

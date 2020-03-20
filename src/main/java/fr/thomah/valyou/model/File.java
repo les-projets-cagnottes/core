@@ -1,5 +1,6 @@
 package fr.thomah.valyou.model;
 
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

@@ -11,13 +11,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.Month;
-import java.util.List;
 
 @SpringBootApplication
 @EnableScheduling
@@ -51,46 +45,24 @@ public class ValyouApplication {
 	public void init() {
 
 		// First launch of App
-		if(userRepository.count() == 0) {
+		if(authorityRepository.count() == 0) {
 
 			// Creation of every roles in database
 			for(AuthorityName authorityName : AuthorityName.values()) {
 				authorityRepository.save(new Authority(authorityName));
 			}
-			userGenerator.init(); // Refresh authorities
-			/*
-			Organization organization = new Organization();
-			organization.setName("Valyou");
-			organization.setSlackTeamId("TMW0TDJKZ");
-			organization = organizationRepository.save(organization);
 
-			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
-				organizationAuthorityRepository.save(new OrganizationAuthority(organization, authorityName));
-			}
-			*/
-			String email = "admin@valyou.fr";
+			userGenerator.init(); // Refresh authorities
+
+			String email = "admin";
 			String generatedPassword = StringGenerator.randomString();
 			User admin = UserGenerator.newUser(email, generatedPassword);
+			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
-			//admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
-			//admin.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_OWNER));
-			//admin.addOrganization(organization);
 			userRepository.save(admin);
-			/*
-			organization.getMembers().add(admin);
-			organization = organizationRepository.save(organization);
 
-			Budget budget = new Budget();
-			budget.setName("My budget");
-			budget.setAmountPerMember(150f);
-			budget.setStartDate(Date.valueOf(LocalDate.of(2019, Month.JANUARY, 1)));
-			budget.setEndDate(Date.valueOf(LocalDate.of(2019, Month.DECEMBER, 31)));
-			budget.setOrganization(organization);
-			budget.setSponsor(admin);
-			budgetRepository.save(budget);
-			*/
-			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin@valyou.fr / " + generatedPassword);
+			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
 		}
 	}
 

@@ -1,13 +1,14 @@
 package fr.thomah.valyou.controller;
 
-import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.Donation;
-import fr.thomah.valyou.model.ProjectStatus;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.DonationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
 import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.security.UserPrincipal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +21,10 @@ import java.util.Set;
 @RestController
 public class DonationController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DonationController.class);
+
     @Autowired
-    private Gson gson;
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private DonationRepository repository;
@@ -34,14 +37,26 @@ public class DonationController {
 
     @RequestMapping(value = "/api/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void create(@RequestBody String donationStr, Principal principal) {
-        Donation donation = gson.fromJson(donationStr, Donation.class);
+    public void create(@RequestBody Donation donation, Principal principal) {
+
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        User userPrincipal = (User) token.getPrincipal();
-        userPrincipal = userRepository.findByEmail(userPrincipal.getEmail());
-        donation.setContributor(userPrincipal);
-        donation.setProject(projectRepository.findById(donation.getProject().getId()).orElse(null));
-        repository.save(donation);
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        User user = userRepository.findByUsername(userPrincipal.getUsername());
+
+        Project project = projectRepository.findById(donation.getProject().getId()).orElse(null);
+        Budget budget = budgetRepository.findById(donation.getBudget().getId()).orElse(null);
+
+        if(project == null || budget == null) {
+            throw new NotFoundException();
+        } else {
+            Donation donationToSave = new Donation();
+            donationToSave.setProject(project);
+            donationToSave.setBudget(budget);
+            donationToSave.setContributor(user);
+            donationToSave.setAmount(donation.getAmount());
+
+            repository.save(donation);
+        }
     }
 
     @PreAuthorize("hasRole('USER')")

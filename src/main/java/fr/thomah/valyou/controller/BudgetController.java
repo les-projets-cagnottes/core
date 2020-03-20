@@ -53,7 +53,7 @@ public class BudgetController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void create(@RequestBody Budget budget, Principal owner) {
+    public void create(@RequestBody Budget budget) {
         repository.save(budget);
     }
 

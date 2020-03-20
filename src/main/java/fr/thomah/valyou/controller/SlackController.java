@@ -5,6 +5,7 @@ import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.SlackClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -75,7 +76,8 @@ public class SlackController {
     @RequestMapping(value = "/api/slack/{teamId}/hello", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void hello(Principal principal, @PathVariable String teamId) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        final User userLoggedIn = userRepository.findByEmail(((User) token.getPrincipal()).getEmail());
+        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        final User userLoggedIn = userRepository.findByUsername(userPrincipal.getUsername());
 
         SlackTeam slackTeam = slackTeamRepository.findByTeamId(teamId);
         if(slackTeam != null) {

@@ -1,10 +1,7 @@
 package fr.thomah.valyou.controller;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
@@ -15,6 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.UnauthaurizedException;
+import fr.thomah.valyou.generator.StringGenerator;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.OrganizationRepository;
@@ -22,6 +20,7 @@ import fr.thomah.valyou.repository.SlackTeamRepository;
 import fr.thomah.valyou.repository.SlackUserRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.exception.AuthenticationException;
+import fr.thomah.valyou.security.TokenProvider;
 import fr.thomah.valyou.service.HttpClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +33,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
-import fr.thomah.valyou.security.JwtTokenUtil;
 
 @RestController
 public class AuthenticationController {
@@ -56,7 +58,7 @@ public class AuthenticationController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private TokenProvider jwtTokenUtil;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -71,21 +73,33 @@ public class AuthenticationController {
     private UserRepository repository;
 
     @Autowired
-    @Qualifier("jwtUserDetailsService")
+    @Qualifier("userService")
     private UserDetailsService userDetailsService;
 
-    @RequestMapping(value = "${jwt.route.authentication.path}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/auth/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponse login(@RequestBody User user) throws AuthenticationException {
-        authenticate(user.getEmail(), user.getPassword());
-        return new AuthenticationResponse(jwtTokenUtil.generateToken(user));
+        LOGGER.debug(user.toString());
+        final Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        user.getEmail(),
+                        user.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        final String token = jwtTokenUtil.generateToken(authentication);
+        return new AuthenticationResponse(token);
     }
 
-    @RequestMapping(value = "${jwt.route.authentication.refresh}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/auth/refresh", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponse refresh(HttpServletRequest request) {
         String authToken = request.getHeader(TOKEN_HEADER);
         final String token = authToken.substring(7);
-        String email = jwtTokenUtil.getEmailFromToken(token);
-        User user = repository.findByEmail(email);
+        String username = jwtTokenUtil.getUsernameFromToken(token);
+        User user = repository.findByUsername(username);
+        if(user == null) {
+            user = repository.findByEmail(username);
+        }
         if (jwtTokenUtil.canTokenBeRefreshed(token, user.getLastPasswordResetDate())) {
             String refreshedToken = jwtTokenUtil.refreshToken(token);
             return new AuthenticationResponse(refreshedToken);
@@ -97,7 +111,7 @@ public class AuthenticationController {
     @RequestMapping(value = "/api/whoami", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public User getAuthenticatedUser(HttpServletRequest request) {
         String token = request.getHeader(TOKEN_HEADER).substring(7);
-        String email = jwtTokenUtil.getEmailFromToken(token);
+        String email = jwtTokenUtil.getUsernameFromToken(token);
         return repository.findByEmail(email);
     }
 
@@ -124,10 +138,13 @@ public class AuthenticationController {
                     User user = repository.findByEmail(jsonUser.get("email").getAsString());
                     if(user == null) {
                         user = new User();
-                        user.setPassword("");
+                        user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                         user.setFirstname(jsonUser.get("name").getAsString());
                         user.setEmail(jsonUser.get("email").getAsString());
+                    } else if(user.getPassword().isEmpty()) {
+                        user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                     }
+                    user.setUsername(jsonUser.get("email").getAsString());
                     user.setAvatarUrl(jsonUser.get("image_192").getAsString());
                     final User userInDb = repository.save(UserGenerator.newUser(user));
 
@@ -139,6 +156,9 @@ public class AuthenticationController {
                     }
                     slackUser.setSlackTeam(slackTeam);
                     slackUser.setUser(user);
+                    slackUser.setName(jsonUser.get("name").getAsString());
+                    slackUser.setImage_192(jsonUser.get("image_192").getAsString());
+                    slackUser.setEmail(jsonUser.get("email").getAsString());
                     final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
 
                     // If the User doesnt have the SlackUser -> Add it
@@ -159,7 +179,12 @@ public class AuthenticationController {
                                     () -> slackTeam.getSlackUsers().add(slackUserInDb));
                     slackTeamRepository.save(slackTeam);
 
-                    return new AuthenticationResponse(jwtTokenUtil.generateToken(user));
+
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(user, null,
+                            AuthorityUtils.createAuthorityList("ROLE_USER"));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    final String token = jwtTokenUtil.generateToken(authentication);
+                    return new AuthenticationResponse(token);
                 } else {
                     throw new UnauthaurizedException();
                 }
@@ -175,19 +200,4 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
 
-    /**
-     * Authenticates the user. If something is wrong, an {@link AuthenticationException} will be thrown
-     */
-    private void authenticate(String email, String password) {
-        Objects.requireNonNull(email);
-        Objects.requireNonNull(password);
-
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-        } catch (DisabledException e) {
-            throw new AuthenticationException("User is disabled!", e);
-        } catch (BadCredentialsException e) {
-            throw new AuthenticationException("Bad credentials!", e);
-        }
-    }
 }

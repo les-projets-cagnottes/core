@@ -1,5 +1,6 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.audit;
 
+import fr.thomah.valyou.security.UserPrincipal;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -15,8 +16,8 @@ public class AuditEntityListener implements AuditorAware<String> {
         } else {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if(!principal.toString().equals("anonymousUser")) {
-                User user = (User) principal;
-                return Optional.of(user.getEmail());
+                UserPrincipal user = (UserPrincipal) principal;
+                return Optional.of(user.getUsername());
             } else {
                 return Optional.of("System");
             }

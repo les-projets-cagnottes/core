@@ -1,6 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +15,7 @@ import java.util.Set;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "organizations_authorities")
-public class OrganizationAuthority extends AuditEntity<String>{
+public class OrganizationAuthority extends AuditEntity<String> {
 
     private static final long serialVersionUID = -5098047340982969186L;
 
@@ -27,7 +28,7 @@ public class OrganizationAuthority extends AuditEntity<String>{
     private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private Set<User> users = new LinkedHashSet<>();
 
     @Column(length = 50)

@@ -1,6 +1,7 @@
 package fr.thomah.valyou.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +14,7 @@ import java.util.*;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "budgets")
-public class Budget extends AuditEntity<String>{
+public class Budget extends AuditEntity<String> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -55,7 +56,7 @@ public class Budget extends AuditEntity<String>{
     private Organization organization = new Organization();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private User sponsor = new User();
 
     @OneToMany(mappedBy = "budget")

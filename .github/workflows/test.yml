@@ -1,0 +1,50 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Build with Maven
+      run: ./mvnw -B clean test --file pom.xml
+
+    - name: Checkout private tools
+      uses: actions/checkout@v2
+      with:
+        repository: les-projets-cagnottes/les-projets-cagnottes.github.io
+        token: ${{ secrets.GITHUB_IO_PAT }}
+        path: les-projets-cagnottes.github.io
+
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Prepare Cucumber output directory
+      run: mkdir -p les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}
+
+    - name: Copy Cucumber Report
+      run: cp -r target/cluecumber les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+
+    - name: Move inside publishing repository
+      run: cd les-projets-cagnottes.github.io
+
+    - name: Commit changes
+      run: git commit --allow-empty -am "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
+
+    - name: Push changes
+      run: git push
