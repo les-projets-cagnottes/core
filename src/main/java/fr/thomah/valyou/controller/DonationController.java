@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.BudgetRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.Set;
 
 @RestController
@@ -49,13 +51,17 @@ public class DonationController {
         if(project == null || budget == null) {
             throw new NotFoundException();
         } else {
-            Donation donationToSave = new Donation();
-            donationToSave.setProject(project);
-            donationToSave.setBudget(budget);
-            donationToSave.setContributor(user);
-            donationToSave.setAmount(donation.getAmount());
-
-            repository.save(donation);
+            Date now = new Date();
+            if(now.compareTo(project.getFundingDeadline()) > 0) {
+                throw new BadRequestException();
+            } else {
+                Donation donationToSave = new Donation();
+                donationToSave.setProject(project);
+                donationToSave.setBudget(budget);
+                donationToSave.setContributor(user);
+                donationToSave.setAmount(donation.getAmount());
+                repository.save(donation);
+            }
         }
     }
 

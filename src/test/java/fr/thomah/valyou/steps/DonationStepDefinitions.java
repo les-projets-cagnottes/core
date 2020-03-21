@@ -11,6 +11,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.apache.http.HttpStatus;
+import org.apache.tomcat.jni.Local;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,6 +196,10 @@ public class DonationStepDefinitions {
     public void theFollowingCampaignsAreRunning(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
+        // Get funding deadline
+        LocalDate now = LocalDate.now();
+        LocalDate fundingDeadline = now.plusMonths(1);
+
         Project campaign;
         for (Map<String, String> columns : rows) {
 
@@ -205,6 +210,33 @@ public class DonationStepDefinitions {
             campaign.setStatus(ProjectStatus.valueOf(columns.get("status")));
             campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
             campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
+            campaign.setFundingDeadline(Date.valueOf(fundingDeadline));
+            campaign = projectRepository.save(campaign);
+
+            // Save in Test Map
+            campaigns.put(campaign.getTitle(), campaign);
+        }
+    }
+
+    @And("The following campaigns have a deadline reached")
+    public void theFollowingCampaignsHaveADeadlineReached(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        // Get funding deadline
+        LocalDate now = LocalDate.now();
+        LocalDate fundingDeadline = now.minusMonths(1);
+
+        Project campaign;
+        for (Map<String, String> columns : rows) {
+
+            // Create campaign
+            campaign = new Project();
+            campaign.setTitle(columns.get("title"));
+            campaign.setLeader(users.get(columns.get("leader")));
+            campaign.setStatus(ProjectStatus.valueOf(columns.get("status")));
+            campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
+            campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
+            campaign.setFundingDeadline(Date.valueOf(fundingDeadline));
             campaign = projectRepository.save(campaign);
 
             // Save in Test Map
@@ -285,9 +317,7 @@ public class DonationStepDefinitions {
             // Submit donation
             AuthenticationResponse response = authenticationHttpClient.refresh();
             donationHttpClient.setBearerAuth(response.getToken());
-            int statusCode = donationHttpClient.post(donation);
-
-            assertThat(statusCode).isEqualTo(HttpStatus.SC_OK);
+            donationHttpClient.post(donation);
         }
     }
 
@@ -326,6 +356,28 @@ public class DonationStepDefinitions {
     public void haveDonationOnTheBudget(String userFirstname, String numberOfDonations, String budgetName) {
         Set<Donation> donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(userFirstname).getId(), budgets.get(budgetName).getId());
         assertThat(numberOfDonations).isEqualTo(String.valueOf(donations.size()));
+    }
+
+    @And("{string} has the following amounts left on corresponding budgets")
+    public void hasTheFollowingAmountsLeftOnCorrespondingBudgets(String userFirstname, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        // Create a non saved project
+        Project nonExistingProject = new Project();
+        nonExistingProject.setId(0L);
+
+        Budget budget;
+        Set<Donation> donations;
+        float totalAmount = 0f;
+        for (Map<String, String> columns : rows) {
+            budget = budgets.get(columns.get("budget"));
+            donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(userFirstname).getId(), budget.getId());
+            for(Donation donation : donations) {
+                totalAmount+= donation.getAmount();
+            }
+
+            assertThat(totalAmount).isEqualTo(budget.getAmountPerMember() - Float.parseFloat(columns.get("amount")));
+        }
     }
 
 }
