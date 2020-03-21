@@ -44,5 +44,6 @@ jobs:
       run: |
         cd les-projets-cagnottes.github.io
         git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+        git status
         git commit --allow-empty -am "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
         git push
