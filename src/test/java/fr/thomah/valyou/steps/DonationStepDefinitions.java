@@ -65,6 +65,7 @@ public class DonationStepDefinitions {
     @Autowired
     private UserRepository userRepository;
 
+    private Map<String, AuthenticationResponse> auths = new HashMap<>();
     private Map<String, Organization> organizations = new HashMap<>();
     private Map<String, User> users = new HashMap<>();
     private Map<String, Content> contents = new HashMap<>();
@@ -127,6 +128,7 @@ public class DonationStepDefinitions {
 
             // Create user
             user = new User();
+            user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
             user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
             user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
@@ -288,21 +290,12 @@ public class DonationStepDefinitions {
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isNotEmpty();
 
-        authenticationHttpClient.setBearerAuth(response.getToken());
-        donationHttpClient.setBearerAuth(response.getToken());
+        auths.put(userFirstname, response);
     }
 
-    @When("{string} submit the following donations on the project {string}")
-    public void submitTheFollowingDonationsOnTheProject(String userFirstname, String projectTitle, DataTable table) {
+    @When("{string} submit the following donations")
+    public void submitTheFollowingDonations(String userFirstname, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        // Create the simplest project for ID reference
-        Project campaign = new Project();
-        campaign.setId(campaigns.get(projectTitle).getId());
-
-        // Create the simplest user for ID reference
-        User user = new User();
-        user.setId(users.get(userFirstname).getId());
 
         Donation donation;
         for (Map<String, String> columns : rows) {
@@ -311,73 +304,41 @@ public class DonationStepDefinitions {
             donation = new Donation();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setBudget(budgets.get(columns.get("budget")));
-            donation.setContributor(user);
-            donation.setProject(campaign);
+            donation.setProject(campaigns.get(columns.get("campaign")));
+            donation.setContributor(users.get(columns.get("contributor")));
 
-            // Submit donation
+            // Refresh Token
+            authenticationHttpClient.setBearerAuth(auths.get(userFirstname).getToken());
             AuthenticationResponse response = authenticationHttpClient.refresh();
+            auths.put(userFirstname, response);
+
+            // Refresh Token
             donationHttpClient.setBearerAuth(response.getToken());
             donationHttpClient.post(donation);
         }
     }
 
-    @When("{string} submit the following donations on a non-existing project")
-    public void submitTheFollowingDonationsOnANonExistingProject(String userFirstname, DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        // Create a non saved project
-        Project nonExistingProject = new Project();
-        nonExistingProject.setId(0L);
-
-        // Create the simplest user for ID reference
-        User user = new User();
-        user.setId(users.get(userFirstname).getId());
-
-        Donation donation;
-        for (Map<String, String> columns : rows) {
-
-            // Create donation
-            donation = new Donation();
-            donation.setAmount(Float.parseFloat(columns.get("amount")));
-            donation.setBudget(budgets.get(columns.get("budget")));
-            donation.setContributor(user);
-            donation.setProject(nonExistingProject);
-
-            // Submit donation
-            AuthenticationResponse response = authenticationHttpClient.refresh();
-            donationHttpClient.setBearerAuth(response.getToken());
-            int statusCode = donationHttpClient.post(donation);
-
-            assertThat(statusCode).isEqualTo(HttpStatus.SC_NOT_FOUND);
-        }
-    }
-
-    @Then("{string} have {string} donation on the {string} budget")
-    public void haveDonationOnTheBudget(String userFirstname, String numberOfDonations, String budgetName) {
+    @Then("{string} has {string} donation on the {string} budget")
+    public void hasDonationOnTheBudget(String userFirstname, String numberOfDonations, String budgetName) {
         Set<Donation> donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(userFirstname).getId(), budgets.get(budgetName).getId());
-        assertThat(numberOfDonations).isEqualTo(String.valueOf(donations.size()));
+        assertThat(String.valueOf(donations.size())).isEqualTo(numberOfDonations);
     }
 
-    @And("{string} has the following amounts left on corresponding budgets")
-    public void hasTheFollowingAmountsLeftOnCorrespondingBudgets(String userFirstname, DataTable table) {
+    @And("Following users have corresponding amount left on budgets")
+    public void followingUsersHaveCorrespondingAmountLeftOnBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        // Create a non saved project
-        Project nonExistingProject = new Project();
-        nonExistingProject.setId(0L);
 
         Budget budget;
         Set<Donation> donations;
         float totalAmount = 0f;
         for (Map<String, String> columns : rows) {
             budget = budgets.get(columns.get("budget"));
-            donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(userFirstname).getId(), budget.getId());
+            donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(columns.get("user")).getId(), budget.getId());
             for(Donation donation : donations) {
                 totalAmount+= donation.getAmount();
             }
 
-            assertThat(totalAmount).isEqualTo(budget.getAmountPerMember() - Float.parseFloat(columns.get("amount")));
+            assertThat(budget.getAmountPerMember() - totalAmount).isEqualTo(Float.parseFloat(columns.get("amount")));
         }
     }
-
 }
