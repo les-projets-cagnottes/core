@@ -1,6 +1,7 @@
 package fr.thomah.valyou.steps;
 
 import fr.thomah.valyou.component.AuthenticationHttpClient;
+import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
 import fr.thomah.valyou.controller.UserController;
 import fr.thomah.valyou.model.*;
@@ -10,8 +11,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.apache.http.HttpStatus;
-import org.apache.tomcat.jni.Local;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.sql.Date;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -65,12 +63,8 @@ public class DonationStepDefinitions {
     @Autowired
     private UserRepository userRepository;
 
-    private Map<String, AuthenticationResponse> auths = new HashMap<>();
-    private Map<String, Organization> organizations = new HashMap<>();
-    private Map<String, User> users = new HashMap<>();
-    private Map<String, Content> contents = new HashMap<>();
-    private Map<String, Budget> budgets = new HashMap<>();
-    private Map<String, Project> campaigns = new HashMap<>();
+    @Autowired
+    private CucumberContext context;
 
     @Given("Empty database")
     public void emptyDatabase() {
@@ -85,11 +79,7 @@ public class DonationStepDefinitions {
         userRepository.deleteAll();
         organizationRepository.deleteAll();
 
-        campaigns = new HashMap<>();
-        budgets = new HashMap<>();
-        contents = new HashMap<>();
-        users = new HashMap<>();
-        organizations = new HashMap<>();
+        context.reset();
     }
 
     @And("The following organizations are registered")
@@ -114,7 +104,7 @@ public class DonationStepDefinitions {
             organization = organizationRepository.save(organization);
 
             // Save in Test Map
-            organizations.put(organization.getName(), organization);
+            context.getOrganizations().put(organization.getName(), organization);
         }
     }
 
@@ -122,7 +112,7 @@ public class DonationStepDefinitions {
     public void theFollowingUsersAreMembersOfOrganization(String organizationName, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization = organizations.get(organizationName);
+        Organization organization = context.getOrganizations().get(organizationName);
         User user;
         for (Map<String, String> columns : rows) {
 
@@ -141,7 +131,7 @@ public class DonationStepDefinitions {
 
             // Save in Test Map
             user.setPassword(columns.get("password"));
-            users.put(user.getFirstname(), user);
+            context.getUsers().put(user.getFirstname(), user);
         }
     }
 
@@ -156,11 +146,11 @@ public class DonationStepDefinitions {
             content = new Content();
             content.setName(columns.get("name"));
             content.setValue(columns.get("value"));
-            content.getOrganizations().add(organizations.get(organizationName));
+            content.getOrganizations().add(context.getOrganizations().get(organizationName));
             content = contentRepository.save(content);
 
             // Save in Test Map
-            contents.put(content.getName(), content);
+            context.getContents().put(content.getName(), content);
         }
     }
 
@@ -173,7 +163,7 @@ public class DonationStepDefinitions {
         LocalDate firstDay = now.with(firstDayOfYear());
         LocalDate lastDay = now.with(lastDayOfYear());
 
-        Organization organization = organizations.get(organizationName);
+        Organization organization = context.getOrganizations().get(organizationName);
         Budget budget;
         for (Map<String, String> columns : rows) {
 
@@ -181,8 +171,8 @@ public class DonationStepDefinitions {
             budget = new Budget();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
-            budget.setSponsor(users.get(columns.get("sponsor")));
-            budget.setRules(contents.get(columns.get("rules")));
+            budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
+            budget.setRules(context.getContents().get(columns.get("rules")));
             budget.setStartDate(Date.valueOf(firstDay));
             budget.setEndDate(Date.valueOf(lastDay));
             budget.setOrganization(organization);
@@ -190,7 +180,7 @@ public class DonationStepDefinitions {
             budget = budgetRepository.save(budget);
 
             // Save in Test Map
-            budgets.put(budget.getName(), budget);
+            context.getBudgets().put(budget.getName(), budget);
         }
     }
 
@@ -208,7 +198,7 @@ public class DonationStepDefinitions {
             // Create campaign
             campaign = new Project();
             campaign.setTitle(columns.get("title"));
-            campaign.setLeader(users.get(columns.get("leader")));
+            campaign.setLeader(context.getUsers().get(columns.get("leader")));
             campaign.setStatus(ProjectStatus.valueOf(columns.get("status")));
             campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
             campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
@@ -216,7 +206,7 @@ public class DonationStepDefinitions {
             campaign = projectRepository.save(campaign);
 
             // Save in Test Map
-            campaigns.put(campaign.getTitle(), campaign);
+            context.getCampaigns().put(campaign.getTitle(), campaign);
         }
     }
 
@@ -234,7 +224,7 @@ public class DonationStepDefinitions {
             // Create campaign
             campaign = new Project();
             campaign.setTitle(columns.get("title"));
-            campaign.setLeader(users.get(columns.get("leader")));
+            campaign.setLeader(context.getUsers().get(columns.get("leader")));
             campaign.setStatus(ProjectStatus.valueOf(columns.get("status")));
             campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
             campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
@@ -242,7 +232,7 @@ public class DonationStepDefinitions {
             campaign = projectRepository.save(campaign);
 
             // Save in Test Map
-            campaigns.put(campaign.getTitle(), campaign);
+            context.getCampaigns().put(campaign.getTitle(), campaign);
         }
     }
 
@@ -254,12 +244,12 @@ public class DonationStepDefinitions {
         for (Map<String, String> columns : rows) {
 
             // Associate project to the organization
-            campaign = campaigns.get(columns.get("title"));
-            campaign.getOrganizations().add(organizations.get(organizationName));
+            campaign = context.getCampaigns().get(columns.get("title"));
+            campaign.getOrganizations().add(context.getOrganizations().get(organizationName));
             campaign = projectRepository.save(campaign);
 
             // Save in Test Map
-            campaigns.put(campaign.getTitle(), campaign);
+            context.getCampaigns().put(campaign.getTitle(), campaign);
         }
     }
 
@@ -267,15 +257,15 @@ public class DonationStepDefinitions {
     public void theFollowingCampaignsUsesTheBudget(String budgetName, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Budget budget = budgets.get(budgetName);
+        Budget budget = context.getBudgets().get(budgetName);
         for (Map<String, String> columns : rows) {
 
             // Add campaign to the budget
-            budget.getProjects().add(campaigns.get(columns.get("title")));
+            budget.getProjects().add(context.getCampaigns().get(columns.get("title")));
             budgetRepository.save(budget);
 
             // Save in Test Map
-            budgets.put(budget.getName(), budget);
+            context.getBudgets().put(budget.getName(), budget);
         }
     }
 
@@ -283,14 +273,14 @@ public class DonationStepDefinitions {
     public void userIsLoggedIn(String userFirstname) {
 
         User user = new User();
-        user.setEmail(users.get(userFirstname).getEmail());
-        user.setPassword(users.get(userFirstname).getPassword());
+        user.setEmail(context.getUsers().get(userFirstname).getEmail());
+        user.setPassword(context.getUsers().get(userFirstname).getPassword());
         AuthenticationResponse response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isNotEmpty();
 
-        auths.put(userFirstname, response);
+        context.getAuths().put(userFirstname, response);
     }
 
     @When("{string} submit the following donations")
@@ -303,14 +293,14 @@ public class DonationStepDefinitions {
             // Create donation
             donation = new Donation();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
-            donation.setBudget(budgets.get(columns.get("budget")));
-            donation.setProject(campaigns.get(columns.get("campaign")));
-            donation.setContributor(users.get(columns.get("contributor")));
+            donation.setBudget(context.getBudgets().get(columns.get("budget")));
+            donation.setProject(context.getCampaigns().get(columns.get("campaign")));
+            donation.setContributor(context.getUsers().get(columns.get("contributor")));
 
             // Refresh Token
-            authenticationHttpClient.setBearerAuth(auths.get(userFirstname).getToken());
+            authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
             AuthenticationResponse response = authenticationHttpClient.refresh();
-            auths.put(userFirstname, response);
+            context.getAuths().put(userFirstname, response);
 
             // Refresh Token
             donationHttpClient.setBearerAuth(response.getToken());
@@ -320,7 +310,7 @@ public class DonationStepDefinitions {
 
     @Then("{string} has {string} donation on the {string} budget")
     public void hasDonationOnTheBudget(String userFirstname, String numberOfDonations, String budgetName) {
-        Set<Donation> donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(userFirstname).getId(), budgets.get(budgetName).getId());
+        Set<Donation> donations = donationRepository.findAllByContributorIdAndBudgetId(context.getUsers().get(userFirstname).getId(), context.getBudgets().get(budgetName).getId());
         assertThat(String.valueOf(donations.size())).isEqualTo(numberOfDonations);
     }
 
@@ -332,8 +322,8 @@ public class DonationStepDefinitions {
         Set<Donation> donations;
         float totalAmount = 0f;
         for (Map<String, String> columns : rows) {
-            budget = budgets.get(columns.get("budget"));
-            donations = donationRepository.findAllByContributorIdAndBudgetId(users.get(columns.get("user")).getId(), budget.getId());
+            budget = context.getBudgets().get(columns.get("budget"));
+            donations = donationRepository.findAllByContributorIdAndBudgetId(context.getUsers().get(columns.get("user")).getId(), budget.getId());
             for(Donation donation : donations) {
                 totalAmount+= donation.getAmount();
             }
