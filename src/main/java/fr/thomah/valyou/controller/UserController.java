@@ -1,11 +1,13 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.security.UserPrincipal;
+import fr.thomah.valyou.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.security.Principal;
 import java.util.Date;
@@ -34,6 +37,9 @@ public class UserController {
     private AuthorityRepository authorityRepository;
 
     @Autowired
+    private OrganizationAuthorityRepository organizationAuthorityRepository;
+
+    @Autowired
     private OrganizationRepository organizationRepository;
 
     @Autowired
@@ -41,6 +47,9 @@ public class UserController {
 
     @Autowired
     private UserRepository repository;
+
+    @Autowired
+    private UserService userService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
@@ -105,17 +114,15 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user/profile", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public void updateProfile(Principal principal, @RequestBody User user) {
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
-        User userLoggedIn = repository.findByUsername(userPrincipal.getUsername());
-        if(!userLoggedIn.getUsername().equals(user.getUsername())) {
+        User userLoggedIn = userService.get(principal);
+        if(!userLoggedIn.getUsername().equals(user.getEmail())) {
             throw new ForbiddenException();
         } else {
             User userInDb = repository.findById(user.getId()).orElse(null);
             if (userInDb == null) {
                 throw new NotFoundException();
             } else {
-                userInDb.setUsername(user.getUsername());
+                userInDb.setUsername(user.getEmail());
                 if(user.getPassword() != null && !user.getPassword().equals("")) {
                     userInDb.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
                     userInDb.setLastPasswordResetDate(new Date());
@@ -127,6 +134,30 @@ public class UserController {
                 repository.save(userInDb);
             }
         }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user/{id}/roles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void grant(@PathVariable long id, @RequestBody OrganizationAuthority organizationAuthority) {
+
+        if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
+            throw new BadRequestException();
+        }
+
+        User userInDb = repository.findById(id).orElse(null);
+        OrganizationAuthority organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
+
+        if(userInDb == null || organizationAuthorityInDb == null) {
+            throw new NotFoundException();
+        }
+
+        userInDb.getUserOrganizationAuthorities().stream().filter(authority -> authority.getId().equals(organizationAuthorityInDb.getId()))
+                .findAny()
+                .ifPresentOrElse(
+                        authority -> userInDb.getUserOrganizationAuthorities().remove(authority),
+                        () -> userInDb.getUserOrganizationAuthorities().add(organizationAuthorityInDb)
+                );
+        repository.save(userInDb);
     }
 
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)

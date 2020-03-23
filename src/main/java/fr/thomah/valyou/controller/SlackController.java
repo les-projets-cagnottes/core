@@ -157,8 +157,6 @@ public class SlackController {
 
                             slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
 
-                            OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER);
-                            userInDb.addOrganizationAuthority(memberOrganizationAuthority);
                             organization.getMembers().add(userInDb);
 
                             organizationRepository.save(organization);

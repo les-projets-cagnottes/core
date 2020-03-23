@@ -108,25 +108,11 @@ public class OrganizationController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/organization", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Organization create(@RequestBody Organization org, Principal principal) {
+    public Organization create(@RequestBody Organization org) {
         org = repository.save(OrganizationGenerator.newOrganization(org));
         for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
             organizationAuthorityRepository.save(new OrganizationAuthority(org, authorityName));
         }
-        OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_MEMBER);
-        for(User member : org.getMembers()) {
-            member = userRepository.findById(member.getId()).orElse(null);
-            if(member != null) {
-                member.addOrganizationAuthority(memberOrganizationAuthority);
-                userRepository.save(member);
-            }
-        }
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
-        User userOwner = userRepository.findByUsername(userPrincipal.getUsername());
-        userOwner.addOrganizationAuthority(organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_OWNER));
-        userRepository.save(userOwner);
-
         return org;
     }
 
@@ -153,7 +139,11 @@ public class OrganizationController {
     @RequestMapping(value = "/api/organization/{id}/members", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> getMembers(@PathVariable("id") long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").ascending().and(Sort.by("lastname").ascending()));
-        return userRepository.findByOrganizations_id(id, pageable);
+        Page<User> members = userRepository.findByOrganizations_id(id, pageable);
+        for(User member : members) {
+            member.getUserOrganizationAuthorities().addAll(organizationAuthorityRepository.findAllByUsers_Id(member.getId()));
+        }
+        return members;
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -164,10 +154,7 @@ public class OrganizationController {
         if(org == null || newMember == null) {
             throw new NotFoundException();
         } else {
-            OrganizationAuthority memberOrganizationAuthority = organizationAuthorityRepository.findByOrganizationAndName(org, OrganizationAuthorityName.ROLE_MEMBER);
-            newMember.addOrganizationAuthority(memberOrganizationAuthority);
             org.getMembers().add(newMember);
-
             repository.save(org);
             userRepository.save(newMember);
         }
@@ -189,6 +176,18 @@ public class OrganizationController {
             org.getMembers().remove(member);
             repository.save(org);
         }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/organization/{id}/authorities", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<OrganizationAuthority> getOrganizationAuthorities(@PathVariable("id") long id) {
+
+        Organization organization = repository.findById(id).orElse(null);
+        if(organization == null) {
+            throw new BadRequestException();
+        }
+
+        return organizationAuthorityRepository.findAllByOrganizationId(organization.getId());
     }
 
     @PreAuthorize("hasRole('USER')")

@@ -125,7 +125,6 @@ public class DonationStepDefinitions {
             user.setFirstname(columns.get("firstname"));
             user.setEnabled(true);
             user.getUserAuthorities().add(authorityRepository.findByName(AuthorityName.ROLE_USER));
-            user.getUserOrganizationAuthorities().add(organizationAuthorityRepository.findByOrganizationAndName(organization, OrganizationAuthorityName.ROLE_MEMBER));
             user.getOrganizations().add(organization);
             user = userRepository.save(user);
 
