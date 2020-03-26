@@ -157,7 +157,7 @@
                 <executions>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>post-integration-test</phase>
                         <goals>
                             <goal>reporting</goal>
                         </goals>

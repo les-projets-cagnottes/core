@@ -9,16 +9,15 @@ import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.aspectj.weaver.ast.Or;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.junit.Assert.*;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrganizationAuthorityStepDefinitions {
 
@@ -53,7 +52,7 @@ public class OrganizationAuthorityStepDefinitions {
             final OrganizationAuthorityName authorityNameFinal = OrganizationAuthorityName.valueOf(columns.get("authority"));
             final OrganizationAuthority organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndName(organization.getId(), authorityNameFinal);
 
-            assertThat(userFinal).isNotNull();
+            assertNotNull(userFinal);
 
             userFinal.setUserOrganizationAuthorities(organizationAuthorityRepository.findAllByUsers_Id(userFinal.getId()));
             userFinal.getUserOrganizationAuthorities().stream().filter(authority -> authority.getName().equals(authorityNameFinal))
@@ -108,6 +107,25 @@ public class OrganizationAuthorityStepDefinitions {
         }
     }
 
+    @When("{string} withdraw organization authorities to following users")
+    public void withdrawOrganizationAuthoritiesToFollowingUsers(String userFirstname, DataTable table) {
+        grantsFollowingUsersWithOrganizationAuthorities(userFirstname, table);
+    }
+
+    @Then("Verify that following users have the correct number of organization authorities")
+    public void verifyThatFollowingUsersHaveTheCorrectNumberOfOrganizationAuthorities(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Organization organizationContext;
+        User userContext;
+        for (Map<String, String> columns : rows) {
+            organizationContext = context.getOrganizations().get(columns.get("organization"));
+            userContext = context.getUsers().get(columns.get("firstname"));
+            Set<OrganizationAuthority> authorities = organizationAuthorityRepository.findByOrganizationIdAndUsersId(organizationContext.getId(), userContext.getId());
+            assertEquals(String.valueOf(authorities.size()), columns.get("authorities"));
+        }
+    }
+
     @Then("Verify that following users are granted with organization authorities")
     public void verifyThatFollowingUsersAreGrantedWithOrganizationAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
@@ -119,7 +137,7 @@ public class OrganizationAuthorityStepDefinitions {
             userContext = context.getUsers().get(columns.get("firstname"));
             final String authorityName = columns.get("authority");
             OrganizationAuthority organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationContext.getId(), userContext.getId(), OrganizationAuthorityName.valueOf(authorityName));
-            assertThat(organizationAuthority).isNotNull();
+            assertNotNull(organizationAuthority);
         }
     }
 
