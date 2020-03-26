@@ -1,6 +1,7 @@
 package fr.thomah.valyou.service;
 
 import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.security.UserPrincipal;
 import org.slf4j.Logger;
@@ -21,6 +22,9 @@ import java.util.*;
 public class UserService implements UserDetailsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -47,6 +51,7 @@ public class UserService implements UserDetailsService {
 
     private Set<SimpleGrantedAuthority> getAuthority(User user) {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        user.setUserAuthorities(authorityRepository.findAllByUsers_Id(user.getId()));
         user.getUserAuthorities().forEach(role -> {
             authorities.add(new SimpleGrantedAuthority(role.getName().name()));
         });

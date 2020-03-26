@@ -52,7 +52,7 @@ public class Budget extends AuditEntity<String> {
     private Content rules = new Content();
 
     @ManyToOne
-    @JsonIgnoreProperties({"members", "projects", "budgets", "slackTeam"})
+    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @ManyToOne

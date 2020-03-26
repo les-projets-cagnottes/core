@@ -15,6 +15,7 @@ import java.util.Map;
 public class CucumberContext {
 
     private Map<String, AuthenticationResponse> auths = new HashMap<>();
+    private Map<String, OrganizationAuthority> organizationAuthorities = new HashMap<>();
     private Map<String, Organization> organizations = new HashMap<>();
     private Map<String, User> users = new HashMap<>();
     private Map<String, Content> contents = new HashMap<>();
@@ -26,6 +27,7 @@ public class CucumberContext {
         budgets = new HashMap<>();
         contents = new HashMap<>();
         users = new HashMap<>();
+        organizationAuthorities = new HashMap<>();
         organizations = new HashMap<>();
     }
 

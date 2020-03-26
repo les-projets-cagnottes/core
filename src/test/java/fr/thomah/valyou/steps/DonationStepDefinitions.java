@@ -8,13 +8,11 @@ import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.repository.*;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.sql.Date;
@@ -25,7 +23,6 @@ import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
 import static java.time.temporal.TemporalAdjusters.lastDayOfYear;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DonationStepDefinitions {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DonationStepDefinitions.class);
@@ -66,22 +63,6 @@ public class DonationStepDefinitions {
     @Autowired
     private CucumberContext context;
 
-    @Given("Empty database")
-    public void emptyDatabase() {
-        budgetRepository.findAll().forEach(budget -> {
-            budget.setProjects(new LinkedHashSet<>());
-            budgetRepository.save(budget);
-        });
-
-        projectRepository.deleteAll();
-        budgetRepository.deleteAll();
-        contentRepository.deleteAll();
-        userRepository.deleteAll();
-        organizationRepository.deleteAll();
-
-        context.reset();
-    }
-
     @And("The following organizations are registered")
     public void theFollowingOrganizationsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
@@ -100,6 +81,7 @@ public class DonationStepDefinitions {
                 organizationAuthority = new OrganizationAuthority(organization, authorityName);
                 organizationAuthority = organizationAuthorityRepository.save(organizationAuthority);
                 organization.getOrganizationAuthorities().add(organizationAuthority);
+                context.getOrganizationAuthorities().put(organization.getName() + authorityName.name(), organizationAuthority);
             }
             organization = organizationRepository.save(organization);
 
@@ -330,4 +312,5 @@ public class DonationStepDefinitions {
             assertThat(budget.getAmountPerMember() - totalAmount).isEqualTo(Float.parseFloat(columns.get("amount")));
         }
     }
+
 }

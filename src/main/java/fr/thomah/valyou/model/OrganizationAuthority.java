@@ -24,10 +24,10 @@ public class OrganizationAuthority extends AuditEntity<String> {
     private Long id;
 
     @ManyToOne
-    @JsonIgnoreProperties({"members", "projects", "budgets", "slackTeam"})
+    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
-    @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "userOrganizationAuthorities")
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private Set<User> users = new LinkedHashSet<>();
 
@@ -44,4 +44,12 @@ public class OrganizationAuthority extends AuditEntity<String> {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return "OrganizationAuthority{" +
+                "id=" + id +
+                ", organization=" + organization.getName() +
+                ", name=" + name +
+                '}';
+    }
 }

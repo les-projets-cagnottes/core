@@ -1,4 +1,4 @@
-Feature: Donation Management
+Feature: Donation
   Verifies rules for create and delete donations
 
   Scenario: A member can contribute on a campaign in progress whose deadline has not been reached

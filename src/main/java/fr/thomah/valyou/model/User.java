@@ -18,6 +18,12 @@ import java.util.*;
 @Setter(AccessLevel.PUBLIC)
 @Getter(AccessLevel.PUBLIC)
 @Entity
+@NamedEntityGraph(name = "User.withAuthorities",
+        attributeNodes = {
+            @NamedAttributeNode("userAuthorities"),
+            @NamedAttributeNode("userOrganizationAuthorities")
+        }
+)
 @Table(name = "users")
 public class User extends AuditEntity<String> implements UserDetails {
 
@@ -56,7 +62,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     @NotNull
     private Date lastPasswordResetDate = new Date();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
@@ -64,19 +70,19 @@ public class User extends AuditEntity<String> implements UserDetails {
     @JsonIgnoreProperties(value = {"users"})
     private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "organization_authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"organization", "userAuthorities"})
+    @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthority> userOrganizationAuthorities = new LinkedHashSet<>();
 
     @Transient
     private Set<SimpleGrantedAuthority> authorities = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"members", "projects", "budgets", "slackTeam"})
+    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")

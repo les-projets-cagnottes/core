@@ -6,8 +6,9 @@ import fr.thomah.valyou.generator.UserGenerator;
 import fr.thomah.valyou.model.*;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
-import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,10 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.security.Principal;
 import java.util.Date;
@@ -29,6 +28,8 @@ import java.util.stream.IntStream;
 
 @RestController
 public class UserController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private ApiTokenRepository apiTokenRepository;
@@ -137,14 +138,14 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/user/{id}/roles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/api/user/{id}/orgauthorities", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void grant(@PathVariable long id, @RequestBody OrganizationAuthority organizationAuthority) {
 
         if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
             throw new BadRequestException();
         }
 
-        User userInDb = repository.findById(id).orElse(null);
+        final User userInDb = repository.findById(id).orElse(null);
         OrganizationAuthority organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
 
         if(userInDb == null || organizationAuthorityInDb == null) {
@@ -154,8 +155,14 @@ public class UserController {
         userInDb.getUserOrganizationAuthorities().stream().filter(authority -> authority.getId().equals(organizationAuthorityInDb.getId()))
                 .findAny()
                 .ifPresentOrElse(
-                        authority -> userInDb.getUserOrganizationAuthorities().remove(authority),
-                        () -> userInDb.getUserOrganizationAuthorities().add(organizationAuthorityInDb)
+                        authority -> {
+                            LOGGER.debug("Remove organization authority {} from user {}", authority.getId(), userInDb.getId());
+                            userInDb.getUserOrganizationAuthorities().remove(authority);
+                        },
+                        () -> {
+                            LOGGER.debug("Add organization authority {} to user {}", organizationAuthorityInDb.getId(), userInDb.getId());
+                            userInDb.getUserOrganizationAuthorities().add(organizationAuthorityInDb);
+                        }
                 );
         repository.save(userInDb);
     }
