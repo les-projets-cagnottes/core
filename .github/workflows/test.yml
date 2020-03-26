@@ -20,8 +20,9 @@ jobs:
         server-id: github
         settings-path: ${{ github.workspace }}
 
-    - name: Build with Maven
-      run: ./mvnw -B clean test --file pom.xml
+    - name: Test with Maven
+      id: tests_run
+      run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml)
 
     - name: Generate Cluecumber report
       run: ./mvnw -B cluecumber-report:reporting --file pom-cluecumber.xml
@@ -54,3 +55,4 @@ jobs:
         git add .
         git commit --allow-empty -m "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
         git push
+        exit ${{ steps.tests_run.outputs.EXIT_CODE }}
