@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
@@ -139,19 +140,39 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user/{id}/orgauthorities", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void grant(@PathVariable long id, @RequestBody OrganizationAuthority organizationAuthority) {
+    public void grant(Principal principal, @PathVariable long id, @RequestBody OrganizationAuthority organizationAuthority) {
 
+        // All prerequisites are presents
         if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
+            LOGGER.debug("Impossible to grant user {} with organization authority {} : some parameters are missing", id, organizationAuthority);
             throw new BadRequestException();
         }
 
+        // Verify user and organization authority exists in DB
         final User userInDb = repository.findById(id).orElse(null);
         OrganizationAuthority organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
-
         if(userInDb == null || organizationAuthorityInDb == null) {
+            LOGGER.debug("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
             throw new NotFoundException();
         }
 
+        // Test that user logged in has correct rights
+        User userLoggedIn = userService.get(principal);
+        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationAuthorityInDb.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_OWNER) == null &&
+                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
+            LOGGER.debug("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
+            throw new ForbiddenException();
+        }
+
+        // Verify that user we want to grant is member of target organization
+        Organization organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).orElse(null);
+        LOGGER.debug(String.valueOf(organization));
+        if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).isEmpty()) {
+            LOGGER.debug("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
+            throw new BadRequestException();
+        }
+
+        // Grant or remove organization authority
         userInDb.getUserOrganizationAuthorities().stream().filter(authority -> authority.getId().equals(organizationAuthorityInDb.getId()))
                 .findAny()
                 .ifPresentOrElse(

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -29,6 +30,10 @@ public class CucumberContext {
         users = new HashMap<>();
         organizationAuthorities = new HashMap<>();
         organizations = new HashMap<>();
+    }
+
+    public static Long generateId() {
+        return ThreadLocalRandom.current().nextLong(Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
 }

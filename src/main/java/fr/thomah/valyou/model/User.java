@@ -62,7 +62,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     @NotNull
     private Date lastPasswordResetDate = new Date();
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany
     @JoinTable(
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
@@ -70,7 +70,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     @JsonIgnoreProperties(value = {"users"})
     private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany
     @JoinTable(
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
@@ -81,7 +81,7 @@ public class User extends AuditEntity<String> implements UserDetails {
     @Transient
     private Set<SimpleGrantedAuthority> authorities = new LinkedHashSet<>();
 
-    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "members")
     @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Set<Organization> organizations = new LinkedHashSet<>();
 

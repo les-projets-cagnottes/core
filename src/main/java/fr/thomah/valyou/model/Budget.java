@@ -39,7 +39,7 @@ public class Budget extends AuditEntity<String> {
     @NotNull
     private Date endDate = new Date();
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany
     @JoinTable(
             name = "project_budgets",
             joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},

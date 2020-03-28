@@ -14,6 +14,11 @@ import java.util.Set;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
+@NamedEntityGraph(name = "Organization.withMembers",
+        attributeNodes = {
+                @NamedAttributeNode("members")
+        }
+)
 @Table(name = "organizations")
 public class Organization extends AuditEntity<String> {
 
@@ -25,7 +30,7 @@ public class Organization extends AuditEntity<String> {
     @NotNull
     private String name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},

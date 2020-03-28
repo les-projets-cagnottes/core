@@ -66,11 +66,7 @@ public class OrganizationAuthorityStepDefinitions {
             user = userRepository.save(userFinal);
             user.setPassword(password);
             context.getUsers().put(user.getFirstname(), user);
-
-            Set<OrganizationAuthority> organizationAuthorities = organizationAuthorityRepository.findAllByUsers_Id(user.getId());
-            LOGGER.debug("User {} has {} organization authorities", user.getId(), organizationAuthorities.size());
         }
-
     }
 
     @When("{string} grants following users with organization authorities")
@@ -122,7 +118,7 @@ public class OrganizationAuthorityStepDefinitions {
             organizationContext = context.getOrganizations().get(columns.get("organization"));
             userContext = context.getUsers().get(columns.get("firstname"));
             Set<OrganizationAuthority> authorities = organizationAuthorityRepository.findByOrganizationIdAndUsersId(organizationContext.getId(), userContext.getId());
-            assertEquals(String.valueOf(authorities.size()), columns.get("authorities"));
+            assertEquals(columns.get("authorities"), String.valueOf(authorities.size()));
         }
     }
 

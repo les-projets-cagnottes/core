@@ -34,9 +34,6 @@ public class DonationStepDefinitions {
     private DonationHttpClient donationHttpClient;
 
     @Autowired
-    private AuthorityRepository authorityRepository;
-
-    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -62,59 +59,6 @@ public class DonationStepDefinitions {
 
     @Autowired
     private CucumberContext context;
-
-    @And("The following organizations are registered")
-    public void theFollowingOrganizationsAreRegistered(DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        Organization organization;
-        OrganizationAuthority organizationAuthority;
-        for (Map<String, String> columns : rows) {
-
-            // Create organization
-            organization = new Organization();
-            organization.setName(columns.get("name"));
-            organization = organizationRepository.save(organization);
-
-            // Create organization's authorities
-            for (OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
-                organizationAuthority = new OrganizationAuthority(organization, authorityName);
-                organizationAuthority = organizationAuthorityRepository.save(organizationAuthority);
-                organization.getOrganizationAuthorities().add(organizationAuthority);
-                context.getOrganizationAuthorities().put(organization.getName() + authorityName.name(), organizationAuthority);
-            }
-            organization = organizationRepository.save(organization);
-
-            // Save in Test Map
-            context.getOrganizations().put(organization.getName(), organization);
-        }
-    }
-
-    @And("The following users are members of organization {string}")
-    public void theFollowingUsersAreMembersOfOrganization(String organizationName, DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        Organization organization = context.getOrganizations().get(organizationName);
-        User user;
-        for (Map<String, String> columns : rows) {
-
-            // Create user
-            user = new User();
-            user.setUsername(columns.get("email"));
-            user.setEmail(columns.get("email"));
-            user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
-            user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
-            user.setFirstname(columns.get("firstname"));
-            user.setEnabled(true);
-            user.getUserAuthorities().add(authorityRepository.findByName(AuthorityName.ROLE_USER));
-            user.getOrganizations().add(organization);
-            user = userRepository.save(user);
-
-            // Save in Test Map
-            user.setPassword(columns.get("password"));
-            context.getUsers().put(user.getFirstname(), user);
-        }
-    }
 
     @And("The following contents are saved in the organization {string}")
     public void theFollowingContentsAreSavedInTheOrganization(String organizationName, DataTable table) {
