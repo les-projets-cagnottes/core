@@ -13,7 +13,6 @@ import io.cucumber.java.en.When;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -21,7 +20,7 @@ import java.util.*;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
 import static java.time.temporal.TemporalAdjusters.lastDayOfYear;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 public class DonationStepDefinitions {
 
@@ -202,8 +201,8 @@ public class DonationStepDefinitions {
         user.setPassword(context.getUsers().get(userFirstname).getPassword());
         AuthenticationResponse response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
 
-        assertThat(response).isNotNull();
-        assertThat(response.getToken()).isNotEmpty();
+        assertNotNull(response);
+        assertFalse(response.getToken().isEmpty());
 
         context.getAuths().put(userFirstname, response);
     }
@@ -236,7 +235,7 @@ public class DonationStepDefinitions {
     @Then("{string} has {string} donation on the {string} budget")
     public void hasDonationOnTheBudget(String userFirstname, String numberOfDonations, String budgetName) {
         Set<Donation> donations = donationRepository.findAllByContributorIdAndBudgetId(context.getUsers().get(userFirstname).getId(), context.getBudgets().get(budgetName).getId());
-        assertThat(String.valueOf(donations.size())).isEqualTo(numberOfDonations);
+        assertEquals(numberOfDonations, String.valueOf(donations.size()));
     }
 
     @And("Following users have corresponding amount left on budgets")
@@ -253,7 +252,7 @@ public class DonationStepDefinitions {
                 totalAmount+= donation.getAmount();
             }
 
-            assertThat(budget.getAmountPerMember() - totalAmount).isEqualTo(Float.parseFloat(columns.get("amount")));
+            assertEquals(Float.parseFloat(columns.get("amount")), budget.getAmountPerMember() - totalAmount, 0);
         }
     }
 

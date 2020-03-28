@@ -22,7 +22,10 @@ jobs:
 
     - name: Test with Maven
       id: tests_run
-      run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml)
+      run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
+
+    - name: Print logs
+      run: cat test.log
 
     - name: Generate Cluecumber report
       run: ./mvnw -B cluecumber-report:reporting --file pom-cluecumber.xml
