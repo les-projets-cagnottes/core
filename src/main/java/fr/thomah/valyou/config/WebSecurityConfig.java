@@ -65,6 +65,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS,"**").permitAll()
                 .antMatchers(HttpMethod.POST,"/api/auth/login**").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/auth/login/slack**").permitAll()
+                .antMatchers(HttpMethod.GET,"/api-docs/**").permitAll()
+                .antMatchers(HttpMethod.GET,"/swagger-ui**").permitAll()
+                .antMatchers(HttpMethod.GET,"/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()
 
                 .and()
