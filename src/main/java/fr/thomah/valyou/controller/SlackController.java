@@ -3,7 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.SlackClientService;

@@ -16,10 +16,10 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Component
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class DonationHttpClient {
+public class MainHttpClient {
 
     private final String SERVER_URL = "http://localhost";
-    private final String ENDPOINT = "/api/donation";
+    private final String ENDPOINT = "/api";
 
     @LocalServerPort
     private int port;
@@ -27,7 +27,7 @@ public class DonationHttpClient {
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
 
-    public DonationHttpClient() {
+    public MainHttpClient() {
         restTemplate = new RestTemplateBuilder()
                 .customizers(new LoggingCustomizer())
                 .build();
@@ -40,28 +40,16 @@ public class DonationHttpClient {
         return SERVER_URL + ":" + port + ENDPOINT;
     }
 
-    public int post(final Donation donation) {
-        HttpEntity<Donation> entity = new HttpEntity<>(donation, headers);
+    public int health() {
+        HttpEntity<Donation> entity = new HttpEntity<>(headers);
 
-        int statusCode = 0;
+        int statusCode;
         try {
-            statusCode = restTemplate.postForEntity(endpoint(), entity, Void.class).getStatusCodeValue();
+            statusCode = restTemplate.getForEntity(endpoint() + "/health", Void.class, entity).getStatusCodeValue();
         } catch (HttpClientErrorException ex) {
             statusCode = ex.getStatusCode().value();
         }
 
         return statusCode;
-    }
-
-    public Donation getContents() {
-        return restTemplate.getForEntity(endpoint(), Donation.class).getBody();
-    }
-
-    public void clean() {
-        restTemplate.delete(endpoint());
-    }
-
-    public void setBearerAuth(String token) {
-        headers.setBearerAuth(token);
     }
 }

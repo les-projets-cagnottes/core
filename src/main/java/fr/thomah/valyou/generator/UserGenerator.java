@@ -1,8 +1,8 @@
 package fr.thomah.valyou.generator;
 
-import fr.thomah.valyou.model.Authority;
-import fr.thomah.valyou.model.AuthorityName;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.Authority;
+import fr.thomah.valyou.entity.AuthorityName;
+import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

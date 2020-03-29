@@ -1,7 +1,7 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.Project;
-import fr.thomah.valyou.model.ProjectStatus;
+import fr.thomah.valyou.entity.Project;
+import fr.thomah.valyou.entity.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 /**
  * Use a prefix *A_* to order correctly data in query outputs

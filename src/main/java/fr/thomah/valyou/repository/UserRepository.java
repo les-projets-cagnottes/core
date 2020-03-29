@@ -1,6 +1,6 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
-import java.util.Set;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     long count();

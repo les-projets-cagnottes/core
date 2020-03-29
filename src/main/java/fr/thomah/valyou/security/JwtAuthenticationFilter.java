@@ -1,7 +1,7 @@
 package fr.thomah.valyou.security;
 
-import static fr.thomah.valyou.model.Constants.HEADER_STRING;
-import static fr.thomah.valyou.model.Constants.TOKEN_PREFIX;
+import static fr.thomah.valyou.entity.Constants.HEADER_STRING;
+import static fr.thomah.valyou.entity.Constants.TOKEN_PREFIX;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.SignatureException;

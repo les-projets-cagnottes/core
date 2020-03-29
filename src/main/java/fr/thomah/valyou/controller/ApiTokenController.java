@@ -1,8 +1,8 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.AuthenticationResponse;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.AuthenticationResponse;
+import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.repository.ApiTokenRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.security.TokenProvider;
@@ -13,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;

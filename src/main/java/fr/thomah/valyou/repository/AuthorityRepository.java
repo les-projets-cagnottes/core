@@ -1,10 +1,9 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.Authority;
-import fr.thomah.valyou.model.AuthorityName;
+import fr.thomah.valyou.entity.Authority;
+import fr.thomah.valyou.entity.AuthorityName;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
 import java.util.Set;
 
 public interface AuthorityRepository extends JpaRepository<Authority, Long> {

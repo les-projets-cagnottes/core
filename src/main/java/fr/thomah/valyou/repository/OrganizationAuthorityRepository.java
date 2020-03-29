@@ -1,7 +1,7 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.OrganizationAuthority;
-import fr.thomah.valyou.model.OrganizationAuthorityName;
+import fr.thomah.valyou.entity.OrganizationAuthority;
+import fr.thomah.valyou.entity.OrganizationAuthorityName;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Set;

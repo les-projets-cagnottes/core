@@ -4,7 +4,7 @@ import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
 import fr.thomah.valyou.controller.UserController;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;

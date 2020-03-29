@@ -1,6 +1,6 @@
 package fr.thomah.valyou.component;
 
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Setter(AccessLevel.PUBLIC)
 @Component
 public class CucumberContext {
+
+    private int lastHttpCode = 0;
 
     private Map<String, AuthenticationResponse> auths = new HashMap<>();
     private Map<String, OrganizationAuthority> organizationAuthorities = new HashMap<>();

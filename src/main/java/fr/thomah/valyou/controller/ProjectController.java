@@ -2,7 +2,7 @@ package fr.thomah.valyou.controller;
 
 import com.google.gson.Gson;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.SlackClientService;
@@ -16,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;

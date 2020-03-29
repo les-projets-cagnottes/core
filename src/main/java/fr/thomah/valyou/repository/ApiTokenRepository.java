@@ -1,6 +1,6 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.AuthenticationResponse;
+import fr.thomah.valyou.entity.AuthenticationResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

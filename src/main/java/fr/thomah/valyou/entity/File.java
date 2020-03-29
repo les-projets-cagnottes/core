@@ -1,4 +1,4 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;

@@ -1,8 +1,6 @@
 package fr.thomah.valyou.component;
 
-import fr.thomah.valyou.model.AuthenticationResponse;
-import fr.thomah.valyou.model.Donation;
-import fr.thomah.valyou.steps.DonationStepDefinitions;
+import fr.thomah.valyou.entity.AuthenticationResponse;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +9,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Collections;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 

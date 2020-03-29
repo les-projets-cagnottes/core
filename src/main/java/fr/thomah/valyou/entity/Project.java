@@ -1,12 +1,10 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

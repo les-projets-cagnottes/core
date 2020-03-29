@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static fr.thomah.valyou.model.Constants.*;
+import static fr.thomah.valyou.entity.Constants.*;
 
 @Component
 public class TokenProvider implements Serializable {

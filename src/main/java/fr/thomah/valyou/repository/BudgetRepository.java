@@ -1,7 +1,6 @@
 package fr.thomah.valyou.repository;
 
-import fr.thomah.valyou.model.Budget;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.Budget;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.thomah.valyou.audit.AuditEntity;

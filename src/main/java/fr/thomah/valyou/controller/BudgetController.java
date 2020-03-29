@@ -1,8 +1,7 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.generator.OrganizationGenerator;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;

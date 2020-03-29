@@ -1,4 +1,4 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -6,7 +6,6 @@ import fr.thomah.valyou.audit.AuditEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;

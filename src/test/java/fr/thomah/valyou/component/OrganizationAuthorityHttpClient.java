@@ -1,7 +1,7 @@
 package fr.thomah.valyou.component;
 
-import fr.thomah.valyou.model.OrganizationAuthority;
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.OrganizationAuthority;
+import fr.thomah.valyou.entity.User;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;

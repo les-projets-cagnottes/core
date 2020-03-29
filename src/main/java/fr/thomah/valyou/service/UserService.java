@@ -1,6 +1,6 @@
 package fr.thomah.valyou.service;
 
-import fr.thomah.valyou.model.User;
+import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
 import fr.thomah.valyou.security.UserPrincipal;
@@ -35,7 +35,11 @@ public class UserService implements UserDetailsService {
     public User get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
-        return userRepository.findByUsername(userPrincipal.getUsername());
+        User user = userRepository.findByUsername(userPrincipal.getUsername());
+        if(user == null) {
+            user = userRepository.findByEmail(userPrincipal.getUsername());
+        }
+        return user;
     }
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

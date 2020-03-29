@@ -3,7 +3,7 @@ package fr.thomah.valyou.steps;
 import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.OrganizationAuthorityHttpClient;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;

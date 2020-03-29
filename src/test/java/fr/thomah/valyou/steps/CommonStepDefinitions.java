@@ -2,7 +2,7 @@ package fr.thomah.valyou.steps;
 
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.controller.UserController;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static fr.thomah.valyou.component.CucumberContext.generateId;
 import static org.junit.Assert.assertNotNull;

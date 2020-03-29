@@ -1,7 +1,7 @@
 package fr.thomah.valyou;
 
 import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.generator.StringGenerator;
 import org.slf4j.Logger;

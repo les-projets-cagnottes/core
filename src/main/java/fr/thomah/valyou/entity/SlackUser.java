@@ -1,4 +1,4 @@
-package fr.thomah.valyou.model;
+package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.thomah.valyou.audit.AuditEntity;
@@ -7,32 +7,41 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@Table(name = "donations")
-public class Donation extends AuditEntity<String> {
+@Table(name = "slack_user")
+public class SlackUser extends AuditEntity<String> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "amount")
-    @NotNull
-    private float amount;
-
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
-    private User contributor = new User();
+    private User user = new User();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
-    private Project project = new Project();
+    @JsonIgnoreProperties({"organization", "slackUsers"})
+    private SlackTeam slackTeam;
 
-    @ManyToOne
-    @JsonIgnoreProperties(value = {"organization", "sponsor", "donations"})
-    private Budget budget = new Budget();
+    @Column
+    private String slackId;
+
+    @Column
+    private String name;
+
+    @Column
+    private String email;
+
+    @Column
+    private String imId;
+
+    @Column
+    private String image_192;
+
+    @Column
+    private Boolean deleted;
 
 }

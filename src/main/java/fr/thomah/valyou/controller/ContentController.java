@@ -1,10 +1,8 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.Budget;
-import fr.thomah.valyou.model.Content;
-import fr.thomah.valyou.model.Organization;
-import fr.thomah.valyou.model.Project;
+import fr.thomah.valyou.entity.Content;
+import fr.thomah.valyou.entity.Organization;
 import fr.thomah.valyou.repository.ContentRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;

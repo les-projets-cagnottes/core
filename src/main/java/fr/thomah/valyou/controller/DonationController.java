@@ -3,7 +3,7 @@ package fr.thomah.valyou.controller;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.model.*;
+import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.DonationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
