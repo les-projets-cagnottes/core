@@ -1,63 +1,60 @@
 package fr.thomah.valyou.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import fr.thomah.valyou.entity.SlackTeam;
+import fr.thomah.valyou.entity.SlackUser;
+import fr.thomah.valyou.entity.User;
+import fr.thomah.valyou.entity.model.AuthenticationRequestModel;
+import fr.thomah.valyou.entity.model.AuthenticationResponseModel;
+import fr.thomah.valyou.entity.model.UserModel;
+import fr.thomah.valyou.exception.AuthenticationException;
+import fr.thomah.valyou.exception.BadRequestException;
+import fr.thomah.valyou.exception.InternalServerException;
+import fr.thomah.valyou.exception.NotFoundException;
+import fr.thomah.valyou.generator.StringGenerator;
+import fr.thomah.valyou.generator.UserGenerator;
+import fr.thomah.valyou.repository.SlackTeamRepository;
+import fr.thomah.valyou.repository.SlackUserRepository;
+import fr.thomah.valyou.repository.UserRepository;
+import fr.thomah.valyou.security.TokenProvider;
+import fr.thomah.valyou.service.HttpClientService;
+import fr.thomah.valyou.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Principal;
 import java.time.Duration;
-import javax.servlet.http.HttpServletRequest;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import fr.thomah.valyou.exception.*;
-import fr.thomah.valyou.generator.StringGenerator;
-import fr.thomah.valyou.generator.UserGenerator;
-import fr.thomah.valyou.entity.AuthenticationResponse;
-import fr.thomah.valyou.entity.SlackTeam;
-import fr.thomah.valyou.entity.SlackUser;
-import fr.thomah.valyou.entity.User;
-import fr.thomah.valyou.model.auth.AuthenticationRequest;
-import fr.thomah.valyou.repository.SlackTeamRepository;
-import fr.thomah.valyou.repository.SlackUserRepository;
-import fr.thomah.valyou.repository.UserRepository;
-import fr.thomah.valyou.security.TokenProvider;
-import fr.thomah.valyou.security.UserPrincipal;
-import fr.thomah.valyou.service.HttpClientService;
-import fr.thomah.valyou.service.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.aspectj.weaver.ast.Not;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCrypt;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Authentication", description = "The Authentication API")
 public class AuthenticationController {
 
+    public static final String TOKEN_HEADER = "Authorization";
+
     private static final String SLACK_CLIENT_ID = System.getenv("VALYOU_SLACK_CLIENT_ID");
     private static final String SLACK_CLIENT_SECRET = System.getenv("VALYOU_SLACK_CLIENT_SECRET");
-    private static final String TOKEN_HEADER = "Authorization";
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationController.class);
 
     @Autowired
@@ -83,13 +80,11 @@ public class AuthenticationController {
 
     @Operation(summary = "Sign in with email and password", description = "Sign in with email and password", tags = { "Authentication" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful login",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthenticationResponse.class)))),
-            @ApiResponse(responseCode = "401", description = "Invalid credentials or user",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseEntity.class))))
+            @ApiResponse(responseCode = "200", description = "Successful login", content = @Content(schema = @Schema(implementation = AuthenticationResponseModel.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials or user", content = @Content(schema = @Schema()))
     })
     @RequestMapping(value = "/auth/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public AuthenticationResponse login(@RequestBody AuthenticationRequest user) throws AuthenticationException {
+    public AuthenticationResponseModel login(@RequestBody AuthenticationRequestModel user) throws AuthenticationException {
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getEmail(),
@@ -99,20 +94,16 @@ public class AuthenticationController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = jwtTokenUtil.generateToken(authentication);
-        return new AuthenticationResponse(token);
+        return new AuthenticationResponseModel(token);
     }
 
     @Operation(summary = "Refresh auth token", description = "Refresh auth token for another 5 hours", tags = { "Authentication" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful login",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthenticationResponse.class)))),
-            @ApiResponse(responseCode = "400", description = "Token is invalid",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseEntity.class))))
+            @ApiResponse(responseCode = "200", description = "Successful refresh", content = @Content(schema = @Schema(implementation = AuthenticationResponseModel.class))),
+            @ApiResponse(responseCode = "400", description = "Token is invalid", content = @Content(schema = @Schema()))
     })
-    @Parameter(in = ParameterIn.HEADER, description = "Bearer token", name = TOKEN_HEADER
-            , content = @Content(schema = @Schema(type = "string", implementation = String.class)))
     @RequestMapping(value = "/auth/refresh", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public AuthenticationResponse refresh(HttpServletRequest request) {
+    public AuthenticationResponseModel refresh(HttpServletRequest request) {
         String authToken = request.getHeader(TOKEN_HEADER);
         final String token = authToken.substring(7);
         String username = jwtTokenUtil.getUsernameFromToken(token);
@@ -122,7 +113,7 @@ public class AuthenticationController {
         }
         if (jwtTokenUtil.canTokenBeRefreshed(token, user.getLastPasswordResetDate())) {
             String refreshedToken = jwtTokenUtil.refreshToken(token);
-            return new AuthenticationResponse(refreshedToken);
+            return new AuthenticationResponseModel(refreshedToken);
         } else {
             throw new BadRequestException();
         }
@@ -130,15 +121,12 @@ public class AuthenticationController {
 
     @Operation(summary = "Sign in with Slack", description = "Exchanging a verification code for an access token with Slack", tags = { "Authentication" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful login",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthenticationResponse.class)))),
-            @ApiResponse(responseCode = "404", description = "No Slack team has been found",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseEntity.class)))),
-            @ApiResponse(responseCode = "500", description = "Unknown error with Slack",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseEntity.class))))
+            @ApiResponse(responseCode = "200", description = "Successful login", content = @Content(schema = @Schema(implementation = AuthenticationResponseModel.class))),
+            @ApiResponse(responseCode = "404", description = "No Slack team has been found", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "500", description = "Unknown error with Slack", content = @Content(schema = @Schema()))
     })
     @RequestMapping(value = "/auth/login/slack", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public AuthenticationResponse slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
+    public AuthenticationResponseModel slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -203,7 +191,7 @@ public class AuthenticationController {
                             AuthorityUtils.createAuthorityList("ROLE_USER"));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     final String token = jwtTokenUtil.generateToken(authentication);
-                    return new AuthenticationResponse(token);
+                    return new AuthenticationResponseModel(token);
                 } else {
                     throw new NotFoundException();
                 }
@@ -218,24 +206,18 @@ public class AuthenticationController {
 
     @Operation(summary = "Get current user", description = "Return the user corresponding to the token", tags = { "Authentication" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful login",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthenticationResponse.class)))),
-            @ApiResponse(responseCode = "404", description = "No user has been found",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseEntity.class))))
+            @ApiResponse(responseCode = "200", description = "Return the current user", content = @Content(schema = @Schema(implementation = UserModel.class))),
+            @ApiResponse(responseCode = "404", description = "No user has been found", content = @Content(schema = @Schema()))
     })
     @RequestMapping(value = "/whoami", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public User whoami(Principal principal) {
+    public UserModel whoami(Principal principal) {
         User user = userService.get(principal);
         if(user == null) {
             throw new NotFoundException();
         } else {
-            return user;
+            user.setPassword("");
+            return UserModel.fromEntity(user);
         }
-    }
-
-    @ExceptionHandler({AuthenticationException.class})
-    public ResponseEntity<String> handleAuthenticationException(AuthenticationException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
 
 }

@@ -1,7 +1,7 @@
 package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.thomah.valyou.audit.AuditEntity;
+import fr.thomah.valyou.entity.model.AuthenticationResponseModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +14,7 @@ import java.util.Date;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "api_tokens")
-public class AuthenticationResponse extends AuditEntity<String> implements Serializable {
+public class AuthenticationResponse extends AuthenticationResponseModel implements Serializable {
 
     private static final long serialVersionUID = 1250166508152483573L;
 
@@ -32,8 +32,7 @@ public class AuthenticationResponse extends AuditEntity<String> implements Seria
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private User user = new User();
 
-    public AuthenticationResponse() {
-    }
+    public AuthenticationResponse() {}
 
     public AuthenticationResponse(String token) {
         this.token = token;

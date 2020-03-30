@@ -2,7 +2,7 @@ package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.thomah.valyou.audit.AuditEntity;
+import fr.thomah.valyou.entity.model.UserModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,8 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Setter(AccessLevel.PUBLIC)
 @Getter(AccessLevel.PUBLIC)
@@ -24,42 +24,9 @@ import java.util.*;
         }
 )
 @Table(name = "users")
-public class User extends AuditEntity<String> implements UserDetails {
+public class User extends UserModel implements UserDetails {
 
     private static final long serialVersionUID = 6210782306288115135L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(name = "username")
-    private String username;
-
-    @Column(name = "password")
-    @NotNull
-    private String password;
-
-    @Column(name = "email", unique = true)
-    @NotNull
-    private String email;
-
-    @Column(name = "firstname")
-    private String firstname = "";
-
-    @Column(name = "lastname")
-    private String lastname = "";
-
-    @Column(name = "avatarUrl")
-    private String avatarUrl;
-
-    @Column(name = "enabled")
-    @NotNull
-    private Boolean enabled = false;
-
-    @Column(name = "lastpasswordresetdate")
-    @Temporal(TemporalType.TIMESTAMP)
-    @NotNull
-    private Date lastPasswordResetDate = new Date();
 
     @ManyToMany
     @JoinTable(
@@ -116,20 +83,6 @@ public class User extends AuditEntity<String> implements UserDetails {
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                ", firstname='" + firstname + '\'' +
-                ", lastname='" + lastname + '\'' +
-                ", enabled=" + enabled +
-                ", lastPasswordResetDate=" + lastPasswordResetDate +
-                '}';
-    }
-
     @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
@@ -155,14 +108,6 @@ public class User extends AuditEntity<String> implements UserDetails {
 
     public void addAuthority(Authority authority) {
         userAuthorities.add(authority);
-    }
-
-    public void addOrganization(Organization organization) {
-        organizations.add(organization);
-    };
-
-    public void addOrganizationAuthority(OrganizationAuthority authority) {
-        userOrganizationAuthorities.add(authority);
     }
 
 }
