@@ -10,12 +10,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -43,12 +43,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -78,12 +78,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns have a deadline reached
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -111,12 +111,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status    | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | C_AVORTED | 2              | 200               |
@@ -144,13 +144,13 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name                             | amountPerMember | sponsor | rules        |
-      | Annual Company Pot Previous Year | 150             | Sabrina | Terms of Use |
-      | Annual Company Pot               | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name                             | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot Previous Year | 150             | true          | Sabrina | Terms of Use |
+      | Unnamed Company | Annual Company Pot               | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -180,12 +180,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -216,12 +216,12 @@ Feature: Donation
       | firstname   | email                      | password |
       | Mike        | mike@unnamedcompany.com    | mike     |
       | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved in the organization "Unnamed Company"
-      | name         | value     |
-      | Terms of Use | Blablabla |
-    And The following budgets are available in the organization "Unnamed Company"
-      | name               | amountPerMember | sponsor | rules        |
-      | Annual Company Pot | 150             | Sabrina | Terms of Use |
+    And The following contents are saved
+      | organization    | name         | value     |
+      | Unnamed Company | Terms of Use | Blablabla |
+    And The following budgets are available
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
+      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |

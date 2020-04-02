@@ -22,7 +22,7 @@ public class SlackTeam extends AuditEntity<String> {
 
     @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)

@@ -16,10 +16,6 @@ import java.util.Set;
 @Table(name = "contents")
 public class Content extends AuditEntity<String> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
     @Column(name = "name")
     private String name;
 

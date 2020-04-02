@@ -1,14 +1,16 @@
 package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.thomah.valyou.audit.AuditEntity;
+import fr.thomah.valyou.entity.model.AuthorityModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -16,18 +18,9 @@ import java.util.Set;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "authorities")
-public class Authority extends AuditEntity<String> implements GrantedAuthority {
+public class Authority extends AuthorityModel implements GrantedAuthority {
 
     private static final long serialVersionUID = -8193848589240726612L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(length = 50)
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    private AuthorityName name;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})

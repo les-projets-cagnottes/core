@@ -33,7 +33,7 @@ public class User extends UserModel implements UserDetails {
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"users"})
+    @JsonIgnoreProperties(value = {"createdAt", "createdBy", "updatedAt", "updatedBy", "users"})
     private Set<Authority> userAuthorities = new LinkedHashSet<>();
 
     @ManyToMany
@@ -48,7 +48,7 @@ public class User extends UserModel implements UserDetails {
     private Set<SimpleGrantedAuthority> authorities = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members")
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Set<Organization> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")

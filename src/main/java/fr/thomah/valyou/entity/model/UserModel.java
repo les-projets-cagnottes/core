@@ -6,18 +6,17 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
-@Setter(AccessLevel.PUBLIC)
 @Getter(AccessLevel.PUBLIC)
+@Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class UserModel extends AuditEntity<String> {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    protected Long id;
 
     @Column(name = "username")
     protected String username;
@@ -48,36 +47,22 @@ public class UserModel extends AuditEntity<String> {
     @NotNull
     protected Date lastPasswordResetDate = new Date();
 
-    public static UserModel fromEntity(User user) {
+    public static UserModel fromEntity(User entity) {
         UserModel model = new UserModel();
-        model.setCreatedAt(user.getCreatedAt());
-        model.setCreatedBy(user.getCreatedBy());
-        model.setUpdatedAt(user.getUpdatedAt());
-        model.setUpdatedBy(user.getUpdatedBy());
-        model.setId(user.getId());
-        model.setUsername(user.getUsername());
-        model.setPassword(user.getPassword());
-        model.setEmail(user.getEmail());
-        model.setFirstname(user.getFirstname());
-        model.setLastname(user.getLastname());
-        model.setAvatarUrl(user.getAvatarUrl());
-        model.setEnabled(user.getEnabled());
-        model.setLastPasswordResetDate(user.getLastPasswordResetDate());
+        model.setCreatedAt(entity.getCreatedAt());
+        model.setCreatedBy(entity.getCreatedBy());
+        model.setUpdatedAt(entity.getUpdatedAt());
+        model.setUpdatedBy(entity.getUpdatedBy());
+        model.setId(entity.getId());
+        model.setUsername(entity.getUsername());
+        model.setPassword(entity.getPassword());
+        model.setEmail(entity.getEmail());
+        model.setFirstname(entity.getFirstname());
+        model.setLastname(entity.getLastname());
+        model.setAvatarUrl(entity.getAvatarUrl());
+        model.setEnabled(entity.getEnabled());
+        model.setLastPasswordResetDate(entity.getLastPasswordResetDate());
         return model;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                ", firstname='" + firstname + '\'' +
-                ", lastname='" + lastname + '\'' +
-                ", enabled=" + enabled +
-                ", lastPasswordResetDate=" + lastPasswordResetDate +
-                '}';
     }
 
 }

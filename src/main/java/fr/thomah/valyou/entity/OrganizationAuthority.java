@@ -24,7 +24,7 @@ public class OrganizationAuthority extends AuditEntity<String> {
     private Long id;
 
     @ManyToOne
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "userOrganizationAuthorities")

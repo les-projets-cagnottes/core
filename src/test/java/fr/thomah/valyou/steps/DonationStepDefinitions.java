@@ -3,9 +3,10 @@ package fr.thomah.valyou.steps;
 import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
-import fr.thomah.valyou.controller.UserController;
 import fr.thomah.valyou.entity.*;
-import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.repository.BudgetRepository;
+import fr.thomah.valyou.repository.DonationRepository;
+import fr.thomah.valyou.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
@@ -16,10 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
-import static java.time.temporal.TemporalAdjusters.lastDayOfYear;
 import static org.junit.Assert.*;
 
 public class DonationStepDefinitions {
@@ -36,77 +37,13 @@ public class DonationStepDefinitions {
     private BudgetRepository budgetRepository;
 
     @Autowired
-    private ContentRepository contentRepository;
-
-    @Autowired
     private DonationRepository donationRepository;
-
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
     private ProjectRepository projectRepository;
 
     @Autowired
-    private UserController userController;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private CucumberContext context;
-
-    @And("The following contents are saved in the organization {string}")
-    public void theFollowingContentsAreSavedInTheOrganization(String organizationName, DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        Content content;
-        for (Map<String, String> columns : rows) {
-
-            // Create content
-            content = new Content();
-            content.setName(columns.get("name"));
-            content.setValue(columns.get("value"));
-            content.getOrganizations().add(context.getOrganizations().get(organizationName));
-            content = contentRepository.save(content);
-
-            // Save in Test Map
-            context.getContents().put(content.getName(), content);
-        }
-    }
-
-    @And("The following budgets are available in the organization {string}")
-    public void theFollowingBudgetsAreAvailableInTheOrganization(String organizationName, DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        // Get dates for budget
-        LocalDate now = LocalDate.now();
-        LocalDate firstDay = now.with(firstDayOfYear());
-        LocalDate lastDay = now.with(lastDayOfYear());
-
-        Organization organization = context.getOrganizations().get(organizationName);
-        Budget budget;
-        for (Map<String, String> columns : rows) {
-
-            // Create budget
-            budget = new Budget();
-            budget.setName(columns.get("name"));
-            budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
-            budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
-            budget.setRules(context.getContents().get(columns.get("rules")));
-            budget.setStartDate(Date.valueOf(firstDay));
-            budget.setEndDate(Date.valueOf(lastDay));
-            budget.setOrganization(organization);
-            budget.setIsDistributed(true);
-            budget = budgetRepository.save(budget);
-
-            // Save in Test Map
-            context.getBudgets().put(budget.getName(), budget);
-        }
-    }
 
     @And("The following campaigns are running")
     public void theFollowingCampaignsAreRunning(DataTable table) {
@@ -226,7 +163,7 @@ public class DonationStepDefinitions {
             AuthenticationResponse response = authenticationHttpClient.refresh();
             context.getAuths().put(userFirstname, response);
 
-            // Refresh Token
+            // Make donation
             donationHttpClient.setBearerAuth(response.getToken());
             donationHttpClient.post(donation);
         }

@@ -1,43 +1,20 @@
 package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.thomah.valyou.audit.AuditEntity;
+import fr.thomah.valyou.entity.model.BudgetModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "budgets")
-public class Budget extends AuditEntity<String> {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(name = "name")
-    private String name = "";
-
-    @Column(name = "amount_per_member")
-    @NotNull
-    private float amountPerMember = 0f;
-
-    @Column(name = "is_distributed")
-    @NotNull
-    private Boolean isDistributed = false;
-
-    @Column(name = "start_date")
-    @NotNull
-    private Date startDate = new Date();
-
-    @Column(name = "end_date")
-    @NotNull
-    private Date endDate = new Date();
+public class Budget extends BudgetModel {
 
     @ManyToMany
     @JoinTable(
@@ -52,7 +29,7 @@ public class Budget extends AuditEntity<String> {
     private Content rules = new Content();
 
     @ManyToOne
-    @JsonIgnoreProperties({"members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @ManyToOne
@@ -63,17 +40,20 @@ public class Budget extends AuditEntity<String> {
     @JsonIgnoreProperties(value = {"budget"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
-    @Transient
-    private float totalDonations = 0f;
-
-    public void addProject(Project project) {
-        this.projects.add(project);
-        project.getBudgets().add(this);
+    @Override
+    public String toString() {
+        return "Budget{" +
+                "projects=" + projects.size() +
+                ", organization=" + organization.getId() +
+                ", sponsor=" + sponsor.getId() +
+                ", id=" + id +
+                ", name='" + name + '\'' +
+                ", amountPerMember=" + amountPerMember +
+                ", isDistributed=" + isDistributed +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", totalDonations=" + totalDonations +
+                ", donations=" + donations.size() +
+                '}';
     }
-
-    public void removeProject(Project project) {
-        this.projects.remove(project);
-        project.getBudgets().remove(this);
-    }
-
 }

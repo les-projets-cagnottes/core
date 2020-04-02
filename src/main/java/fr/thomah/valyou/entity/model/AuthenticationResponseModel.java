@@ -14,10 +14,6 @@ import java.util.Date;
 @MappedSuperclass
 public class AuthenticationResponseModel extends AuditEntity<String> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
     @Column
     private Date expiration = new Date();
 

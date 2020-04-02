@@ -1,64 +1,101 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.entity.Budget;
+import fr.thomah.valyou.entity.Organization;
+import fr.thomah.valyou.entity.User;
+import fr.thomah.valyou.entity.model.BudgetModel;
 import fr.thomah.valyou.exception.NotFoundException;
-import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
+import fr.thomah.valyou.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.security.Principal;
+import java.util.*;
 
 @RestController
+@RequestMapping("/api")
+@Tag(name = "Budgets", description = "The Budgets API")
 public class BudgetController {
 
     @Autowired
-    private BudgetRepository repository;
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
 
+    @Autowired
+    private UserService userService;
+
+    @Operation(summary = "Find all usable budgets for the current user", description = "A usable budget has an unreached end date and is distributed", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all usable budgets for the current user", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class))))
+    })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    public Page<Budget> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-        Pageable pageable = PageRequest.of(offset, limit);
-        return repository.findAll(pageable);
+    @RequestMapping(value = "/budget/usable", method = RequestMethod.GET)
+    public Set<BudgetModel> getUsableBudgets(Principal principal) {
+
+        // Get user organizations
+        User user = userService.get(principal);
+        Set<Organization> organizations = organizationRepository.findByMembers_Id(user.getId());
+
+        // Put all organization IDs in a single list
+        List<Long> organizationIds = new ArrayList<>();
+        organizations.forEach(organization -> {
+            organizationIds.add(organization.getId());
+        });
+
+        // Retrieve all corresponding entities
+        Set<Budget> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
+
+        // Convert all entities to models
+        Set<BudgetModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> {
+            models.add(BudgetModel.fromEntity(entity));
+        });
+
+        return models;
+    }
+
+    @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all budgets for an organization", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class))))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
+    public Set<BudgetModel> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
+        Set<Budget> entities = budgetRepository.findAllByOrganizationId(organizationId);
+
+        // Convert all entities to models
+        Set<BudgetModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> {
+            models.add(BudgetModel.fromEntity(entity));
+        });
+
+        return models;
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"isActive"})
-    public Set<Budget> getByIsActive(@RequestParam("isActive") boolean isActive) {
-        if(isActive) {
-            return repository.findAllByEndDateGreaterThan(new Date());
-        } else {
-            return repository.findAllByEndDateLessThan(new Date());
-        }
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
-    public Set<Budget> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
-        return repository.findAllByOrganizationId(organizationId);
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void create(@RequestBody Budget budget) {
-        repository.save(budget);
+        budgetRepository.save(budget);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/budget", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public void save(@RequestBody List<Budget> budgets) {
         for(Budget budget : budgets) {
-            Budget budgetInDb = repository.findById(budget.getId()).orElse(null);
+            Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
             if(budgetInDb == null) {
                 throw new NotFoundException();
             } else {
@@ -69,29 +106,29 @@ public class BudgetController {
                     budgetInDb.setAmountPerMember(budget.getAmountPerMember());
                     budgetInDb.setRules(budget.getRules());
                 }
-                repository.save(budgetInDb);
+                budgetRepository.save(budgetInDb);
             }
         }
     }
 
-    @RequestMapping(value = "/api/budget/{id}/distribute", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/budget/{id}/distribute", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void distribute(@PathVariable("id") Long id) {
-        Budget budget = repository.findById(id).orElse(null);
+        Budget budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
             throw new NotFoundException();
         } else {
             budget.setIsDistributed(!budget.getIsDistributed());
-            repository.save(budget);
+            budgetRepository.save(budget);
         }
     }
 
-    @RequestMapping(value = "/api/budget/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/budget/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") Long id) {
-        repository.deleteById(id);
+        budgetRepository.deleteById(id);
     }
 
 }

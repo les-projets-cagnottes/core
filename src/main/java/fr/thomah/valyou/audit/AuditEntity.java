@@ -1,6 +1,7 @@
 package fr.thomah.valyou.audit;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.thomah.valyou.entity.model.GenericModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,7 @@ import java.util.Date;
         value = {"updatedAt"},
         allowGetters = true
 )
-public class AuditEntity<U> {
+public class AuditEntity<U> extends GenericModel {
 
     @CreatedDate
     @Column(name = "created_at", updatable = false, columnDefinition = "timestamp default now()")

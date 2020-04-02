@@ -101,6 +101,12 @@ public class DonationController {
     }
 
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
+    public Set<Donation> getByBudgetId(@RequestParam("budgetId") long budgetId) {
+        return donationRepository.findAllByBudgetId(budgetId);
+    }
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
     public Set<Donation> getByProjectId(@RequestParam("projectId") long projectId) {
         return donationRepository.findAllByProjectId(projectId);
