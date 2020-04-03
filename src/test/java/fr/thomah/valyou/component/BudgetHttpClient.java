@@ -3,15 +3,16 @@ package fr.thomah.valyou.component;
 import fr.thomah.valyou.entity.Budget;
 import fr.thomah.valyou.entity.Donation;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
@@ -26,10 +27,12 @@ public class BudgetHttpClient {
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private CucumberContext context;
+
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
-
-    private Set<Budget> lastBody = new LinkedHashSet<>();
+    private ResponseEntity<Set<Budget>> response;
 
     public BudgetHttpClient() {
         restTemplate = new RestTemplateBuilder()
@@ -47,15 +50,41 @@ public class BudgetHttpClient {
     public void getUsableBudgets() {
         HttpEntity<Donation> entity = new HttpEntity<>(headers);
         ParameterizedTypeReference<Set<Budget>> responseType = new ParameterizedTypeReference<>() {};
-        ResponseEntity<Set<Budget>> resp = restTemplate.exchange(endpoint() + "/usable", HttpMethod.GET, entity, responseType);
-        this.lastBody = resp.getBody();
+        try {
+            response = restTemplate.exchange(endpoint() + "/usable", HttpMethod.GET, entity, responseType);
+            context.setLastHttpCode(response.getStatusCodeValue());
+        } catch (HttpClientErrorException ex) {
+            context.setLastHttpCode(ex.getStatusCode().value());
+        }
+    }
+
+    public void getByOrganizationId(Long organizationId) {
+        HttpEntity<Donation> entity = new HttpEntity<>(headers);
+        ParameterizedTypeReference<Set<Budget>> responseType = new ParameterizedTypeReference<>() {};
+        try {
+            response = restTemplate.exchange(endpoint() + "?organizationId=" + organizationId, HttpMethod.GET, entity, responseType);
+            context.setLastHttpCode(response.getStatusCodeValue());
+        } catch (HttpClientErrorException ex) {
+            context.setLastHttpCode(ex.getStatusCode().value());
+        }
     }
 
     public void setBearerAuth(String token) {
         headers.setBearerAuth(token);
     }
 
-    public Set<Budget> getLastBody() {
-        return lastBody;
+    public ResponseEntity<Set<Budget>> getLastResponse() {
+        return response;
     }
+
+    public void create(final Budget budget) {
+        HttpEntity<Budget> entity = new HttpEntity<>(budget, headers);
+        try {
+            ResponseEntity<Void> response = restTemplate.postForEntity(endpoint(), entity, Void.class);
+            context.setLastHttpCode(response.getStatusCodeValue());
+        } catch (HttpClientErrorException ex) {
+            context.setLastHttpCode(ex.getStatusCode().value());
+        }
+    }
+
 }

@@ -3,12 +3,14 @@ package fr.thomah.valyou.component;
 import fr.thomah.valyou.entity.OrganizationAuthority;
 import fr.thomah.valyou.entity.User;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -24,6 +26,9 @@ public class OrganizationAuthorityHttpClient {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private CucumberContext context;
 
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
@@ -41,17 +46,14 @@ public class OrganizationAuthorityHttpClient {
         return SERVER_URL + ":" + port + ENDPOINT;
     }
 
-    public int grant(User user, final OrganizationAuthority organizationAuthority) {
+    public void grant(User user, final OrganizationAuthority organizationAuthority) {
         HttpEntity<OrganizationAuthority> entity = new HttpEntity<>(organizationAuthority, headers);
-
-        int statusCode = 0;
         try {
-            statusCode = restTemplate.postForEntity(endpoint() + user.getId() + "/orgauthorities", entity, Void.class).getStatusCodeValue();
+            ResponseEntity<Void> response = restTemplate.postForEntity(endpoint() + user.getId() + "/orgauthorities", entity, Void.class);
+            context.setLastHttpCode(response.getStatusCodeValue());
         } catch (HttpClientErrorException ex) {
-            statusCode = ex.getStatusCode().value();
+            context.setLastHttpCode(ex.getStatusCode().value());
         }
-
-        return statusCode;
     }
 
     public void setBearerAuth(String token) {

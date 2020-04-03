@@ -48,7 +48,8 @@ public class AuthorityStepDefinitions {
     public void itReturnsFollowingAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<Authority> authoritiesReturned = authorityHttpClient.getLastBody();
+        Set<Authority> authoritiesReturned = authorityHttpClient.getLastResponse().getBody();
+        Assert.assertNotNull(authoritiesReturned);
 
         Authority authority;
         for (Map<String, String> columns : rows) {

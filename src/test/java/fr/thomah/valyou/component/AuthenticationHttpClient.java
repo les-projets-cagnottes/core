@@ -4,6 +4,7 @@ import fr.thomah.valyou.entity.AuthenticationResponse;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
@@ -25,6 +26,9 @@ public class AuthenticationHttpClient {
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private CucumberContext context;
+
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
 
@@ -44,12 +48,15 @@ public class AuthenticationHttpClient {
     public AuthenticationResponse login(String email, String password) {
         String body = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
         HttpEntity<String> request = new HttpEntity<>(body, headers);
-        return restTemplate.postForEntity(endpoint() + "/login", request, AuthenticationResponse.class).getBody();
+        ResponseEntity<AuthenticationResponse> result = restTemplate.postForEntity(endpoint() + "/login", request, AuthenticationResponse.class);
+        context.setLastHttpCode(result.getStatusCodeValue());
+        return result.getBody();
     }
 
     public AuthenticationResponse refresh() {
         HttpEntity<String> request = new HttpEntity<>(null, headers);
         ResponseEntity<AuthenticationResponse> result = restTemplate.exchange(endpoint() + "/refresh", HttpMethod.GET, request, AuthenticationResponse.class);
+        context.setLastHttpCode(result.getStatusCodeValue());
         return result.getBody();
     }
 

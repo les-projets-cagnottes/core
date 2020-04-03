@@ -27,4 +27,11 @@ public class GenericModel {
             this.id = null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "GenericModel{" +
+                "id=" + id +
+                '}';
+    }
 }

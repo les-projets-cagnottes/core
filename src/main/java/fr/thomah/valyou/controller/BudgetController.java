@@ -4,6 +4,7 @@ import fr.thomah.valyou.entity.Budget;
 import fr.thomah.valyou.entity.Organization;
 import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.entity.model.BudgetModel;
+import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.OrganizationRepository;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -73,7 +75,16 @@ public class BudgetController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"organizationId"})
-    public Set<BudgetModel> getByOrganizationId(@RequestParam("organizationId") Long organizationId) {
+    public Set<BudgetModel> getByOrganizationId(Principal principal, @RequestParam("organizationId") Long organizationId) {
+
+        // Verify that principal is member of organization
+        User user = userService.get(principal);
+        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(organizationId, user.getId());
+        if(organization.isEmpty()) {
+            throw new ForbiddenException();
+        }
+
+        // Get budget entities
         Set<Budget> entities = budgetRepository.findAllByOrganizationId(organizationId);
 
         // Convert all entities to models
@@ -87,6 +98,7 @@ public class BudgetController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
     public void create(@RequestBody Budget budget) {
         budgetRepository.save(budget);
     }

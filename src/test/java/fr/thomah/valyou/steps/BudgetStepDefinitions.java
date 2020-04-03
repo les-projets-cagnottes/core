@@ -111,11 +111,92 @@ public class BudgetStepDefinitions {
         budgetHttpClient.getUsableBudgets();
     }
 
+    @When("{string} get budgets for {string} organization")
+    public void getBudgetsForOrganization(String userFirstname, String organizationName) {
+
+        // Refresh Token
+        authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
+        AuthenticationResponse response = authenticationHttpClient.refresh();
+        context.getAuths().put(userFirstname, response);
+
+        // Get budgets
+        budgetHttpClient.setBearerAuth(response.getToken());
+        budgetHttpClient.getByOrganizationId(context.getOrganizations().get(organizationName).getId());
+    }
+
+    @When("{string} submits following budgets on current year")
+    public void submitsFollowingBudgetsOnCurrentYear(String userFirstname, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        // Get dates for budget
+        LocalDate lastYear = LocalDate.now();
+        LocalDate firstDay = lastYear.with(firstDayOfYear());
+        LocalDate lastDay = lastYear.with(lastDayOfYear());
+
+        Budget budget;
+        for (Map<String, String> columns : rows) {
+            budget = new Budget();
+            budget.setName(columns.get("name"));
+            budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
+            budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
+            budget.setRules(context.getContents().get(columns.get("rules")));
+            budget.setStartDate(Date.valueOf(firstDay));
+            budget.setEndDate(Date.valueOf(lastDay));
+            budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
+            budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
+
+            // Refresh Token
+            authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
+            AuthenticationResponse response = authenticationHttpClient.refresh();
+            context.getAuths().put(userFirstname, response);
+
+            // Create budget
+            budgetHttpClient.setBearerAuth(response.getToken());
+            budgetHttpClient.create(budget);
+        }
+    }
+
     @Then("It returns following budgets")
     public void itReturnsFollowingBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<Budget> budgetsReturned = budgetHttpClient.getLastBody();
+        Set<Budget> budgetsReturned = budgetHttpClient.getLastResponse().getBody();
+        Assert.assertNotNull(budgetsReturned);
+
+        Budget budget;
+        for (Map<String, String> columns : rows) {
+
+            // Create budget from feature
+            budget = new Budget();
+            budget.setName(columns.get("name"));
+            budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
+            budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
+            budget.setRules(context.getContents().get(columns.get("rules")));
+            budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
+            budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
+            final Budget budgetFinal = budget;
+
+            budgetsReturned.stream()
+                    .filter(budgetReturned -> budgetFinal.getName().equals(budgetReturned.getName()))
+                    .filter(budgetReturned -> budgetFinal.getAmountPerMember() == budgetReturned.getAmountPerMember())
+                    .filter(budgetReturned -> budgetFinal.getIsDistributed().equals(budgetReturned.getIsDistributed()))
+                    .filter(budgetReturned -> budgetFinal.getSponsor().getId().equals(budgetReturned.getSponsor().getId()))
+                    .filter(budgetReturned -> budgetFinal.getRules().getId().equals(budgetReturned.getRules().getId()))
+                    .filter(budgetReturned -> budgetFinal.getOrganization().getId().equals(budgetReturned.getOrganization().getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            budgetsReturned::remove,
+                            Assert::fail);
+        }
+
+        Assert.assertEquals(0, budgetsReturned.size());
+    }
+
+    @And("Following budgets are registered")
+    public void followingBudgetsAreRegistered(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        List<Budget> budgetsReturned = budgetRepository.findAll();
 
         Budget budget;
         for (Map<String, String> columns : rows) {

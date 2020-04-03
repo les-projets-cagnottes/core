@@ -1,27 +1,20 @@
 package fr.thomah.valyou.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.thomah.valyou.audit.AuditEntity;
+import fr.thomah.valyou.entity.model.DonationModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "donations")
-public class Donation extends AuditEntity<String> {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(name = "amount")
-    @NotNull
-    private float amount;
+public class Donation extends DonationModel {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})

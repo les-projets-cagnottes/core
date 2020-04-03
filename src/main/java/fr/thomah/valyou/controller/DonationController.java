@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.entity.model.DonationModel;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
@@ -12,6 +13,7 @@ import fr.thomah.valyou.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,10 +42,12 @@ public class DonationController {
 
     @RequestMapping(value = "/api/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void create(Principal principal, @RequestBody Donation donation) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public void create(Principal principal, @RequestBody DonationModel donation) {
 
         // Fails if any of references are null
-        if(donation == null || donation.getProject() == null || donation.getContributor() == null || donation.getBudget() == null) {
+        if(donation == null || donation.getProject() == null || donation.getContributor() == null || donation.getBudget() == null
+        || donation.getProject().getId() == null || donation.getContributor().getId() == null || donation.getBudget().getId() == null) {
             throw new BadRequestException();
         }
 
@@ -97,7 +101,7 @@ public class DonationController {
         donationToSave.setBudget(budget);
         donationToSave.setContributor(contributor);
         donationToSave.setAmount(donation.getAmount());
-        donationRepository.save(donation);
+        donationRepository.save(donationToSave);
     }
 
     @PreAuthorize("hasRole('USER')")
