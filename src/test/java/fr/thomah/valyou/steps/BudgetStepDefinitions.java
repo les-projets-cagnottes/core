@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -156,6 +157,33 @@ public class BudgetStepDefinitions {
         }
     }
 
+    @When("{string} updates following budgets")
+    public void updatesFollowingBudgets(String userFirstname, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Set<Budget> budgets = new LinkedHashSet<>();
+        Budget budget;
+        for (Map<String, String> columns : rows) {
+            budget = context.getBudgets().get(columns.get("name"));
+            budget.setName(columns.get("name"));
+            budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
+            budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
+            budget.setRules(context.getContents().get(columns.get("rules")));
+            budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
+            budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
+            budgets.add(budget);
+        }
+
+        // Refresh Token
+        authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
+        AuthenticationResponse response = authenticationHttpClient.refresh();
+        context.getAuths().put(userFirstname, response);
+
+        // Create budget
+        budgetHttpClient.setBearerAuth(response.getToken());
+        budgetHttpClient.save(budgets);
+    }
+
     @Then("It returns following budgets")
     public void itReturnsFollowingBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
@@ -226,4 +254,5 @@ public class BudgetStepDefinitions {
 
         Assert.assertEquals(0, budgetsReturned.size());
     }
+
 }

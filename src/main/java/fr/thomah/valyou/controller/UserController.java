@@ -32,9 +32,6 @@ public class UserController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
-    private ApiTokenRepository apiTokenRepository;
-
-    @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
@@ -143,7 +140,7 @@ public class UserController {
 
         // All prerequisites are presents
         if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
-            LOGGER.debug("Impossible to grant user {} with organization authority {} : some parameters are missing", id, organizationAuthority);
+            LOGGER.error("Impossible to grant user {} with organization authority {} : some parameters are missing", id, organizationAuthority);
             throw new BadRequestException();
         }
 
@@ -151,7 +148,7 @@ public class UserController {
         final User userInDb = repository.findById(id).orElse(null);
         OrganizationAuthority organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
         if(userInDb == null || organizationAuthorityInDb == null) {
-            LOGGER.debug("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
+            LOGGER.error("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
             throw new NotFoundException();
         }
 
@@ -159,7 +156,7 @@ public class UserController {
         User userLoggedIn = userService.get(principal);
         if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationAuthorityInDb.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_OWNER) == null &&
                 authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
-            LOGGER.debug("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
+            LOGGER.error("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
             throw new ForbiddenException();
         }
 
@@ -167,7 +164,7 @@ public class UserController {
         Organization organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).orElse(null);
         LOGGER.debug(String.valueOf(organization));
         if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).isEmpty()) {
-            LOGGER.debug("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
+            LOGGER.error("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
             throw new BadRequestException();
         }
 

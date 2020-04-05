@@ -2,6 +2,7 @@ package fr.thomah.valyou.component;
 
 import fr.thomah.valyou.entity.Budget;
 import fr.thomah.valyou.entity.Donation;
+import fr.thomah.valyou.entity.model.BudgetModel;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
@@ -78,9 +80,21 @@ public class BudgetHttpClient {
     }
 
     public void create(final Budget budget) {
-        HttpEntity<Budget> entity = new HttpEntity<>(budget, headers);
+        HttpEntity<BudgetModel> entity = new HttpEntity<>(BudgetModel.fromEntity(budget), headers);
         try {
             ResponseEntity<Void> response = restTemplate.postForEntity(endpoint(), entity, Void.class);
+            context.setLastHttpCode(response.getStatusCodeValue());
+        } catch (HttpClientErrorException ex) {
+            context.setLastHttpCode(ex.getStatusCode().value());
+        }
+    }
+
+    public void save(final Set<Budget> budgets) {
+        Set<BudgetModel> budgetModels = new LinkedHashSet<>();
+        budgets.forEach(budget -> budgetModels.add(BudgetModel.fromEntity(budget)));
+        HttpEntity<Set<BudgetModel>> entity = new HttpEntity<>(budgetModels, headers);
+        try {
+            ResponseEntity<Void> response = restTemplate.exchange(endpoint(), HttpMethod.PUT, entity, Void.class);
             context.setLastHttpCode(response.getStatusCodeValue());
         } catch (HttpClientErrorException ex) {
             context.setLastHttpCode(ex.getStatusCode().value());
