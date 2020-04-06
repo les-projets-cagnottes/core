@@ -59,7 +59,7 @@ public class DonationController {
             @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "At least one reference wasn't found", content = @Content(schema = @Schema()))
     })
-    @RequestMapping(value = "/api/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/donation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     @ResponseStatus(HttpStatus.CREATED)
     public void create(Principal principal, @RequestBody DonationModel donation) {
@@ -143,7 +143,7 @@ public class DonationController {
             @ApiResponse(responseCode = "404", description = "At least one reference wasn't found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
+    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
     public Set<Donation> getByBudgetId(Principal principal, @RequestParam("budgetId") long budgetId) {
 
         // Fails if budget ID is missing
@@ -158,24 +158,24 @@ public class DonationController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
+    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
     public Set<Donation> getByProjectId(@RequestParam("projectId") long projectId) {
         return donationRepository.findAllByProjectId(projectId);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
+    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
     public Set<Donation> getByContributorId(@RequestParam("contributorId") long contributorId) {
         return donationRepository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId", "budgetId"})
+    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId", "budgetId"})
     public Set<Donation> getByContributorIdAndBudgetId(@RequestParam("contributorId") long contributorId, @RequestParam("budgetId") long budgetId) {
         return donationRepository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
     }
 
-    @RequestMapping(value = "/api/donation/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/donation/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") Long id) {
