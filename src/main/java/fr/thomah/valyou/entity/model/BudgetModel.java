@@ -65,4 +65,18 @@ public class BudgetModel extends AuditEntity<String> {
         return model;
     }
 
+    @Override
+    public String toString() {
+        return "BudgetModel{" +
+                "name='" + name + '\'' +
+                ", amountPerMember=" + amountPerMember +
+                ", isDistributed=" + isDistributed +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", totalDonations=" + totalDonations +
+                ", organization=" + organization +
+                ", rules=" + rules +
+                ", sponsor=" + sponsor +
+                '}';
+    }
 }

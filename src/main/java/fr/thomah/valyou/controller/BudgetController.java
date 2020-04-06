@@ -106,7 +106,7 @@ public class BudgetController {
 
     @Operation(summary = "Create a budget", description = "Create a budget", tags = { "Budgets" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Budget created", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "201", description = "Budget created", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Principal or sponsor has not enough privileges", content = @Content(schema = @Schema()))
@@ -114,7 +114,7 @@ public class BudgetController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void create(Principal principal, @RequestBody Budget budget) {
+    public void create(Principal principal, @RequestBody BudgetModel budget) {
 
         // Fails if any of references are null
         if(budget == null || budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
@@ -159,17 +159,27 @@ public class BudgetController {
             throw new ForbiddenException();
         }
 
-        budgetRepository.save(budget);
+        // Save budget
+        Budget budgetToSave = new Budget();
+        budgetToSave.setName(budget.getName());
+        budgetToSave.setAmountPerMember(budget.getAmountPerMember());
+        budgetToSave.setStartDate(budget.getStartDate());
+        budgetToSave.setEndDate(budget.getEndDate());
+        budgetToSave.setIsDistributed(budget.getIsDistributed());
+        budgetToSave.setOrganization(organization);
+        budgetToSave.setSponsor(sponsor);
+        budgetToSave.setRules(rules);
+        budgetRepository.save(budgetToSave);
     }
 
     @Operation(summary = "Save multiple budgets", description = "Save a collection of budgets", tags = { "Budgets" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Budgets saved", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Body is missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "200", description = "Budgets saved", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Body is missing", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void save(Principal principal, @RequestBody List<Budget> budgets) {
+    public void save(Principal principal, @RequestBody List<BudgetModel> budgets) {
 
         // Fails if body is null
         if(budgets == null) {
@@ -180,7 +190,7 @@ public class BudgetController {
         User userLoggedIn = userService.get(principal);
         boolean userLoggedIn_isAdmin = authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null;
 
-        for(Budget budget : budgets) {
+        for(BudgetModel budget : budgets) {
 
             // Fails if any of references are null
             if(budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
@@ -191,8 +201,11 @@ public class BudgetController {
 
             // Retrieve full referenced objects
             Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
-            if(budgetInDb == null) {
-                LOGGER.error("Impossible to save budget {} : ID not found", budget.getId());
+            Organization organization = organizationRepository.findById(budget.getOrganization().getId()).orElse(null);
+            User sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
+            fr.thomah.valyou.entity.Content rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
+            if(budgetInDb == null || organization == null || sponsor == null || rules == null) {
+                LOGGER.error("Impossible to save budget {} : one or more reference(s) doesn't exist", budget.getId());
                 continue;
             }
 
@@ -222,30 +235,100 @@ public class BudgetController {
                 budgetInDb.setStartDate(budget.getStartDate());
                 budgetInDb.setEndDate(budget.getEndDate());
                 budgetInDb.setAmountPerMember(budget.getAmountPerMember());
-                budgetInDb.setSponsor(budget.getSponsor());
-                budgetInDb.setRules(budget.getRules());
+                budgetInDb.setOrganization(organization);
+                budgetInDb.setSponsor(sponsor);
+                budgetInDb.setRules(rules);
             }
             budgetRepository.save(budgetInDb);
         }
     }
 
+    @Operation(summary = "Distribute a budget", description = "Distribute a budget between members of organization", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Budget distributed", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "ID is missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
     @RequestMapping(value = "/budget/{id}/distribute", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
-    public void distribute(@PathVariable("id") Long id) {
+    public void distribute(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if any of references are null
+        if(id <= 0) {
+            LOGGER.error("Impossible to distribute budget : ID is missing");
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
         Budget budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
+            LOGGER.error("Impossible to distribute budget {} : budget not found", id);
             throw new NotFoundException();
-        } else {
-            budget.setIsDistributed(!budget.getIsDistributed());
-            budgetRepository.save(budget);
         }
+
+        // Verify that principal is member of organization
+        User userLoggedIn = userService.get(principal);
+        Optional<Organization> principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
+        if(principalOrganization.isEmpty()) {
+            LOGGER.error("Impossible to distribute budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
+            throw new ForbiddenException();
+        }
+
+        // Test that user logged in has correct rights
+        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(budget.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null &&
+                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
+            LOGGER.error("Impossible to distribute budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+            throw new ForbiddenException();
+        }
+
+        // Distribute budget
+        budget.setIsDistributed(!budget.getIsDistributed());
+        budgetRepository.save(budget);
     }
 
+    @Operation(summary = "Delete a budget", description = "Delete a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Budget distributed", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
     @RequestMapping(value = "/budget/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
-    public void delete(@PathVariable("id") Long id) {
+    public void delete(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if any of references are null
+        if(id <= 0) {
+            LOGGER.error("Impossible to delete budget : ID is missing");
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(id).orElse(null);
+        if(budget == null) {
+            LOGGER.error("Impossible to delete budget {} : budget not found", id);
+            throw new NotFoundException();
+        }
+
+        // Verify that principal is member of organization
+        User userLoggedIn = userService.get(principal);
+        Optional<Organization> principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
+        if(principalOrganization.isEmpty()) {
+            LOGGER.error("Impossible to delete budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
+            throw new ForbiddenException();
+        }
+
+        // Test that user logged in has correct rights
+        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(budget.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null &&
+                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
+            LOGGER.error("Impossible to delete budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+            throw new ForbiddenException();
+        }
+
+        // Delete budget
         budgetRepository.deleteById(id);
     }
 

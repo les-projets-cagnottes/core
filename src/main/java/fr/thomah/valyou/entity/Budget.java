@@ -46,6 +46,7 @@ public class Budget extends BudgetModel {
                 "projects=" + projects.size() +
                 ", organization=" + organization.getId() +
                 ", sponsor=" + sponsor.getId() +
+                ", rules=" + rules.getId() +
                 ", id=" + id +
                 ", name='" + name + '\'' +
                 ", amountPerMember=" + amountPerMember +
