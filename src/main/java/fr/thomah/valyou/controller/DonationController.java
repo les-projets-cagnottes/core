@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -135,32 +136,84 @@ public class DonationController {
         donationRepository.save(donationToSave);
     }
 
-    @Operation(summary = "Get donations of a single budget", description = "Get donations of a single budget", tags = { "Donations" })
+    @Operation(summary = "Get donations imputed on a budget", description = "Get donations imputed on a budget", tags = { "Donations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "At least one reference wasn't found", content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
-    public Set<Donation> getByBudgetId(Principal principal, @RequestParam("budgetId") long budgetId) {
+    public Set<DonationModel> getByBudgetId(Principal principal, @RequestParam("budgetId") long budgetId) {
 
         // Fails if budget ID is missing
         if(budgetId <= 0) {
-            LOGGER.error("Impossible to create get donations : Budget ID is incorrect");
+            LOGGER.error("Impossible to get donations by budget ID : Budget ID is incorrect");
             throw new BadRequestException();
         }
 
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(budgetId).orElse(null);
 
+        // Verify that any of references are not null
+        if(budget == null) {
+            LOGGER.error("Impossible to get donations by budget ID : budget not found");
+            throw new NotFoundException();
+        }
 
-        return donationRepository.findAllByBudgetId(budgetId);
+        // Verify that principal is member of organization
+        User userLoggedIn = userService.get(principal);
+        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
+        if(organization.isEmpty()) {
+            LOGGER.error("Impossible to get donations by budget ID : principal {} is not member of organization {}", userLoggedIn.getId(), budget.getOrganization().getId());
+            throw new ForbiddenException();
+        }
+
+        Set<Donation> entities = donationRepository.findAllByBudgetId(budgetId);
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+        return models;
     }
 
+    @Operation(summary = "Get donations made on a project", description = "Get donations made on a project", tags = { "Donations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
-    public Set<Donation> getByProjectId(@RequestParam("projectId") long projectId) {
-        return donationRepository.findAllByProjectId(projectId);
+    public Set<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId) {
+
+        // Fails if budget ID is missing
+        if(projectId <= 0) {
+            LOGGER.error("Impossible to get donations by project ID : Project ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
+        Project project = projectRepository.findById(projectId).orElse(null);
+
+        // Verify that any of references are not null
+        if(project == null) {
+            LOGGER.error("Impossible to get donations by project ID : project not found");
+            throw new NotFoundException();
+        }
+
+        // If principal is leader of project, returns all donations
+        // Else returns donations of his own organization
+        User userLoggedIn = userService.get(principal);
+        Set<Donation> entities;
+        if(userLoggedIn.getId().equals(project.getLeader().getId())) {
+            entities = donationRepository.findAllByProjectId(projectId);
+        } else {
+            entities = donationRepository.getDonationsByUserIdAndProjectId(userLoggedIn.getId(), projectId);
+        }
+
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+        return models;
     }
 
     @PreAuthorize("hasRole('USER')")
