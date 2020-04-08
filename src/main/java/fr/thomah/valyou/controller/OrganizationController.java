@@ -138,7 +138,7 @@ public class OrganizationController {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").ascending().and(Sort.by("lastname").ascending()));
         Page<User> members = userRepository.findByOrganizations_id(id, pageable);
         for(User member : members) {
-            member.getUserOrganizationAuthorities().addAll(organizationAuthorityRepository.findAllByUsers_Id(member.getId()));
+            member.setUserOrganizationAuthorities(organizationAuthorityRepository.findAllByOrganizationIdAndUsers_Id(id, member.getId()));
         }
         return members;
     }

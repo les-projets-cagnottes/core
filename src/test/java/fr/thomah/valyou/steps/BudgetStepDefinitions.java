@@ -8,6 +8,7 @@ import fr.thomah.valyou.entity.Budget;
 import fr.thomah.valyou.repository.BudgetRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
@@ -41,7 +42,7 @@ public class BudgetStepDefinitions {
     @Autowired
     private CucumberContext context;
 
-    @And("The following budgets are available")
+    @Given("The following budgets are available")
     public void theFollowingBudgetsAreAvailable(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
@@ -220,7 +221,7 @@ public class BudgetStepDefinitions {
         Assert.assertEquals(0, budgetsReturned.size());
     }
 
-    @And("Following budgets are registered")
+    @Then("Following budgets are registered")
     public void followingBudgetsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 

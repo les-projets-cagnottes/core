@@ -100,12 +100,11 @@ public class ProjectController {
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public Project create(Principal principal, @RequestBody String projectStr) {
+    public Project create(Principal principal, @RequestBody Project project) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
         final User userLoggedIn = userRepository.findByUsername(userPrincipal.getUsername());
 
-        Project project = gson.fromJson(projectStr, Project.class);
         Set<Organization> organizations = project.getOrganizations();
         Set<Organization> newOrganizations = new LinkedHashSet<>();
         organizations.forEach(organization -> {

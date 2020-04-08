@@ -1,5 +1,5 @@
-Feature: Donation
-  Verifies rules for create and delete donations
+Feature: Donation - Create
+  Verifies rules for create donations
 
   Scenario: A member can contribute on a campaign in progress whose deadline has not been reached
     Given Empty database
@@ -19,12 +19,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -52,12 +52,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title           |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign             | budget                  | contributor | amount |
@@ -87,12 +87,12 @@ Feature: Donation
     And The following campaigns have a deadline reached
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -120,12 +120,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status    | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | C_AVORTED | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -154,12 +154,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget                           | contributor | amount |
@@ -189,12 +189,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -205,7 +205,6 @@ Feature: Donation
       | user    | budget             | amount |
       | Mike    | Annual Company Pot | 150    |
       | Sabrina | Annual Company Pot | 150    |
-
 
   Scenario: A member cannot contribute on a campaign if he has not enough budget
     Given Empty database
@@ -225,12 +224,12 @@ Feature: Donation
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to the "Unnamed Company" organization
-      | title            |
-      | Awesome Campaign |
-    And The following campaigns uses the "Annual Company Pot" budget
-      | title            |
-      | Awesome Campaign |
+    And The following campaigns are associated to organizations
+      | campaign         | organization    |
+      | Awesome Campaign | Unnamed Company |
+    And The following campaigns uses budgets
+      | campaign         | budget             |
+      | Awesome Campaign | Annual Company Pot |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |

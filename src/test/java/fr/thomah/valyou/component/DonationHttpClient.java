@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Set;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -32,6 +32,7 @@ public class DonationHttpClient {
 
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
+    private ResponseEntity<Set<DonationModel>> response;
 
     public DonationHttpClient() {
         restTemplate = new RestTemplateBuilder()
@@ -56,7 +57,23 @@ public class DonationHttpClient {
         }
     }
 
+    public void getByProjectId(long projectId) {
+        HttpEntity<Donation> entity = new HttpEntity<>(headers);
+        ParameterizedTypeReference<Set<DonationModel>> responseType = new ParameterizedTypeReference<>() {};
+        try {
+            response = restTemplate.exchange(endpoint() + "?projectId=" + projectId, HttpMethod.GET, entity, responseType);
+            context.setLastHttpCode(response.getStatusCodeValue());
+        } catch (HttpClientErrorException ex) {
+            context.setLastHttpCode(ex.getStatusCode().value());
+        }
+    }
+
     public void setBearerAuth(String token) {
         headers.setBearerAuth(token);
     }
+
+    public ResponseEntity<Set<DonationModel>> getLastResponse() {
+        return response;
+    }
+
 }

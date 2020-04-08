@@ -4,13 +4,16 @@ import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
 import fr.thomah.valyou.entity.*;
+import fr.thomah.valyou.entity.model.DonationModel;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.DonationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class DonationStepDefinitions {
 
@@ -97,16 +100,16 @@ public class DonationStepDefinitions {
         }
     }
 
-    @And("The following campaigns are associated to the {string} organization")
-    public void theFollowingCampaignsAreAssociatedToTheOrganization(String organizationName, DataTable table) {
+    @When("The following campaigns are associated to organizations")
+    public void theFollowingCampaignsAreAssociatedToOrganizations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
         Project campaign;
         for (Map<String, String> columns : rows) {
 
             // Associate project to the organization
-            campaign = context.getCampaigns().get(columns.get("title"));
-            campaign.getOrganizations().add(context.getOrganizations().get(organizationName));
+            campaign = context.getCampaigns().get(columns.get("campaign"));
+            campaign.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
             campaign = projectRepository.save(campaign);
 
             // Save in Test Map
@@ -114,34 +117,30 @@ public class DonationStepDefinitions {
         }
     }
 
-    @And("The following campaigns uses the {string} budget")
-    public void theFollowingCampaignsUsesTheBudget(String budgetName, DataTable table) {
+    @When("The following campaigns uses budgets")
+    public void theFollowingCampaignsUsesBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        Budget budget = context.getBudgets().get(budgetName);
+        Budget budget;
         for (Map<String, String> columns : rows) {
-
-            // Add campaign to the budget
-            budget.getProjects().add(context.getCampaigns().get(columns.get("title")));
+            budget = context.getBudgets().get(columns.get("budget"));
+            budget.getProjects().add(context.getCampaigns().get(columns.get("campaign")));
             budgetRepository.save(budget);
-
-            // Save in Test Map
             context.getBudgets().put(budget.getName(), budget);
         }
     }
 
-    @And("{string} is logged in")
-    public void userIsLoggedIn(String userFirstname) {
-
-        User user = new User();
-        user.setEmail(context.getUsers().get(userFirstname).getEmail());
-        user.setPassword(context.getUsers().get(userFirstname).getPassword());
-        AuthenticationResponse response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
-
-        assertNotNull(response);
-        assertFalse(response.getToken().isEmpty());
-
-        context.getAuths().put(userFirstname, response);
+    @Given("The following donations are made")
+    public void theFollowingDonationsAreMade(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        Donation donation;
+        for (Map<String, String> columns : rows) {
+            donation = new Donation();
+            donation.setAmount(Float.parseFloat(columns.get("amount")));
+            donation.setBudget(context.getBudgets().get(columns.get("budget")));
+            donation.setProject(context.getCampaigns().get(columns.get("campaign")));
+            donation.setContributor(context.getUsers().get(columns.get("contributor")));
+            donationRepository.save(donation);
+        }
     }
 
     @When("{string} submit the following donations")
@@ -175,7 +174,7 @@ public class DonationStepDefinitions {
         assertEquals(numberOfDonations, String.valueOf(donations.size()));
     }
 
-    @And("Following users have corresponding amount left on budgets")
+    @Then("Following users have corresponding amount left on budgets")
     public void followingUsersHaveCorrespondingAmountLeftOnBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
@@ -191,6 +190,52 @@ public class DonationStepDefinitions {
 
             assertEquals(Float.parseFloat(columns.get("amount")), budget.getAmountPerMember() - totalAmount, 0);
         }
+    }
+
+    @Then("It returns following donations")
+    public void itReturnsFollowingDonations(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        Set<DonationModel> donationsReturned = donationHttpClient.getLastResponse().getBody();
+        Assert.assertNotNull(donationsReturned);
+
+        Donation donation;
+        for (Map<String, String> columns : rows) {
+
+            // Create budget from feature
+            donation = new Donation();
+            donation.setAmount(Float.parseFloat(columns.get("amount")));
+            donation.setBudget(context.getBudgets().get(columns.get("budget")));
+            donation.setProject(context.getCampaigns().get(columns.get("campaign")));
+            donation.setContributor(context.getUsers().get(columns.get("contributor")));
+            final Donation donationFinal = donation;
+            LOGGER.debug("HERE");
+            LOGGER.debug(String.valueOf(donationsReturned.size()));
+            donationsReturned.stream()
+                    .filter(donationReturned -> donationFinal.getAmount() == donationReturned.getAmount())
+                    .filter(donationReturned -> donationFinal.getBudget().getId().equals(donationReturned.getBudget().getId()))
+                    .filter(donationReturned -> donationFinal.getProject().getId().equals(donationReturned.getProject().getId()))
+                    .filter(donationReturned -> donationFinal.getContributor().getId().equals(donationReturned.getContributor().getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            donationsReturned::remove,
+                            Assert::fail);
+        }
+
+        Assert.assertEquals(0, donationsReturned.size());
+    }
+
+    @When("{string} gets donations of the {string} campaign")
+    public void getsDonationsOfTheCampaign(String userFirstname, String campaign) {
+
+        // Refresh Token
+        authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
+        AuthenticationResponse response = authenticationHttpClient.refresh();
+        context.getAuths().put(userFirstname, response);
+
+        // Get donations
+        donationHttpClient.setBearerAuth(response.getToken());
+        donationHttpClient.getByProjectId(context.getCampaigns().get(campaign).getId());
     }
 
 }

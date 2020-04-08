@@ -12,4 +12,5 @@ public interface OrganizationAuthorityRepository extends JpaRepository<Organizat
     Set<OrganizationAuthority> findByOrganizationIdAndUsersId(Long organizationId, Long userId);
     OrganizationAuthority findByOrganizationIdAndName(Long id, OrganizationAuthorityName authorityName);
     OrganizationAuthority findByOrganizationIdAndUsersIdAndName(Long organizationId, Long userId, OrganizationAuthorityName authorityName);
+    Set<OrganizationAuthority> findAllByOrganizationIdAndUsers_Id(long organizationId, long userId);
 }

@@ -209,6 +209,7 @@ public class DonationController {
             entities = donationRepository.findAllByProjectId(projectId);
         } else {
             entities = donationRepository.getDonationsByUserIdAndProjectId(userLoggedIn.getId(), projectId);
+            LOGGER.debug(String.valueOf(entities.size()));
         }
 
         Set<DonationModel> models = new LinkedHashSet<>();

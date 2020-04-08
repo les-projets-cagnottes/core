@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.entity.model.OrganizationAuthorityModel;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.generator.UserGenerator;
@@ -136,7 +137,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user/{id}/orgauthorities", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void grant(Principal principal, @PathVariable long id, @RequestBody OrganizationAuthority organizationAuthority) {
+    public void grant(Principal principal, @PathVariable long id, @RequestBody OrganizationAuthorityModel organizationAuthority) {
 
         // All prerequisites are presents
         if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
