@@ -37,6 +37,9 @@ public class DonationController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DonationController.class);
 
     @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -193,25 +196,9 @@ public class DonationController {
             throw new BadRequestException();
         }
 
-
-//        select p.* from projects p " +
-//        "inner join project_organizations on p.id = project_organizations.project_id " +
-//                "inner join organizations o on project_organizations.organization_id = o.id " +
-//                "inner join organizations_users on organizations_users.organization_id = o.id " +
-//                "inner join users u on u.id = organizations_users.user_id " +
-//                "where u.id = :user_id and p.id = :project_id")
-
-        List<Organization> organizationList = organizationRepository.findAll();
-        organizationList.forEach(organization -> {
-            LOGGER.debug(organization.getName());
-            organization.getProjects().forEach(project -> {
-                LOGGER.debug(project.getTitle());
-            });
-        });
-
         // Verify that principal is in one organization of the project
         long userLoggedInId = userService.get(principal).getId();
-        if(projectRepository.findAllProjectsByUserInOrganizations(userLoggedInId, projectId).isEmpty()) {
+        if(projectRepository.findAllProjectsByUserInOrganizations(userLoggedInId, projectId).isEmpty() && authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedInId) == null) {
             LOGGER.error("Impossible to get donations by project ID : user {} is not member of concerned organizations", userLoggedInId);
             throw new ForbiddenException();
         }
