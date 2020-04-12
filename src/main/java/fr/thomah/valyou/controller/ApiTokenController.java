@@ -1,7 +1,6 @@
 package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.entity.AuthenticationResponse;
-import fr.thomah.valyou.entity.AuthorityName;
 import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.entity.model.AuthenticationResponseModel;
 import fr.thomah.valyou.exception.NotFoundException;
@@ -23,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -84,7 +82,7 @@ public class ApiTokenController {
         cal.add(Calendar.YEAR, 1);
         Date nextYear = cal.getTime();
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, AuthorityUtils.createAuthorityList(AuthorityName.ROLE_USER.name()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
         AuthenticationResponse authenticationResponse = new AuthenticationResponse(jwtTokenUtil.generateToken(authentication, nextYear));
         authenticationResponse.setExpiration(nextYear);
         authenticationResponse.setUser(user);

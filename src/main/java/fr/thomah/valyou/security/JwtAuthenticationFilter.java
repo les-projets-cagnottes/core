@@ -1,11 +1,7 @@
 package fr.thomah.valyou.security;
 
-import static fr.thomah.valyou.entity.Constants.HEADER_STRING;
-import static fr.thomah.valyou.entity.Constants.TOKEN_PREFIX;
-
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.SignatureException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Iterator;
+
+import static fr.thomah.valyou.entity.Constants.HEADER_STRING;
+import static fr.thomah.valyou.entity.Constants.TOKEN_PREFIX;
 
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

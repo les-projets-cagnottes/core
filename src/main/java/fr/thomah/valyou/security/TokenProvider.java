@@ -91,7 +91,7 @@ public class TokenProvider implements Serializable {
         final Date createdDate = clock.now();
         final Date expirationDate = new Date(createdDate.getTime() + ACCESS_TOKEN_VALIDITY_SECONDS * 1000);
 
-        SimpleDateFormat dt1 = new SimpleDateFormat("yyyyy-mm-dd");
+        SimpleDateFormat dt1 = new SimpleDateFormat("yyyyy-MM-dd");
         LOGGER.debug("createdDate = " + dt1.format(createdDate));
         LOGGER.debug("expirationDate = " + dt1.format(expirationDate));
 

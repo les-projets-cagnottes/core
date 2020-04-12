@@ -87,8 +87,8 @@ Feature: Budget
       | organization    | name                 | value     |
       | Another Company | Another Terms of Use | Blablabla |
     And The following budgets are available
-      | organization    | name                  | amountPerMember | isDistributed | sponsor | rules                |
-      | Another Company | Annual Another Pot    | 150             | true          | Sabrina | Another Terms of Use |
+      | organization    | name               | amountPerMember | isDistributed | sponsor | rules                |
+      | Another Company | Annual Another Pot | 150             | true          | Sabrina | Another Terms of Use |
     And "Mike" is logged in
     When "Mike" get budgets for "Another Company" organization
     Then Last HTTP code was "403"
@@ -136,7 +136,7 @@ Feature: Budget
       | Unnamed Company | Annual Unnamed Pot #1 | 150             | true          | Sabrina | Unnamed Terms of Use |
     Then Last HTTP code was "403"
     And Following budgets are registered
-      | organization    | name                  | amountPerMember | isDistributed | sponsor | rules                |
+      | organization | name | amountPerMember | isDistributed | sponsor | rules |
 
   Scenario: A non-sponsor cannot create a budget
     Given Empty database
@@ -158,7 +158,7 @@ Feature: Budget
       | Unnamed Company | Annual Unnamed Pot #1 | 150             | true          | Sabrina | Unnamed Terms of Use |
     Then Last HTTP code was "403"
     And Following budgets are registered
-      | organization    | name                  | amountPerMember | isDistributed | sponsor | rules                |
+      | organization | name | amountPerMember | isDistributed | sponsor | rules |
 
   Scenario: A sponsor cannot create a budget if sponsor, rules or organization are missing
     Given Empty database
@@ -178,7 +178,7 @@ Feature: Budget
       | Unnamed Company     | Annual Unnamed Pot #1 | 150             | true          | Nonexistent sponsor | Unnamed Terms of Use     |
       | Unnamed Company     | Annual Unnamed Pot #1 | 150             | true          | Sabrina             | Nonexistent Terms of Use |
     Then Following budgets are registered
-      | organization        | name                  | amountPerMember | isDistributed | sponsor             | rules                    |
+      | organization | name | amountPerMember | isDistributed | sponsor | rules |
 
   Scenario: A sponsor can update budgets
     Given Empty database
@@ -198,7 +198,7 @@ Feature: Budget
       | Sabrina   | Unnamed Company | ROLE_SPONSOR |
       | Sinclair  | Unnamed Company | ROLE_SPONSOR |
     And The following contents are saved
-      | organization    | name         | value     |
+      | organization    | name            | value     |
       | Unnamed Company | Terms of Use #1 | Blablabla |
       | Unnamed Company | Terms of Use #2 | Blablabla |
     And The following budgets are available
@@ -225,11 +225,11 @@ Feature: Budget
       | name            |
       | Unnamed Company |
     And The following users are registered
-      | firstname | email                       | password |
-      | Sabrina   | sabrina@unnamedcompany.com  | sabrina  |
+      | firstname | email                      | password |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following users are members of organizations
-      | user     | organization    |
-      | Sabrina  | Unnamed Company |
+      | user    | organization    |
+      | Sabrina | Unnamed Company |
     And The following users are granted with organization authorities
       | firstname | organization    | authority    |
       | Sabrina   | Unnamed Company | ROLE_SPONSOR |
@@ -290,8 +290,8 @@ Feature: Budget
       | name            |
       | Unnamed Company |
     And The following users are registered
-      | firstname | email                       | password |
-      | Sabrina   | sabrina@unnamedcompany.com  | sabrina  |
+      | firstname | email                      | password |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following users are members of organizations
       | user    | organization    |
       | Sabrina | Unnamed Company |

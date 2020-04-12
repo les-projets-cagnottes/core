@@ -268,13 +268,6 @@ public class ProjectController {
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/project/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    public Page<Donation> getDonations(@PathVariable("id") long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-        Pageable pageable = PageRequest.of(offset, limit);
-        return donationRepository.findByProject_idOrderByIdAsc(id, pageable);
-    }
-
     @RequestMapping(value = "/api/project/validate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public void validate() {

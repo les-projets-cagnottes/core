@@ -7,9 +7,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -31,8 +31,8 @@ Feature: Donation - Create
       | Awesome Campaign | Annual Company Pot | Mike        | 50     |
     Then "Mike" has "1" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget             | amount |
-      | Mike    | Annual Company Pot | 100    |
+      | user | budget             | amount |
+      | Mike | Annual Company Pot | 100    |
 
   Scenario: A member cannot contribute on a project with a nonexistent campaign, budget or contributor
     Given Empty database
@@ -40,9 +40,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -66,8 +66,8 @@ Feature: Donation - Create
       | Awesome Campaign     | Annual Company Pot      | Ned         | 50     |
     Then "Mike" has "0" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget             | amount |
-      | Mike    | Annual Company Pot | 150    |
+      | user | budget             | amount |
+      | Mike | Annual Company Pot | 150    |
 
   Scenario: A member cannot contribute on a campaign in progress whose deadline has been reached
     Given Empty database
@@ -75,9 +75,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -99,8 +99,8 @@ Feature: Donation - Create
       | Awesome Campaign | Annual Company Pot | Mike        | 50     |
     Then "Mike" has "0" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget             | amount |
-      | Mike    | Annual Company Pot | 150    |
+      | user | budget             | amount |
+      | Mike | Annual Company Pot | 150    |
 
   Scenario: A member cannot contribute on a campaign not in progress
     Given Empty database
@@ -108,9 +108,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -132,8 +132,8 @@ Feature: Donation - Create
       | Awesome Campaign | Annual Company Pot | Mike        | 50     |
     Then "Mike" has "0" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget             | amount |
-      | Mike    | Annual Company Pot | 150    |
+      | user | budget             | amount |
+      | Mike | Annual Company Pot | 150    |
 
   Scenario: A member cannot contribute on a campaign not associated with the budget referenced
     Given Empty database
@@ -141,9 +141,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -167,9 +167,9 @@ Feature: Donation - Create
     Then "Mike" has "0" donation on the "Annual Company Pot Previous Year" budget
     And "Mike" has "0" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget                           | amount |
-      | Mike    | Annual Company Pot Previous Year | 150    |
-      | Mike    | Annual Company Pot               | 150    |
+      | user | budget                           | amount |
+      | Mike | Annual Company Pot Previous Year | 150    |
+      | Mike | Annual Company Pot               | 150    |
 
   Scenario: A member cannot contribute behalf of another member
     Given Empty database
@@ -177,9 +177,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -212,9 +212,9 @@ Feature: Donation - Create
       | name            |
       | Unnamed Company |
     And The following users are members of organization "Unnamed Company"
-      | firstname   | email                      | password |
-      | Mike        | mike@unnamedcompany.com    | mike     |
-      | Sabrina     | sabrina@unnamedcompany.com | sabrina  |
+      | firstname | email                      | password |
+      | Mike      | mike@unnamedcompany.com    | mike     |
+      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
     And The following contents are saved
       | organization    | name         | value     |
       | Unnamed Company | Terms of Use | Blablabla |
@@ -237,5 +237,5 @@ Feature: Donation - Create
       | Awesome Campaign | Annual Company Pot | Mike        | 150    |
     Then "Mike" has "1" donation on the "Annual Company Pot" budget
     And Following users have corresponding amount left on budgets
-      | user    | budget             | amount |
-      | Mike    | Annual Company Pot | 100    |
+      | user | budget             | amount |
+      | Mike | Annual Company Pot | 100    |

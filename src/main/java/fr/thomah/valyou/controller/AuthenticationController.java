@@ -33,7 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
@@ -186,9 +185,7 @@ public class AuthenticationController {
                                     () -> slackTeam.getSlackUsers().add(slackUserInDb));
                     slackTeamRepository.save(slackTeam);
 
-
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(user, null,
-                            AuthorityUtils.createAuthorityList("ROLE_USER"));
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     final String token = jwtTokenUtil.generateToken(authentication);
                     return new AuthenticationResponseModel(token);

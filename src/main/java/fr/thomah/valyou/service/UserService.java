@@ -1,5 +1,6 @@
 package fr.thomah.valyou.service;
 
+import fr.thomah.valyou.entity.Authority;
 import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service(value = "userService")
 public class UserService implements UserDetailsService {
@@ -36,7 +39,7 @@ public class UserService implements UserDetailsService {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
         User user = userRepository.findByUsername(userPrincipal.getUsername());
-        if(user == null) {
+        if (user == null) {
             user = userRepository.findByEmail(userPrincipal.getUsername());
         }
         return user;
@@ -44,22 +47,23 @@ public class UserService implements UserDetailsService {
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
-        if(user == null){
+        if (user == null) {
             user = userRepository.findByEmail(username);
-            if(user == null) {
-                throw new UsernameNotFoundException("Invalid username or password.");
+            if (user == null) {
+                throw new UsernameNotFoundException("User not found");
             }
         }
-        return new UserPrincipal(username, user.getPassword(), getAuthority(user));
+
+        return new UserPrincipal(username, user.getPassword(), getAuthorities(user.getId()));
     }
 
-    private Set<SimpleGrantedAuthority> getAuthority(User user) {
-        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-        user.setUserAuthorities(authorityRepository.findAllByUsers_Id(user.getId()));
-        user.getUserAuthorities().forEach(role -> {
-            authorities.add(new SimpleGrantedAuthority(role.getName().name()));
-        });
-        return authorities;
+    public List<GrantedAuthority> getAuthorities(long userId) {
+        Set<Authority> userAuthorities = authorityRepository.findAllByUsers_Id(userId);
+        LOGGER.debug("Authorities for user {} :", userId);
+        return userAuthorities.stream().map(r -> {
+            LOGGER.debug("{}", r.getName().name());
+            return new SimpleGrantedAuthority(r.getAuthority());
+        }).collect(Collectors.toList());
     }
 
     public List<User> findAll() {
@@ -77,13 +81,13 @@ public class UserService implements UserDetailsService {
     }
 
     public User findById(Long id) {
-        return userRepository.findById(id).get();
+        return userRepository.findById(id).orElse(null);
     }
 
     public User save(User user) {
         User newUser = new User();
         newUser.setUsername(user.getUsername());
-        if(user.getPassword() != null && !user.getPassword().equals("")) {
+        if (user.getPassword() != null && !user.getPassword().equals("")) {
             newUser.setPassword(bcryptEncoder.encode(user.getPassword()));
             newUser.setLastPasswordResetDate(new Date());
         }

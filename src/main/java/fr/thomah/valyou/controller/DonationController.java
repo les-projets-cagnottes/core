@@ -6,6 +6,7 @@ import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
+import fr.thomah.valyou.service.DataPage;
 import fr.thomah.valyou.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -17,6 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -184,7 +188,7 @@ public class DonationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
-    public Set<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId) {
+    public Page<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
 
         // Fails if budget ID is missing
         if(projectId <= 0) {
@@ -201,19 +205,12 @@ public class DonationController {
             throw new NotFoundException();
         }
 
-        // If principal is leader of project, returns all donations
-        // Else returns donations of his own organization
-        User userLoggedIn = userService.get(principal);
-        Set<Donation> entities;
-        if(userLoggedIn.getId().equals(project.getLeader().getId())) {
-            entities = donationRepository.findAllByProjectId(projectId);
-        } else {
-            entities = donationRepository.getDonationsByUserIdAndProjectId(userLoggedIn.getId(), projectId);
-            LOGGER.debug(String.valueOf(entities.size()));
-        }
+        // TODO: Verify that principal is in one organization of the project
 
-        Set<DonationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+        // Get and transform donations
+        Page<Donation> entities = donationRepository.findByProject_idOrderByIdAsc(projectId, PageRequest.of(offset, limit, Sort.by("id")));
+        DataPage<DonationModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(DonationModel.fromEntity(entity)));
         return models;
     }
 
