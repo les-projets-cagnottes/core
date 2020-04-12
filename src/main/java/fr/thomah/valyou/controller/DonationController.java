@@ -6,7 +6,7 @@ import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
-import fr.thomah.valyou.service.DataPage;
+import fr.thomah.valyou.pagination.DataPage;
 import fr.thomah.valyou.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -27,10 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @RequestMapping("/api")
 @Tag(name = "Donations", description = "The Donations API")
@@ -188,12 +185,35 @@ public class DonationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
-    public Page<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+    public DataPage<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId, @RequestParam(name = "offset", defaultValue = "0") int offset, @RequestParam(name = "limit", defaultValue = "10") int limit) {
 
         // Fails if budget ID is missing
         if(projectId <= 0) {
             LOGGER.error("Impossible to get donations by project ID : Project ID is incorrect");
             throw new BadRequestException();
+        }
+
+
+//        select p.* from projects p " +
+//        "inner join project_organizations on p.id = project_organizations.project_id " +
+//                "inner join organizations o on project_organizations.organization_id = o.id " +
+//                "inner join organizations_users on organizations_users.organization_id = o.id " +
+//                "inner join users u on u.id = organizations_users.user_id " +
+//                "where u.id = :user_id and p.id = :project_id")
+
+        List<Organization> organizationList = organizationRepository.findAll();
+        organizationList.forEach(organization -> {
+            LOGGER.debug(organization.getName());
+            organization.getProjects().forEach(project -> {
+                LOGGER.debug(project.getTitle());
+            });
+        });
+
+        // Verify that principal is in one organization of the project
+        long userLoggedInId = userService.get(principal).getId();
+        if(projectRepository.findAllProjectsByUserInOrganizations(userLoggedInId, projectId).isEmpty()) {
+            LOGGER.error("Impossible to get donations by project ID : user {} is not member of concerned organizations", userLoggedInId);
+            throw new ForbiddenException();
         }
 
         // Retrieve full referenced objects
@@ -204,8 +224,6 @@ public class DonationController {
             LOGGER.error("Impossible to get donations by project ID : project not found");
             throw new NotFoundException();
         }
-
-        // TODO: Verify that principal is in one organization of the project
 
         // Get and transform donations
         Page<Donation> entities = donationRepository.findByProject_idOrderByIdAsc(projectId, PageRequest.of(offset, limit, Sort.by("id")));

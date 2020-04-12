@@ -2,6 +2,7 @@ package fr.thomah.valyou.component;
 
 import fr.thomah.valyou.entity.Donation;
 import fr.thomah.valyou.entity.model.DonationModel;
+import fr.thomah.valyou.pagination.DataPage;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -12,8 +13,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Set;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
@@ -32,7 +31,7 @@ public class DonationHttpClient {
 
     private final RestTemplate restTemplate;
     private HttpHeaders headers;
-    private ResponseEntity<Set<DonationModel>> response;
+    private ResponseEntity<?> response;
 
     public DonationHttpClient() {
         restTemplate = new RestTemplateBuilder()
@@ -58,8 +57,8 @@ public class DonationHttpClient {
     }
 
     public void getByProjectId(long projectId) {
-        HttpEntity<Donation> entity = new HttpEntity<>(headers);
-        ParameterizedTypeReference<Set<DonationModel>> responseType = new ParameterizedTypeReference<>() {};
+        HttpEntity<DonationModel> entity = new HttpEntity<>(headers);
+        ParameterizedTypeReference<DataPage<DonationModel>> responseType = new ParameterizedTypeReference<>() {};
         try {
             response = restTemplate.exchange(endpoint() + "?projectId=" + projectId, HttpMethod.GET, entity, responseType);
             context.setLastHttpCode(response.getStatusCodeValue());
@@ -72,7 +71,7 @@ public class DonationHttpClient {
         headers.setBearerAuth(token);
     }
 
-    public ResponseEntity<Set<DonationModel>> getLastResponse() {
+    public ResponseEntity<?> getLastResponse() {
         return response;
     }
 

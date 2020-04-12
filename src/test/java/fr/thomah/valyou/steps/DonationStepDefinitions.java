@@ -5,8 +5,10 @@ import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
 import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.entity.model.DonationModel;
+import fr.thomah.valyou.pagination.DataPage;
 import fr.thomah.valyou.repository.BudgetRepository;
 import fr.thomah.valyou.repository.DonationRepository;
+import fr.thomah.valyou.repository.OrganizationRepository;
 import fr.thomah.valyou.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
@@ -25,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class DonationStepDefinitions {
 
@@ -41,6 +44,9 @@ public class DonationStepDefinitions {
 
     @Autowired
     private DonationRepository donationRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -104,16 +110,31 @@ public class DonationStepDefinitions {
     public void theFollowingCampaignsAreAssociatedToOrganizations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
+        Organization organization;
         Project campaign;
         for (Map<String, String> columns : rows) {
 
-            // Associate project to the organization
+            // Get campaign
             campaign = context.getCampaigns().get(columns.get("campaign"));
-            campaign.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
-            campaign = projectRepository.save(campaign);
+            final Project campaignFinal = campaign;
 
-            // Save in Test Map
-            context.getCampaigns().put(campaign.getTitle(), campaign);
+            // Get organization
+            organization = organizationRepository.findById(context.getOrganizations().get(columns.get("organization")).getId()).orElse(null);
+            final Organization organizationFinal = organization;
+            assertNotNull(organizationFinal);
+
+            // Associate project to the organization
+            organizationFinal.getProjects().stream()
+                    .filter(project -> project.getId().equals(campaignFinal.getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            campaignPresent -> {},
+                            () -> organizationFinal.getProjects().add(campaignFinal)
+                    );
+
+            // Save
+            organization = organizationRepository.save(organizationFinal);
+            context.getOrganizations().put(organization.getName(), organization);
         }
     }
 
@@ -196,7 +217,9 @@ public class DonationStepDefinitions {
     public void itReturnsFollowingDonations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<DonationModel> donationsReturned = donationHttpClient.getLastResponse().getBody();
+        DataPage<DonationModel> body = (DataPage<DonationModel>) donationHttpClient.getLastResponse().getBody();
+        Assert.assertNotNull(body);
+        List<DonationModel> donationsReturned = body.getContent();
         Assert.assertNotNull(donationsReturned);
 
         Donation donation;

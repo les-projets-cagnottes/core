@@ -14,9 +14,10 @@ import java.util.Set;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@NamedEntityGraph(name = "Organization.withMembers",
+@NamedEntityGraph(name = "Organization.withLinkedEntities",
         attributeNodes = {
-                @NamedAttributeNode("members")
+                @NamedAttributeNode("members"),
+                @NamedAttributeNode("projects")
         }
 )
 @Table(name = "organizations")

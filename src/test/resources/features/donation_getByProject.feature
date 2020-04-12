@@ -1,7 +1,7 @@
 Feature: Donation - Get By Project
   Verifies rules for getting donations on a project
 
-  Scenario: A member can get project's donations of his organization
+  Scenario: A member of a project's organization can get project's donations
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -48,8 +48,9 @@ Feature: Donation - Get By Project
       | budget              | campaign         | contributor | amount |
       | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
+      | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
 
-  Scenario: A project leader can get project's donations of all associated organizations
+  Scenario: A non-member of any project's organizations cannot get project's donations
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -57,6 +58,7 @@ Feature: Donation - Get By Project
       | Another Company |
     And The following users are registered
       | firstname | email                       | password |
+      | Nicolas   | nicolas@anonymous.com       | nicolas  |
       | Mike      | mike@unnamedcompany.com     | mike     |
       | Sabrina   | sabrina@unnamedcompany.com  | sabrina  |
       | Sinclair  | sinclair@anothercompany.com | sinclair |
@@ -74,8 +76,8 @@ Feature: Donation - Get By Project
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
     And The following campaigns are running
-      | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 400               |
+      | title            | leader  | status        | peopleRequired | donationsRequired |
+      | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -89,11 +91,6 @@ Feature: Donation - Get By Project
       | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
       | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
-    And "Mike" is logged in
-    When "Mike" gets donations of the "Awesome Campaign" campaign
-    Then Last HTTP code was "200"
-    And It returns following donations
-      | budget              | campaign         | contributor | amount |
-      | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |
-      | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
-      | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
+    And "Nicolas" is logged in
+    When "Nicolas" gets donations of the "Awesome Campaign" campaign
+    Then Last HTTP code was "403"

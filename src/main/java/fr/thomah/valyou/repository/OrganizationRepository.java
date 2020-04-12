@@ -12,17 +12,17 @@ import java.util.Set;
 
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
 
-    @EntityGraph(value = "Organization.withMembers")
+    @EntityGraph(value = "Organization.withLinkedEntities")
     List<Organization> findAll();
 
     Page<Organization> findAll(Pageable pageable);
 
-    @EntityGraph(value = "Organization.withMembers")
+    @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findById(Long id);
 
     Set<Organization> findByMembers_Id(Long userId);
 
-    @EntityGraph(value = "Organization.withMembers")
+    @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findByIdAndMembers_Id(Long id, Long userId);
 
     Organization findBySlackTeam_Id(Long slackTeamId);
