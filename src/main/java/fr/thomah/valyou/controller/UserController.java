@@ -72,6 +72,17 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public User findById(@PathVariable("id") long id) {
+        User user = userRepository.findById(id).orElse(null);
+        if(user == null) {
+            throw new NotFoundException();
+        }
+        user.setPassword("");
+        return user;
+    }
+
+    @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"email"})
     public User findByEmail(@RequestParam("email") String email) {
         User user = userRepository.findByEmail(email);
