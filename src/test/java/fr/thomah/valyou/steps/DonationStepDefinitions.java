@@ -3,6 +3,7 @@ package fr.thomah.valyou.steps;
 import fr.thomah.valyou.component.AuthenticationHttpClient;
 import fr.thomah.valyou.component.CucumberContext;
 import fr.thomah.valyou.component.DonationHttpClient;
+import fr.thomah.valyou.component.ProjectHttpClient;
 import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.entity.model.DonationModel;
 import fr.thomah.valyou.pagination.DataPage;
@@ -38,6 +39,9 @@ public class DonationStepDefinitions {
 
     @Autowired
     private DonationHttpClient donationHttpClient;
+
+    @Autowired
+    private ProjectHttpClient projectHttpClient;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -217,7 +221,7 @@ public class DonationStepDefinitions {
     public void itReturnsFollowingDonations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        DataPage<DonationModel> body = (DataPage<DonationModel>) donationHttpClient.getLastResponse().getBody();
+        DataPage<DonationModel> body = (DataPage<DonationModel>) projectHttpClient.getLastResponse().getBody();
         Assert.assertNotNull(body);
         List<DonationModel> donationsReturned = body.getContent();
         Assert.assertNotNull(donationsReturned);
@@ -257,8 +261,8 @@ public class DonationStepDefinitions {
         context.getAuths().put(userFirstname, response);
 
         // Get donations
-        donationHttpClient.setBearerAuth(response.getToken());
-        donationHttpClient.getByProjectId(context.getCampaigns().get(campaign).getId());
+        projectHttpClient.setBearerAuth(response.getToken());
+        projectHttpClient.getDonations(context.getCampaigns().get(campaign).getId());
     }
 
 }

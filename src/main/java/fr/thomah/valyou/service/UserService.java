@@ -1,6 +1,7 @@
 package fr.thomah.valyou.service;
 
 import fr.thomah.valyou.entity.Authority;
+import fr.thomah.valyou.entity.AuthorityName;
 import fr.thomah.valyou.entity.User;
 import fr.thomah.valyou.repository.AuthorityRepository;
 import fr.thomah.valyou.repository.UserRepository;
@@ -70,6 +71,10 @@ public class UserService implements UserDetailsService {
         List<User> list = new ArrayList<>();
         userRepository.findAll().iterator().forEachRemaining(list::add);
         return list;
+    }
+
+    public boolean isAdmin(long userId) {
+        return authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userId) != null;
     }
 
     public void delete(long id) {

@@ -2,6 +2,7 @@ package fr.thomah.valyou.controller;
 
 import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.entity.model.BudgetModel;
+import fr.thomah.valyou.entity.model.DonationModel;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
@@ -33,6 +34,9 @@ public class BudgetController {
     private static final Logger LOGGER = LoggerFactory.getLogger(BudgetController.class);
 
     @Autowired
+    private UserController userController;
+
+    @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
@@ -40,6 +44,9 @@ public class BudgetController {
 
     @Autowired
     private ContentRepository contentRepository;
+
+    @Autowired
+    private DonationRepository donationRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -103,6 +110,60 @@ public class BudgetController {
 
         return models;
     }
+
+    @Operation(summary = "Get donations imputed on a budget", description = "Get donations imputed on a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<DonationModel> getDonations(Principal principal, @PathVariable("id") long budgetId) {
+
+        // Fails if budget ID is missing
+        if(budgetId <= 0) {
+            LOGGER.error("Impossible to get donations by budget ID : Budget ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(budgetId).orElse(null);
+
+        // Verify that any of references are not null
+        if(budget == null) {
+            LOGGER.error("Impossible to get donations by budget ID : budget not found");
+            throw new NotFoundException();
+        }
+
+        // Verify that principal is member of organization
+        long userLoggedInId = userService.get(principal).getId();
+        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedInId);
+        if(organization.isEmpty() && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get donations by budget ID : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
+            throw new ForbiddenException();
+        }
+
+        Set<Donation> entities = donationRepository.findAllByBudgetId(budgetId);
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/budget/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
+    public Set<DonationModel> getDonationsByContributorId(Principal principal, @PathVariable("id") long budgetId, @RequestParam("contributorId") long contributorId) {
+        return userController.getDonationsByBudgetId(principal, contributorId, budgetId);
+    }
+
 
     @Operation(summary = "Create a budget", description = "Create a budget", tags = { "Budgets" })
     @ApiResponses(value = {

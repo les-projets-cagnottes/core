@@ -1,4 +1,4 @@
-Feature: Donation - Get By Project
+Feature: Project - Get Donations
   Verifies rules for getting donations on a project
 
   Scenario: A member of a project's organization can get project's donations

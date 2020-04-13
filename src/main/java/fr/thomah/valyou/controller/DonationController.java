@@ -6,7 +6,6 @@ import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
-import fr.thomah.valyou.pagination.DataPage;
 import fr.thomah.valyou.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -18,16 +17,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.Optional;
+import java.util.Set;
 
 @RequestMapping("/api")
 @Tag(name = "Donations", description = "The Donations API")
@@ -88,16 +86,16 @@ public class DonationController {
         }
 
         // Verify that principal is the contributor
-        User userLoggedIn = userService.get(principal);
-        if(!userLoggedIn.getId().equals(contributor.getId())) {
-            LOGGER.error("Impossible to create donation : principal {} is not the contributor", userLoggedIn.getId());
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != contributor.getId()) {
+            LOGGER.error("Impossible to create donation : principal {} is not the contributor", userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that principal is member of organization
-        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
-        if(organization.isEmpty()) {
-            LOGGER.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedIn.getId(), budget.getOrganization().getId());
+        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedInId);
+        if(organization.isEmpty() && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
 
@@ -140,107 +138,48 @@ public class DonationController {
         donationRepository.save(donationToSave);
     }
 
-    @Operation(summary = "Get donations imputed on a budget", description = "Get donations imputed on a budget", tags = { "Donations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
-    public Set<DonationModel> getByBudgetId(Principal principal, @RequestParam("budgetId") long budgetId) {
-
-        // Fails if budget ID is missing
-        if(budgetId <= 0) {
-            LOGGER.error("Impossible to get donations by budget ID : Budget ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(budgetId).orElse(null);
-
-        // Verify that any of references are not null
-        if(budget == null) {
-            LOGGER.error("Impossible to get donations by budget ID : budget not found");
-            throw new NotFoundException();
-        }
-
-        // Verify that principal is member of organization
-        User userLoggedIn = userService.get(principal);
-        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
-        if(organization.isEmpty()) {
-            LOGGER.error("Impossible to get donations by budget ID : principal {} is not member of organization {}", userLoggedIn.getId(), budget.getOrganization().getId());
-            throw new ForbiddenException();
-        }
-
-        Set<Donation> entities = donationRepository.findAllByBudgetId(budgetId);
-        Set<DonationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
-        return models;
-    }
-
-    @Operation(summary = "Get donations made on a project", description = "Get donations made on a project", tags = { "Donations" })
+    @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Donations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
             @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
     })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"projectId"})
-    public DataPage<DonationModel> getByProjectId(Principal principal, @RequestParam("projectId") long projectId, @RequestParam(name = "offset", defaultValue = "0") int offset, @RequestParam(name = "limit", defaultValue = "10") int limit) {
-
-        // Fails if budget ID is missing
-        if(projectId <= 0) {
-            LOGGER.error("Impossible to get donations by project ID : Project ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that principal is in one organization of the project
-        long userLoggedInId = userService.get(principal).getId();
-        if(projectRepository.findAllProjectsByUserInOrganizations(userLoggedInId, projectId).isEmpty() && authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedInId) == null) {
-            LOGGER.error("Impossible to get donations by project ID : user {} is not member of concerned organizations", userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Retrieve full referenced objects
-        Project project = projectRepository.findById(projectId).orElse(null);
-
-        // Verify that any of references are not null
-        if(project == null) {
-            LOGGER.error("Impossible to get donations by project ID : project not found");
-            throw new NotFoundException();
-        }
-
-        // Get and transform donations
-        Page<Donation> entities = donationRepository.findByProject_idOrderByIdAsc(projectId, PageRequest.of(offset, limit, Sort.by("id")));
-        DataPage<DonationModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(DonationModel.fromEntity(entity)));
-        return models;
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
-    public Set<Donation> getByContributorId(@RequestParam("contributorId") long contributorId) {
-        return donationRepository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId", "budgetId"})
-    public Set<Donation> getByContributorIdAndBudgetId(@RequestParam("contributorId") long contributorId, @RequestParam("budgetId") long budgetId) {
-        return donationRepository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
-    }
-
     @RequestMapping(value = "/donation/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
-    public void delete(@PathVariable("id") Long id) {
-        Donation donation = donationRepository.findById(id).orElse(null);
-        if(donation == null) {
-            throw new NotFoundException();
-        } else if(donation.getProject().getStatus() == ProjectStatus.A_IN_PROGRESS) {
-            donationRepository.deleteById(id);
+    public void delete(Principal principal, @PathVariable("id") long id) {
+
+        // Fails if project ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to delete donation : ID is incorrect");
+            throw new BadRequestException();
         }
+
+        // Retrieve full referenced objects
+        Donation donation = donationRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(donation == null) {
+            LOGGER.error("Impossible to delete donation : donation {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the contributor OR Principal is admin
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != donation.getContributor().getId() && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to delete donation : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Verify that campaign associated is in progress
+        if(donation.getProject().getStatus() != ProjectStatus.A_IN_PROGRESS) {
+            throw new ForbiddenException();
+        }
+
+        // Delete donation
+        donationRepository.deleteById(id);
     }
 
 

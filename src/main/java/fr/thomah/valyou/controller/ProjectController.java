@@ -1,17 +1,28 @@
 package fr.thomah.valyou.controller;
 
 import com.google.gson.Gson;
+import fr.thomah.valyou.entity.model.DonationModel;
+import fr.thomah.valyou.exception.BadRequestException;
+import fr.thomah.valyou.exception.ForbiddenException;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.entity.*;
+import fr.thomah.valyou.pagination.DataPage;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.security.UserPrincipal;
 import fr.thomah.valyou.service.SlackClientService;
+import fr.thomah.valyou.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,10 +56,13 @@ public class ProjectController {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private ProjectRepository repository;
+    private ProjectRepository projectRepository;
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filter"})
@@ -61,14 +75,14 @@ public class ProjectController {
         if(statuses.isEmpty()) {
             statuses.addAll(List.of(ProjectStatus.values()));
         }
-        return repository.findAllByStatusInOrderByStatusAscFundingDeadlineAsc(statuses, pageable);
+        return projectRepository.findAllByStatusInOrderByStatusAscFundingDeadlineAsc(statuses, pageable);
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"memberId"})
     public Set<Project> getByMemberId(@RequestParam("memberId") Long memberId) {
-        Set<Project> projectsByLeader = repository.findAllByLeaderId(memberId);
-        Set<Project> projectsByPeopleGivingTime = repository.findAllByPeopleGivingTime_Id(memberId);
+        Set<Project> projectsByLeader = projectRepository.findAllByLeaderId(memberId);
+        Set<Project> projectsByPeopleGivingTime = projectRepository.findAllByPeopleGivingTime_Id(memberId);
         projectsByLeader.addAll(projectsByPeopleGivingTime);
         return projectsByLeader;
     }
@@ -76,7 +90,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Project findById(@PathVariable("id") Long id) {
-        Project project = repository.findById(id).orElse(null);
+        Project project = projectRepository.findById(id).orElse(null);
         if (project == null) {
             throw new NotFoundException();
         } else {
@@ -95,8 +109,49 @@ public class ProjectController {
     @RequestMapping(value = "/api/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
     public Page<Project> getByBudgetId(@RequestParam("budgetId") long budgetId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
-        return repository.findByBudgets_idOrderByIdDesc(budgetId, pageable);
+        return projectRepository.findByBudgets_idOrderByIdDesc(budgetId, pageable);
     }
+
+    @Operation(summary = "Get donations made on a project", description = "Get donations made on a project", tags = { "Projects" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User is not member of concerned organizations", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/project/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DataPage<DonationModel> getDonations(Principal principal, @PathVariable("id") long projectId, @RequestParam(name = "offset", defaultValue = "0") int offset, @RequestParam(name = "limit", defaultValue = "10") int limit) {
+
+        // Fails if project ID is missing
+        if(projectId <= 0) {
+            LOGGER.error("Impossible to get donations by project ID : Project ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is in one organization of the project
+        long userLoggedInId = userService.get(principal).getId();
+        if(projectRepository.findAllProjectsByUserInOrganizations(userLoggedInId, projectId).isEmpty() && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get donations by project ID : user {} is not member of concerned organizations", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        Project project = projectRepository.findById(projectId).orElse(null);
+
+        // Verify that any of references are not null
+        if(project == null) {
+            LOGGER.error("Impossible to get donations by project ID : project {} not found", projectId);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Page<Donation> entities = donationRepository.findByProject_idOrderByIdAsc(projectId, PageRequest.of(offset, limit, Sort.by("id")));
+        DataPage<DonationModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(DonationModel.fromEntity(entity)));
+        return models;
+    }
+
 
     @RequestMapping(value = "/api/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
@@ -130,7 +185,7 @@ public class ProjectController {
         });
         project.setBudgets(budgets);
 
-        Project p = repository.save(project);
+        Project p = projectRepository.save(project);
         User leader = p.getLeader();
 
         String defaultUser = new StringBuilder("*")
@@ -186,7 +241,7 @@ public class ProjectController {
     @RequestMapping(value = "/api/project", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public Project update(@RequestBody Project project) {
-        Project projectInDb = repository.findById(project.getId()).orElse(null);
+        Project projectInDb = projectRepository.findById(project.getId()).orElse(null);
         if (projectInDb == null) {
             throw new NotFoundException();
         } else {
@@ -226,18 +281,18 @@ public class ProjectController {
             if (project.getDonationsRequired() > projectInDb.getDonationsRequired()) {
                 projectInDb.setDonationsRequired(project.getDonationsRequired());
             }
-            return repository.save(projectInDb);
+            return projectRepository.save(projectInDb);
         }
     }
 
     @RequestMapping(value = "/api/project/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public void save(@PathVariable("id") String id, @RequestBody Project project) {
-        Project projectInDb = repository.findById(Long.valueOf(id)).orElse(null);
+        Project projectInDb = projectRepository.findById(Long.valueOf(id)).orElse(null);
         if (projectInDb == null) {
             throw new NotFoundException();
         } else {
-            repository.save(project);
+            projectRepository.save(project);
         }
     }
 
@@ -245,13 +300,13 @@ public class ProjectController {
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") String id) {
-        repository.deleteById(Long.valueOf(id));
+        projectRepository.deleteById(Long.valueOf(id));
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/project/{id}/join", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Project join(@PathVariable("id") Long id, Principal principal) {
-        Project projectInDb = repository.findById(id).orElse(null);
+        Project projectInDb = projectRepository.findById(id).orElse(null);
         if (projectInDb == null) {
             throw new NotFoundException();
         } else {
@@ -264,7 +319,7 @@ public class ProjectController {
             } else {
                 projectInDb.getPeopleGivingTime().remove(userInPeopleGivingTime);
             }
-            return repository.save(projectInDb);
+            return projectRepository.save(projectInDb);
         }
     }
 
@@ -277,7 +332,7 @@ public class ProjectController {
     @Scheduled(cron = "0 0 3 * * *")
     public void processProjectFundingDeadlines() {
         LOGGER.info("[processProjectFundingDeadlines] Start Project Funding Deadlines Processing");
-        Set<Project> projects = repository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.A_IN_PROGRESS, new Date());
+        Set<Project> projects = projectRepository.findAllByStatusAndFundingDeadlineLessThan(ProjectStatus.A_IN_PROGRESS, new Date());
         LOGGER.info("[processProjectFundingDeadlines] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             Set<Donation> donations = donationRepository.findAllByProjectId(project.getId());
@@ -311,7 +366,7 @@ public class ProjectController {
     @Scheduled(cron = "0 0 8 * * *")
     public void notifyProjectsAlmostFinished() {
         LOGGER.info("[notifyProjectsAlmostFinished] Start Notify Project Almost Finished");
-        Set<Project> projects = repository.findAllByStatus(ProjectStatus.A_IN_PROGRESS);
+        Set<Project> projects = projectRepository.findAllByStatus(ProjectStatus.A_IN_PROGRESS);
         LOGGER.info("[notifyProjectsAlmostFinished] " + projects.size() + " project(s) found");
         projects.forEach(project -> {
             long diffInMillies = Math.abs(project.getFundingDeadline().getTime() - new Date().getTime());
@@ -330,7 +385,7 @@ public class ProjectController {
     @RequestMapping(value = "/api/project/{id}/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public void notifyProjectStatus(@PathVariable("id") long id) {
-        Project project = repository.findById(id).orElse(null);
+        Project project = projectRepository.findById(id).orElse(null);
         if(project == null) {
             throw new NotFoundException();
         } else {

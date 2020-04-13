@@ -1,5 +1,6 @@
 package fr.thomah.valyou.controller;
 
+import fr.thomah.valyou.entity.model.DonationModel;
 import fr.thomah.valyou.entity.model.OrganizationAuthorityModel;
 import fr.thomah.valyou.exception.BadRequestException;
 import fr.thomah.valyou.exception.ForbiddenException;
@@ -8,6 +9,12 @@ import fr.thomah.valyou.entity.*;
 import fr.thomah.valyou.exception.NotFoundException;
 import fr.thomah.valyou.repository.*;
 import fr.thomah.valyou.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +44,12 @@ public class UserController {
     private AuthorityRepository authorityRepository;
 
     @Autowired
+    private BudgetRepository budgetRepository;
+
+    @Autowired
+    private DonationRepository donationRepository;
+
+    @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
@@ -45,7 +59,7 @@ public class UserController {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository userRepository;
 
     @Autowired
     private UserService userService;
@@ -54,13 +68,13 @@ public class UserController {
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public Page<User> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").and(Sort.by("lastname")));
-        return repository.findAll(pageable);
+        return userRepository.findAll(pageable);
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"email"})
     public User findByEmail(@RequestParam("email") String email) {
-        User user = repository.findByEmail(email);
+        User user = userRepository.findByEmail(email);
         user.setPassword("");
         return user;
     }
@@ -69,16 +83,99 @@ public class UserController {
     @RequestMapping(value = "/api/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "offset", "limit"})
     public Page<User> getByBudgetId(@RequestParam("budgetId") long budgetId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
         Pageable pageable = PageRequest.of(offset, limit);
-        Page<User> users = repository.findByBudgetIdWithPagination(budgetId, pageable);
-        Page<Float> totalBudgetDonations = repository.sumTotalBudgetDonationsByBudgetIdWithPagination(budgetId, pageable);
+        Page<User> users = userRepository.findByBudgetIdWithPagination(budgetId, pageable);
+        Page<Float> totalBudgetDonations = userRepository.sumTotalBudgetDonationsByBudgetIdWithPagination(budgetId, pageable);
         final List<Float> totalBudgetDonationsArray = totalBudgetDonations.get().collect(Collectors.toList());
         List<User> userList = users.get().collect(Collectors.toList());
         IntStream
                 .range(0, (int) users.get().count())
-                .forEach(index -> {
-                    userList.get(index).setTotalBudgetDonations(totalBudgetDonationsArray.get(index));
-                });
+                .forEach(index -> userList.get(index).setTotalBudgetDonations(totalBudgetDonationsArray.get(index)));
         return users;
+    }
+
+    @Operation(summary = "Get donations made by a user", description = "Get donations made by a user", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<DonationModel> getDonations(Principal principal, @PathVariable("id") long contributorId) {
+
+        // Fails if project ID is missing
+        if(contributorId <= 0) {
+            LOGGER.error("Impossible to get donations by contributor ID : Contributor ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the contributor OR Principal is admin
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != contributorId && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get donations by contributor ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        User user = userRepository.findById(contributorId).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null) {
+            LOGGER.error("Impossible to get donations by contributor ID : user {} not found", contributorId);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Set<Donation> entities = donationRepository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+
+        return models;
+    }
+
+    @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/api/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
+    public Set<DonationModel> getDonationsByBudgetId(Principal principal, @PathVariable("id") long contributorId, @RequestParam("budgetId") long budgetId) {
+
+        // Fails if project ID is missing
+        if(contributorId <= 0 || budgetId <= 0) {
+            LOGGER.error("Impossible to get donations by contributor ID and budget ID : Contributor ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the contributor OR Principal is admin
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != contributorId && !userService.isAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get donations by contributor ID and budget ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(budgetId).orElse(null);
+        User user = userRepository.findById(contributorId).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null || budget == null) {
+            LOGGER.error("Impossible to get donations by contributor ID and budget ID : user {} or budget {} not found", contributorId, budget);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Set<Donation> entities = donationRepository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+
+        return models;
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -86,13 +183,13 @@ public class UserController {
     public void create(@RequestBody User user) {
         user = UserGenerator.newUser(user);
         user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
-        repository.save(user);
+        userRepository.save(user);
     }
 
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public void save(@PathVariable("id") String id, @RequestBody User user) {
-        User userInDb = repository.findById(Long.valueOf(id)).orElse(null);
+        User userInDb = userRepository.findById(Long.valueOf(id)).orElse(null);
         if (userInDb == null) {
             throw new NotFoundException();
         } else {
@@ -106,7 +203,7 @@ public class UserController {
             userInDb.setLastname(user.getLastname());
             userInDb.setAvatarUrl(user.getAvatarUrl());
             userInDb.setEnabled(user.getEnabled());
-            repository.save(userInDb);
+            userRepository.save(userInDb);
         }
     }
 
@@ -117,7 +214,7 @@ public class UserController {
         if(!userLoggedIn.getUsername().equals(user.getEmail())) {
             throw new ForbiddenException();
         } else {
-            User userInDb = repository.findById(user.getId()).orElse(null);
+            User userInDb = userRepository.findById(user.getId()).orElse(null);
             if (userInDb == null) {
                 throw new NotFoundException();
             } else {
@@ -130,7 +227,7 @@ public class UserController {
                 userInDb.setFirstname(user.getFirstname());
                 userInDb.setLastname(user.getLastname());
                 userInDb.setAvatarUrl(user.getAvatarUrl());
-                repository.save(userInDb);
+                userRepository.save(userInDb);
             }
         }
     }
@@ -146,7 +243,7 @@ public class UserController {
         }
 
         // Verify user and organization authority exists in DB
-        final User userInDb = repository.findById(id).orElse(null);
+        final User userInDb = userRepository.findById(id).orElse(null);
         OrganizationAuthority organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
         if(userInDb == null || organizationAuthorityInDb == null) {
             LOGGER.error("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
@@ -182,14 +279,14 @@ public class UserController {
                             userInDb.getUserOrganizationAuthorities().add(organizationAuthorityInDb);
                         }
                 );
-        repository.save(userInDb);
+        userRepository.save(userInDb);
     }
 
     @RequestMapping(value = "/api/user/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(@PathVariable("id") long id) {
-        User user = repository.findById(id).orElse(null);
+        User user = userRepository.findById(id).orElse(null);
         if (user == null) {
             throw new NotFoundException();
         } else {
@@ -203,7 +300,7 @@ public class UserController {
                 project.getPeopleGivingTime().remove(user);
                 projectRepository.save(project);
             });
-            repository.deleteById(id);
+            userRepository.deleteById(id);
         }
     }
 
