@@ -14,9 +14,9 @@
 1. Create a PostgreSQL database matching the configuration in `src/main/resources/application.properties`
 2. Create the following environment variables :
 ```bash
-VALYOU_SLACK_CLIENT_ID=<ask-the-team>
-VALYOU_SLACK_CLIENT_SECRET=<ask-the-team>
-VALYOU_WEB_URL=http://localhost:4200
+LPC_SLACK_CLIENT_ID=<ask-the-team>
+LPC_SLACK_CLIENT_SECRET=<ask-the-team>
+LPC_WEB_URL=http://localhost:4200
 HTTP_PROXY=http://<host>:<port>
 ```
 3. Run the following command :

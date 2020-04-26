@@ -16,6 +16,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -34,7 +37,7 @@ Feature: Donation - Create
       | user | budget             | amount |
       | Mike | Annual Company Pot | 100    |
 
-  Scenario: A member cannot contribute on a project with a nonexistent campaign, budget or contributor
+  Scenario: A member cannot contribute on a campaign with a nonexistent account, campaign, budget or contributor
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -49,6 +52,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -84,6 +90,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns have a deadline reached
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -117,6 +126,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns are running
       | title            | leader | status    | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | C_AVORTED | 2              | 200               |
@@ -151,6 +163,9 @@ Feature: Donation - Create
       | organization    | name                             | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot Previous Year | 150             | true          | Sabrina | Terms of Use |
       | Unnamed Company | Annual Company Pot               | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget                           | amount |
+      | Mike  | Annual Company Pot Previous Year | 150    |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -186,6 +201,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -221,6 +239,9 @@ Feature: Donation - Create
     And The following budgets are available
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
+    And The following accounts are created
+      | owner | budget             | amount |
+      | Mike  | Annual Company Pot | 150    |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |

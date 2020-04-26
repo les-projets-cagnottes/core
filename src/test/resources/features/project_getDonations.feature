@@ -1,7 +1,7 @@
-Feature: Project - Get Donations
-  Verifies rules for getting donations on a project
+Feature: Campaign - Get Donations
+  Verifies rules for getting donations on a campaign
 
-  Scenario: A member of a project's organization can get project's donations
+  Scenario: A member of a campaign's organization can get campaign's donations
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -25,6 +25,10 @@ Feature: Project - Get Donations
       | organization    | name                | amountPerMember | isDistributed | sponsor  | rules                |
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
+    And The following accounts are created
+      | owner | budget              | amount |
+      | Mike  | Unnamed Company Pot | 150    |
+      | Mike  | Another Company Pot | 200    |
     And The following campaigns are running
       | title            | leader  | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
@@ -50,7 +54,7 @@ Feature: Project - Get Donations
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
       | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
 
-  Scenario: A non-member of any project's organizations cannot get project's donations
+  Scenario: A non-member of any campaign's organizations cannot get project's donations
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -75,6 +79,10 @@ Feature: Project - Get Donations
       | organization    | name                | amountPerMember | isDistributed | sponsor  | rules                |
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
+    And The following accounts are created
+      | owner | budget              | amount |
+      | Mike  | Unnamed Company Pot | 150    |
+      | Mike  | Another Company Pot | 200    |
     And The following campaigns are running
       | title            | leader  | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
