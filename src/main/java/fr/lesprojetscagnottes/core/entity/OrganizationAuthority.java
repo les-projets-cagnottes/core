@@ -22,11 +22,11 @@ public class OrganizationAuthority extends OrganizationAuthorityModel {
     private static final long serialVersionUID = -5098047340982969186L;
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "userOrganizationAuthorities")
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<User> users = new LinkedHashSet<>();
 
     public OrganizationAuthority() {

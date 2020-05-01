@@ -12,7 +12,7 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
 
     // TODO : Retrieve it by jointures with accounts
     Set<Donation> findAllByBudgetId(long budgetId);
-    Set<Donation> findAllByCampaignId(long projectId);
+    Set<Donation> findAllByCampaignId(long campaignId);
     Set<Donation> findAllByContributorIdOrderByBudgetIdAsc(long contributorId);
     Set<Donation> findAllByContributorIdAndBudgetId(long contributorId, long budgetId);
     void deleteByCampaignId(Long id);

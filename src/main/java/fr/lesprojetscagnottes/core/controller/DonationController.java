@@ -154,7 +154,7 @@ public class DonationController {
     @PreAuthorize("hasRole('USER')")
     public void delete(Principal principal, @PathVariable("id") long id) {
 
-        // Fails if project ID is missing
+        // Fails if campaign ID is missing
         if(id <= 0) {
             LOGGER.error("Impossible to delete donation : ID is incorrect");
             throw new BadRequestException();

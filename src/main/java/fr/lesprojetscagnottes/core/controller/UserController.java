@@ -1,10 +1,7 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
-import fr.lesprojetscagnottes.core.entity.model.OrganizationAuthorityModel;
-import fr.lesprojetscagnottes.core.entity.model.OrganizationModel;
-import fr.lesprojetscagnottes.core.entity.model.UserModel;
+import fr.lesprojetscagnottes.core.entity.model.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -70,15 +67,15 @@ public class UserController {
     @Operation(summary = "Get paginated users", description = "Get paginated users", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return paginated users", content = @Content(schema = @Schema(implementation = DataPage.class))),
-            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Params are incorrects", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public DataPage<UserModel> list(@RequestParam("offset") int offset, @RequestParam("limit") int limit) {
 
-        // Verify that ID is correct
-        if(offset <= 0 || limit <= 0) {
+        // Verify that params are correct
+        if(offset < 0 || limit <= 0) {
             LOGGER.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
@@ -165,6 +162,49 @@ public class UserController {
         return model;
     }
 
+    @Operation(summary = "Get user campaigns", description = "Get user campaigns", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding campaignss", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CampaignModel.class)))),
+            @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<CampaignModel> getByMemberId(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if user ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to get campaigns by user ID : User ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the user OR Principal is admin
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != id && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get campaigns by user ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        User user = userRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null) {
+            LOGGER.error("Impossible to get campaigns by user ID : user {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform entities
+        Set<CampaignModel> models = new LinkedHashSet<>();
+        Set<Campaign> entities = campaignRepository.findAllByLeaderId(id);
+        entities.addAll(campaignRepository.findAllByPeopleGivingTime_Id(id));
+        entities.forEach(entity -> models.add(CampaignModel.fromEntity(entity)));
+
+        return models;
+    }
+
     @Operation(summary = "Get user organizations", description = "Get user organizations", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding organizations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
@@ -176,7 +216,7 @@ public class UserController {
     @RequestMapping(value = "/user/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Set<OrganizationModel> getOrganizations(Principal principal, @PathVariable("id") long id) {
 
-        // Fails if project ID is missing
+        // Fails if user ID is missing
         if(id <= 0) {
             LOGGER.error("Impossible to get organizations by user ID : User ID is incorrect");
             throw new BadRequestException();
@@ -217,7 +257,7 @@ public class UserController {
     @RequestMapping(value = "/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Set<DonationModel> getDonations(Principal principal, @PathVariable("id") long contributorId) {
 
-        // Fails if project ID is missing
+        // Fails if campaign ID is missing
         if(contributorId <= 0) {
             LOGGER.error("Impossible to get donations by contributor ID : Contributor ID is incorrect");
             throw new BadRequestException();
@@ -251,15 +291,15 @@ public class UserController {
     @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
     public Set<DonationModel> getDonationsByBudgetId(Principal principal, @PathVariable("id") long contributorId, @RequestParam("budgetId") long budgetId) {
 
-        // Fails if project ID is missing
+        // Fails if campaign ID is missing
         if(contributorId <= 0 || budgetId <= 0) {
             LOGGER.error("Impossible to get donations by contributor ID and budget ID : Contributor ID is incorrect");
             throw new BadRequestException();
@@ -317,7 +357,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "User updated", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/user", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -428,7 +468,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable("id") long id) {
 
-        // Fails if project ID is missing
+        // Fails if campaign ID is missing
         if(id <= 0) {
             LOGGER.error("Impossible to delete user : ID is incorrect");
             throw new BadRequestException();
@@ -452,9 +492,9 @@ public class UserController {
 
         // Remove user from projects
         Set<Campaign> campaigns = campaignRepository.findAllByPeopleGivingTime_Id(id);
-        campaigns.forEach(project -> {
-            project.getPeopleGivingTime().remove(user);
-            campaignRepository.save(project);
+        campaigns.forEach(campaign -> {
+            campaign.getPeopleGivingTime().remove(user);
+            campaignRepository.save(campaign);
         });
 
         // Delete user

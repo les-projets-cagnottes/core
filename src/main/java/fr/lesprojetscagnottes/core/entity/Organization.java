@@ -27,21 +27,21 @@ public class Organization extends OrganizationModel {
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<User> members = new LinkedHashSet<>();
 
     @ManyToMany
     @JoinTable(
-            name = "project_organizations",
+            name = "campaigns_organizations",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+            inverseJoinColumns = {@JoinColumn(name = "campaign_id", referencedColumnName = "id")})
     @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Campaign> campaigns = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties(value = {"organization", "projects", "sponsor", "donations"})
+    @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
     private Set<Budget> budgets = new LinkedHashSet<>();
 
     @ManyToMany

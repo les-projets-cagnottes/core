@@ -54,7 +54,7 @@ Feature: Campaign - Get Donations
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
       | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
 
-  Scenario: A non-member of any campaign's organizations cannot get project's donations
+  Scenario: A non-member of any campaign's organizations cannot get campaign's donations
     Given Empty database
     And The following organizations are registered
       | name            |

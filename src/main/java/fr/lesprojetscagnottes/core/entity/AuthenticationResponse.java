@@ -30,7 +30,7 @@ public class AuthenticationResponse extends AuthenticationResponseModel implemen
     private String token = StringsCommon.EMPTY_STRING;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private User user = new User();
 
     public AuthenticationResponse() {}

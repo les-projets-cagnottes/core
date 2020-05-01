@@ -2,10 +2,12 @@ package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.entity.model.BudgetModel;
+import fr.lesprojetscagnottes.core.entity.model.CampaignModel;
 import fr.lesprojetscagnottes.core.entity.model.DonationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -58,6 +63,9 @@ public class BudgetController {
     private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
+    private CampaignRepository campaignRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -76,7 +84,7 @@ public class BudgetController {
         Set<Organization> organizations = organizationRepository.findAllByMembers_Id(user.getId());
 
         // Put all organization IDs in a single list
-        List<Long> organizationIds = new ArrayList<>();
+        Set<Long> organizationIds = new LinkedHashSet<>();
         organizations.forEach(organization -> organizationIds.add(organization.getId()));
 
         // Retrieve all corresponding entities
@@ -86,6 +94,46 @@ public class BudgetController {
         Set<BudgetModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(BudgetModel.fromEntity(entity)));
 
+        return models;
+    }
+
+    @Operation(summary = "Get campaigns using a budget", description = "Get campaigns using a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding campaigns", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public DataPage<CampaignModel> getCampaigns(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+
+        // Fails if budget ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to get campaigns by budget ID : budget ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is in one organization of the campaign
+        Long userLoggedInId = userService.get(principal).getId();
+        if(budgetRepository.findAllByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get campaigns by budget ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(budget == null) {
+            LOGGER.error("Impossible to get campaigns by budget ID : budget {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Page<Campaign> entities = campaignRepository.findByBudgets_id(id, PageRequest.of(offset, limit, Sort.by("id")));
+        DataPage<CampaignModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(CampaignModel.fromEntity(entity)));
         return models;
     }
 
@@ -132,16 +180,15 @@ public class BudgetController {
     @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Budgets" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/api/budget/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
     public Set<DonationModel> getDonationsByContributorId(Principal principal, @PathVariable("id") long budgetId, @RequestParam("contributorId") long contributorId) {
         return userController.getDonationsByBudgetId(principal, contributorId, budgetId);
     }
-
 
     @Operation(summary = "Create a budget", description = "Create a budget", tags = { "Budgets" })
     @ApiResponses(value = {

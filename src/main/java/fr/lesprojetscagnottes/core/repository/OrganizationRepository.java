@@ -17,8 +17,12 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Page<Organization> findAll(Pageable pageable);
 
+    Set<Organization> findAllById(Set<Long> id);
+
     @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findById(Long id);
+
+    Set<Organization> findAllByCampaigns_Id(Long campaignId);
 
     Set<Organization> findAllByMembers_Id(Long userId);
 
@@ -27,8 +31,5 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findByIdAndMembers_Id(Long id, Long userId);
 
-    Organization findBySlackTeam_Id(Long slackTeamId);
-
-    Organization findByBudgets_id(long budgetId);
-
+    Set<Organization> findAllByIdAndMembers_Id(Set<Long> id, Long userId);
 }

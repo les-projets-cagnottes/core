@@ -6,17 +6,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
+
+    Set<Budget> findAllById(Set<Long> id);
+
     Set<Budget> findAllByOrganizationId(Long aLong);
 
-    @Query(value = "select coalesce(sum(amount),0) from donations where donations.budget_id = :budget_id",
-            nativeQuery = true)
-    float getTotalDonations(@Param("budget_id") long budgetId);
-
     @Query(nativeQuery =true,value = "SELECT * FROM budgets AS b WHERE b.end_date > :endDate AND b.is_distributed = true AND b.organization_id IN (:organizations)")
-    Set<Budget> findAllUsableBudgetsInOrganizations(@Param("endDate") Date endDate, @Param("organizations") List<Long> organizations);
+    Set<Budget> findAllUsableBudgetsInOrganizations(@Param("endDate") Date endDate, @Param("organizations") Set<Long> organizations);
+
+    @Query(nativeQuery = true,
+            value= "select b.* from budgets b " +
+                    "    inner join organizations o on b.organization_id = o.id " +
+                    "    inner join organizations_users on organizations_users.organization_id = o.id " +
+                    "    inner join users u on u.id = organizations_users.user_id " +
+                    "    where u.id = :user_id")
+    Set<Budget> findAllByUser(@Param("user_id") Long userId);
+
+    @Query(nativeQuery = true,
+            value= "select b.* from budgets b " +
+                    "    inner join organizations o on b.organization_id = o.id " +
+                    "    inner join organizations_users on organizations_users.organization_id = o.id " +
+                    "    inner join users u on u.id = organizations_users.user_id " +
+                    "    where u.id = :user_id and b.id = :budget_id")
+    Set<Budget> findAllByUserAndId(@Param("user_id") Long userId, @Param("budget_id") Long budgetId);
 
 }

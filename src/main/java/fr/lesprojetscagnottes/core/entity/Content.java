@@ -17,7 +17,7 @@ import java.util.Set;
 public class Content extends ContentModel {
 
     @ManyToMany(mappedBy = "contents", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"})
+    @JsonIgnoreProperties(value = {"members", "campaigns", "budgets", "contents"})
     private Set<Organization> organizations = new LinkedHashSet<>();
 
 }

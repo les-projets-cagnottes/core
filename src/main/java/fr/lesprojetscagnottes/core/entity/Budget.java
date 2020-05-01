@@ -18,9 +18,9 @@ public class Budget extends BudgetModel {
 
     @ManyToMany
     @JoinTable(
-            name = "project_budgets",
+            name = "campaigns_budgets",
             joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+            inverseJoinColumns = {@JoinColumn(name = "campaign_id", referencedColumnName = "id")})
     @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Campaign> campaigns = new LinkedHashSet<>();
 
@@ -29,15 +29,15 @@ public class Budget extends BudgetModel {
     private Content rules = new Content();
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
     @OneToMany(mappedBy = "budget")
-    @JsonIgnoreProperties(value = {"contributor", "project", "budget", "account"})
+    @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private User sponsor = new User();
 
     @OneToMany(mappedBy = "budget")
@@ -47,7 +47,7 @@ public class Budget extends BudgetModel {
     @Override
     public String toString() {
         return "Budget{" +
-                "projects=" + campaigns.size() +
+                "campaigns=" + campaigns.size() +
                 ", organization=" + organization.getId() +
                 ", sponsor=" + sponsor.getId() +
                 ", rules=" + rules.getId() +

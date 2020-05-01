@@ -257,7 +257,7 @@ public class OrganizationController {
     @RequestMapping(value = "/organization/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void delete(Principal principal, @PathVariable("id") long id) {
 
-        // Fails if project ID is missing
+        // Fails if campaign ID is missing
         if(id <= 0) {
             LOGGER.error("Impossible to delete organization : ID is incorrect");
             throw new BadRequestException();

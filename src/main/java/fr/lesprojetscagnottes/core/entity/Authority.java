@@ -23,7 +23,7 @@ public class Authority extends AuthorityModel implements GrantedAuthority {
     private static final long serialVersionUID = -8193848589240726612L;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<User> users = new LinkedHashSet<>();
 
     public Authority() {

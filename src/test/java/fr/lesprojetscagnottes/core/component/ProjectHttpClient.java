@@ -21,7 +21,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 public class ProjectHttpClient {
 
     private final String SERVER_URL = "http://localhost";
-    private final String ENDPOINT = "/api/project";
+    private final String ENDPOINT = "/api/campaign";
 
     @LocalServerPort
     private int port;

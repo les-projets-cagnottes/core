@@ -127,9 +127,9 @@ public class DonationStepDefinitions {
             final Organization organizationFinal = organization;
             assertNotNull(organizationFinal);
 
-            // Associate project to the organization
+            // Associate campaign to the organization
             organizationFinal.getCampaigns().stream()
-                    .filter(project -> project.getId().equals(campaignFinal.getId()))
+                    .filter(organizationCampaign -> organizationCampaign.getId().equals(campaignFinal.getId()))
                     .findAny()
                     .ifPresentOrElse(
                             campaignPresent -> {},
