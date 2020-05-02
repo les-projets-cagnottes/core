@@ -10,7 +10,6 @@ import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.*;
-import fr.lesprojetscagnottes.core.security.UserPrincipal;
 import fr.lesprojetscagnottes.core.service.SlackClientService;
 import fr.lesprojetscagnottes.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -357,167 +355,189 @@ public class CampaignController {
         return campaign;
     }
 
+    @Operation(summary = "Update a campaign", description = "Update a campaign", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Campaign updated", content = @Content(schema = @Schema(implementation = CampaignModel.class))),
+            @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
     @RequestMapping(value = "/campaign", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public Campaign update(@RequestBody Campaign campaign) {
-        Campaign campaignInDb = campaignRepository.findById(campaign.getId()).orElse(null);
-        if (campaignInDb == null) {
-            throw new NotFoundException();
-        } else {
-            Set<Organization> organizations = campaign.getOrganizations();
-            organizations.forEach(organization -> {
-                Organization organizationInDb = organizationRepository.findById(organization.getId()).orElse(null);
-                if (organizationInDb == null) {
-                    throw new NotFoundException();
-                } else {
-                    if (organizationInDb.getCampaigns().stream().noneMatch(prj -> campaignInDb.getId().equals(prj.getId()))) {
-                        organizationInDb.addProject(campaign);
-                    }
-                    organization = organizationInDb;
-                }
-            });
-            campaignInDb.setOrganizations(organizations);
+    public CampaignModel update(Principal principal, @RequestBody CampaignModel campaignModel) {
 
-            Set<Budget> budgets = campaign.getBudgets();
-            budgets.forEach(budget -> {
-                Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
-                if (budgetInDb == null) {
-                    throw new NotFoundException();
-                } else {
-                    if (budgetInDb.getCampaigns().stream().noneMatch(prj -> campaignInDb.getId().equals(prj.getId()))) {
-                        budgetInDb.getCampaigns().add(campaign);
-                    }
-                    budget = budgetInDb;
-                }
-            });
-            campaign.setBudgets(budgets);
-
-            campaignInDb.setTitle(campaign.getTitle());
-            campaignInDb.setShortDescription(campaign.getShortDescription());
-            campaignInDb.setLongDescription(campaign.getLongDescription());
-            campaignInDb.setLeader(campaign.getLeader());
-            campaignInDb.setPeopleRequired(campaign.getPeopleRequired());
-            if (campaign.getDonationsRequired() > campaignInDb.getDonationsRequired()) {
-                campaignInDb.setDonationsRequired(campaign.getDonationsRequired());
-            }
-            return campaignRepository.save(campaignInDb);
-        }
-    }
-
-    @RequestMapping(value = "/campaign/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
-    public void save(@PathVariable("id") String id, @RequestBody Campaign campaign) {
-        Campaign campaignInDb = campaignRepository.findById(Long.valueOf(id)).orElse(null);
-        if (campaignInDb == null) {
-            throw new NotFoundException();
-        } else {
-            campaignRepository.save(campaign);
-        }
-    }
-
-    @RequestMapping(value = "/api/campaign/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @PreAuthorize("hasRole('USER')")
-    public void delete(@PathVariable("id") String id) {
-        campaignRepository.deleteById(Long.valueOf(id));
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/campaign/{id}/join", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Campaign join(@PathVariable("id") Long id, Principal principal) {
-        Campaign campaignInDb = campaignRepository.findById(id).orElse(null);
-        if (campaignInDb == null) {
-            throw new NotFoundException();
-        } else {
-            UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-            UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
-            final User userLoggedIn = userRepository.findByUsername(userPrincipal.getUsername());
-            User userInPeopleGivingTime = campaignInDb.getPeopleGivingTime().stream().filter(userGivingTime -> userLoggedIn.getId().equals(userGivingTime.getId())).findFirst().orElse(null);
-            if (userInPeopleGivingTime == null) {
-                campaignInDb.addPeopleGivingTime(userLoggedIn);
+        // Fails if any of references are null
+        if(campaignModel == null || campaignModel.getId() <= 0 || campaignModel.getLeader() == null || campaignModel.getLeader().getId() < 0) {
+            if(campaignModel != null ) {
+                LOGGER.error("Impossible to update campaign {} : some references are missing", campaignModel.getId());
             } else {
-                campaignInDb.getPeopleGivingTime().remove(userInPeopleGivingTime);
+                LOGGER.error("Impossible to update a null campaign");
             }
-            return campaignRepository.save(campaignInDb);
+            throw new BadRequestException();
         }
+
+        // Retrieve full referenced objects
+        User leader = userRepository.findById(campaignModel.getLeader().getId()).orElse(null);
+        Campaign campaign = campaignRepository.findById(campaignModel.getId()).orElse(null);
+
+        // Fails if any of references are null
+        if(campaign == null || leader == null) {
+            LOGGER.error("Impossible to update campaign {} : one or more reference(s) doesn't exist", campaignModel.getId());
+            throw new NotFoundException();
+        }
+
+        // Verify that principal has enough privileges
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!leader.getId().equals(userLoggedInId) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to update campaign {} : principal has not enough privileges", campaignModel.getId());
+        }
+
+        // Save campaign
+        campaign.setTitle(campaign.getTitle());
+        campaign.setShortDescription(campaign.getShortDescription());
+        campaign.setLongDescription(campaign.getLongDescription());
+        campaign.setLeader(campaign.getLeader());
+        campaign.setPeopleRequired(campaign.getPeopleRequired());
+        if (campaign.getDonationsRequired() > campaign.getDonationsRequired()) {
+            campaign.setDonationsRequired(campaign.getDonationsRequired());
+        }
+
+        return CampaignModel.fromEntity(campaignRepository.save(campaign));
     }
 
+    @Operation(summary = "Join a campaign", description = "Make principal join the campaign as a member", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Campaign joined", content = @Content(schema = @Schema(implementation = CampaignModel.class))),
+            @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/campaign/{id}/join", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void join(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if any of references are null
+        if(id < 0) {
+            LOGGER.error("Impossible to join campaign {} : some references are missing", id);
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
+        Campaign campaign = campaignRepository.findById(id).orElse(null);
+
+        // Fails if any of references are null
+        if(campaign == null) {
+            LOGGER.error("Impossible to join campaign {} : one or more reference(s) doesn't exist", id);
+            throw new NotFoundException();
+        }
+
+        // Verify that principal is member of organizations
+        User userLoggedIn = userService.get(principal);
+        Long userLoggedInId = userLoggedIn.getId();
+        campaign.setOrganizations(organizationRepository.findAllByCampaigns_Id(id));
+        Set<Long> organizationsRef = new LinkedHashSet<>();
+        campaign.getOrganizations().forEach(organization -> organizationsRef.add(organization.getId()));
+        if(organizationRepository.findAllByIdAndMembers_Id(organizationsRef, userLoggedInId).isEmpty()) {
+            LOGGER.error("Impossible to join campaign {} : principal {} is not member of all organizations", id, userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Add or remove member
+        campaign.setPeopleGivingTime(userRepository.findAllByCampaigns_Id(id));
+        campaign.getPeopleGivingTime()
+                .stream()
+                .filter(member -> userLoggedInId.equals(member.getId()))
+                .findAny()
+                .ifPresentOrElse(
+                        user -> campaign.getPeopleGivingTime().remove(user),
+                        () -> campaign.getPeopleGivingTime().add(userLoggedIn));
+        campaignRepository.save(campaign);
+    }
+
+    @Operation(summary = "Execute campaign validation", description = "Execute campaign validation without waiting for the CRON", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Validation executed with success", content = @Content(schema = @Schema()))
+    })
     @RequestMapping(value = "/campaign/validate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void validate() {
-        processProjectFundingDeadlines();
+        processCampaignFundingDeadlines();
     }
 
-    @Scheduled(cron = "0 0 3 * * *")
-    public void processProjectFundingDeadlines() {
-        LOGGER.info("[processProjectFundingDeadlines] Start Campaign Funding Deadlines Processing");
-        Set<Campaign> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.A_IN_PROGRESS, new Date());
-        LOGGER.info("[processProjectFundingDeadlines] " + campaigns.size() + " campaign(s) found");
-        campaigns.forEach(campaign -> {
-            Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
-            float totalDonations = 0f;
-            for (Donation donation : donations) {
-                totalDonations += donation.getAmount();
-            }
-            LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
-            LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Teammates : " + campaign.getPeopleGivingTime().size() + " / " + campaign.getPeopleRequired());
-            LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Donations : " + totalDonations + " € / " + campaign.getDonationsRequired() + " €");
-            if (totalDonations >= campaign.getDonationsRequired()
-                    && campaign.getPeopleGivingTime().size() >= campaign.getPeopleRequired()) {
-                campaign.setStatus(CampaignStatus.B_READY);
-                LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Status => B_READY");
-            } else {
-                campaign.setStatus(CampaignStatus.C_AVORTED);
-                LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Status => C_AVORTED");
-                donationRepository.deleteByCampaignId(campaign.getId());
-                LOGGER.info("[processProjectFundingDeadlines][" + campaign.getId() + "] Donations deleted");
-            }
-        });
-        LOGGER.info("[processProjectFundingDeadlines] End Campaign Funding Deadlines Processing");
-    }
-
+    @Operation(summary = "Execute campaign notification", description = "Execute campaign notification without waiting for the CRON", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Notification executed with success", content = @Content(schema = @Schema()))
+    })
     @RequestMapping(value = "/campaign/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
-    public void notifyProjectsAlmostFinished(Principal principal) {
-        notifyProjectsAlmostFinished();
-    }
-
-    @Scheduled(cron = "0 0 8 * * *")
-    public void notifyProjectsAlmostFinished() {
-        LOGGER.info("[notifyProjectsAlmostFinished] Start Notify Campaign Almost Finished");
-        Set<Campaign> campaigns = campaignRepository.findAllByStatus(CampaignStatus.A_IN_PROGRESS);
-        LOGGER.info("[notifyProjectsAlmostFinished] " + campaigns.size() + " campaign(s) found");
-        campaigns.forEach(campaign -> {
-            long diffInMillies = Math.abs(campaign.getFundingDeadline().getTime() - new Date().getTime());
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
-
-            LOGGER.info("[notifyProjectsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
-            LOGGER.info("[notifyProjectsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
-
-            if(diff == 7 || diff == 1) {
-                notifyProjectStatus(campaign, diff);
-            }
-        });
-        LOGGER.info("[notifyProjectsAlmostFinished] End Notify Campaign Almost Finished");
+    @PreAuthorize("hasRole('ADMIN')")
+    public void notifyCampaignsAlmostFinished(Principal principal) {
+        notifyCampaignsAlmostFinished();
     }
 
     @RequestMapping(value = "/campaign/{id}/notify", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void notifyProjectStatus(@PathVariable("id") long id) {
+    public void notifyCampaignStatus(@PathVariable("id") long id) {
         Campaign campaign = campaignRepository.findById(id).orElse(null);
         if(campaign == null) {
             throw new NotFoundException();
         } else {
             long diffInMillies = Math.abs(campaign.getFundingDeadline().getTime() - new Date().getTime());
             long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
-            notifyProjectStatus(campaign, diff);
+            notifyCampaignStatus(campaign, diff);
         }
     }
 
-    private void notifyProjectStatus(Campaign campaign, long daysUntilDeadline) {
+    @Scheduled(cron = "0 0 3 * * *")
+    public void processCampaignFundingDeadlines() {
+        LOGGER.info("[processCampaignFundingDeadlines] Start Campaign Funding Deadlines Processing");
+        Set<Campaign> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.A_IN_PROGRESS, new Date());
+        LOGGER.info("[processCampaignFundingDeadlines] " + campaigns.size() + " campaign(s) found");
+        campaigns.forEach(campaign -> {
+            Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
+            float totalDonations = 0f;
+            for (Donation donation : donations) {
+                totalDonations += donation.getAmount();
+            }
+            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
+            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Teammates : " + campaign.getPeopleGivingTime().size() + " / " + campaign.getPeopleRequired());
+            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations : " + totalDonations + " € / " + campaign.getDonationsRequired() + " €");
+            if (totalDonations >= campaign.getDonationsRequired()
+                    && campaign.getPeopleGivingTime().size() >= campaign.getPeopleRequired()) {
+                campaign.setStatus(CampaignStatus.B_READY);
+                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => B_READY");
+            } else {
+                campaign.setStatus(CampaignStatus.C_AVORTED);
+                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => C_AVORTED");
+                donationRepository.deleteByCampaignId(campaign.getId());
+                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations deleted");
+            }
+        });
+        LOGGER.info("[processCampaignFundingDeadlines] End Campaign Funding Deadlines Processing");
+    }
+
+    @Scheduled(cron = "0 0 8 * * *")
+    public void notifyCampaignsAlmostFinished() {
+        LOGGER.info("[notifyCampaignsAlmostFinished] Start Notify Campaign Almost Finished");
+        Set<Campaign> campaigns = campaignRepository.findAllByStatus(CampaignStatus.A_IN_PROGRESS);
+        LOGGER.info("[notifyCampaignsAlmostFinished] " + campaigns.size() + " campaign(s) found");
+        campaigns.forEach(campaign -> {
+            long diffInMillies = Math.abs(campaign.getFundingDeadline().getTime() - new Date().getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
+
+            LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
+            LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
+
+            if(diff == 7 || diff == 1) {
+                notifyCampaignStatus(campaign, diff);
+            }
+        });
+        LOGGER.info("[notifyCampaignsAlmostFinished] End Notify Campaign Almost Finished");
+    }
+
+    private void notifyCampaignStatus(Campaign campaign, long daysUntilDeadline) {
 
         int teamMatesMissing = campaign.getPeopleRequired() - campaign.getPeopleGivingTime().size();
-        LOGGER.info("[notifyProjectStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
+        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
 
         Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
         float totalDonations = 0f;
@@ -525,11 +545,14 @@ public class CampaignController {
             totalDonations += donation.getAmount();
         }
         float donationsMissing = campaign.getDonationsRequired() - totalDonations;
-        LOGGER.info("[notifyProjectsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
+        LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
+
+        User leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
+        if(leader == null) {
+            LOGGER.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
+        }
 
         if(teamMatesMissing > 0 || donationsMissing > 0) {
-
-            User leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
 
             String defaultUser = new StringBuilder("*")
                     .append(leader.getFirstname())
@@ -587,11 +610,11 @@ public class CampaignController {
                                         .append("/projects/")
                                         .append(campaign.getId());
                             });
-                    LOGGER.info("[notifyProjectStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
+                    LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
                     String channelId = slackClientService.joinChannel(organization.getSlackTeam());
                     slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
                     slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
-                    LOGGER.info("[notifyProjectStatus][" + campaign.getId() + "] Slack Message Sent");
+                    LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
                 }
             });
 

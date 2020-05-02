@@ -135,7 +135,9 @@ public class AuthenticationController {
                 .GET()
                 .build();
         try {
+            LOGGER.debug("Call {}", url);
             HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("Response from {} : {}", url, response.body());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("user") != null && json.get("team") != null) {

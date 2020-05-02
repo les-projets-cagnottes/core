@@ -4,6 +4,7 @@ import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.entity.model.DonationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
+import fr.lesprojetscagnottes.core.exception.InternalServerException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.service.UserService;
@@ -139,7 +140,17 @@ public class DonationController {
         donationToSave.setBudget(budget);
         donationToSave.setContributor(contributor);
         donationToSave.setAmount(donation.getAmount());
-        donationRepository.save(donationToSave);
+        donationToSave = donationRepository.save(donationToSave);
+
+        // Update account
+        Long accountId = account.getId();
+        account = accountRepository.findById(accountId).orElse(null);
+        if(account == null) {
+            LOGGER.error("Error while updating account {} after donation {} creation", accountId, donationToSave.getId());
+            throw new InternalServerException();
+        }
+        account.setAmount(account.getAmount() - donation.getAmount());
+        accountRepository.save(account);
     }
 
     @Operation(summary = "Delete a donation by its ID", description = "Delete a donation by its ID", tags = { "Donations" })
@@ -185,6 +196,16 @@ public class DonationController {
 
         // Delete donation
         donationRepository.deleteById(id);
+
+        // Update account
+        Long accountId = donation.getAccount().getId();
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if(account == null) {
+            LOGGER.error("Error while updating account {} after donation {} of \"{}\"€ deletion", accountId, id, donation.getAmount());
+            throw new InternalServerException();
+        }
+        account.setAmount(account.getAmount() - donation.getAmount());
+        accountRepository.save(account);
     }
 
 

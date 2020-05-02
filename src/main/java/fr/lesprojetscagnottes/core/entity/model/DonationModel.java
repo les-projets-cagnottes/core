@@ -22,19 +22,19 @@ public class DonationModel extends AuditEntity<String> {
 
     @Column(name = "amount")
     @NotNull
-    private float amount;
+    protected float amount;
 
     @Transient
-    private GenericModel account;
+    protected GenericModel account;
 
     @Transient
-    private GenericModel contributor;
+    protected GenericModel contributor;
 
     @Transient
-    private GenericModel campaign;
+    protected GenericModel campaign;
 
     @Transient
-    private GenericModel budget;
+    protected GenericModel budget;
 
     public static DonationModel fromEntity(Donation entity) {
         DonationModel model = new DonationModel();

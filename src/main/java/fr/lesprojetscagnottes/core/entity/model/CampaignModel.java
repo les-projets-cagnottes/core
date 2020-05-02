@@ -19,41 +19,45 @@ public class CampaignModel extends AuditEntity<String> {
 
     @Column(name = "title")
     @NotNull
-    private String title = StringsCommon.EMPTY_STRING;
+    protected String title = StringsCommon.EMPTY_STRING;
 
     @Column(length = 50)
     @NotNull
     @Enumerated(EnumType.STRING)
-    private CampaignStatus status;
+    protected CampaignStatus status;
 
     @Column(name = "short_description")
-    private String shortDescription;
+    protected String shortDescription;
 
     @Column(name = "long_description", columnDefinition = "TEXT")
-    private String longDescription;
+    protected String longDescription;
 
     @Column(name = "donations_required")
-    private Float donationsRequired;
+    protected Float donationsRequired;
 
     @Column(name = "peopleRequired")
-    private Integer peopleRequired;
+    protected Integer peopleRequired;
 
     @Column(name = "funding_deadline")
     @Temporal(TemporalType.TIMESTAMP)
     @NotNull
-    private Date fundingDeadline = new Date();
+    protected Date fundingDeadline = new Date();
 
     @Column(name = "total_donations")
-    private Float totalDonations;
+    @NotNull
+    protected Float totalDonations = 0f;
 
     @Transient
-    private GenericModel leader;
+    protected GenericModel leader;
 
     @Transient
     private Set<Long> organizationsRef = new LinkedHashSet<>();
 
     @Transient
     private Set<Long> budgetsRef = new LinkedHashSet<>();
+
+    @Transient
+    private Set<Long> peopleGivingTimeRef = new LinkedHashSet<>();
 
     public static CampaignModel fromEntity(Campaign entity) {
         CampaignModel model = new CampaignModel();
@@ -71,6 +75,9 @@ public class CampaignModel extends AuditEntity<String> {
         model.setFundingDeadline(entity.getFundingDeadline());
         model.setTotalDonations(entity.getTotalDonations());
         model.setLeader(new GenericModel(entity.getLeader()));
+        entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
+        entity.getBudgets().forEach(budget -> model.getBudgetsRef().add(budget.getId()));
+        entity.getPeopleGivingTime().forEach(member -> model.getPeopleGivingTimeRef().add(member.getId()));
         return model;
     }
 

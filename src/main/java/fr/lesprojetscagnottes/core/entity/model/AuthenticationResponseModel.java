@@ -16,10 +16,10 @@ import java.util.Date;
 public class AuthenticationResponseModel extends AuditEntity<String> {
 
     @Column
-    private Date expiration = new Date();
+    protected Date expiration = new Date();
 
     @Column
-    private String token = StringsCommon.EMPTY_STRING;
+    protected String token = StringsCommon.EMPTY_STRING;
 
     public AuthenticationResponseModel() {}
 

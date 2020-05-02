@@ -8,7 +8,10 @@ import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -23,5 +26,9 @@ public class Account extends AccountModel {
     @ManyToOne
     @JsonIgnoreProperties(value = {"organization", "sponsor", "donations", "accounts"})
     private Budget budget = new Budget();
+
+    @OneToMany
+    @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
+    private Set<Donation> donations = new LinkedHashSet<>();
 
 }

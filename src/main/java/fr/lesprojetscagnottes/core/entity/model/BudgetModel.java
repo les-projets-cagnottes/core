@@ -36,7 +36,8 @@ public class BudgetModel extends AuditEntity<String> {
     protected Date endDate = new Date();
 
     @Column(name = "total_donations")
-    protected float totalDonations = 0f;
+    @NotNull
+    protected Float totalDonations = 0f;
 
     @Transient
     private GenericModel organization;

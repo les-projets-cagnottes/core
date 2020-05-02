@@ -15,10 +15,10 @@ import javax.persistence.MappedSuperclass;
 public class ContentModel extends AuditEntity<String> {
 
     @Column(name = "name")
-    private String name;
+    protected String name;
 
     @Column(name = "value", columnDefinition = "TEXT")
-    private String value;
+    protected String value;
 
     public static ContentModel fromEntity(Content entity) {
         ContentModel model = new ContentModel();

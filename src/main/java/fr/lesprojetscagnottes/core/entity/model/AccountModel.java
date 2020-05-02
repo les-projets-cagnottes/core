@@ -22,13 +22,17 @@ public class AccountModel extends AuditEntity<String> {
 
     @Column(name = "amount")
     @NotNull
-    private float amount;
+    protected float amount;
+
+    @Column(name = "total_donations")
+    @NotNull
+    protected Float totalDonations = 0f;
 
     @Transient
-    private GenericModel owner;
+    protected GenericModel owner;
 
     @Transient
-    private GenericModel budget;
+    protected GenericModel budget;
 
     public static AccountModel fromEntity(Account entity) {
         AccountModel model = new AccountModel();

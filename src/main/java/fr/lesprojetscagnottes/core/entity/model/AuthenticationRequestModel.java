@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter(AccessLevel.PUBLIC)
 @Getter(AccessLevel.PUBLIC)
 public class AuthenticationRequestModel {
-    private String email;
-    private String password;
+    protected String email;
+    protected String password;
 }
