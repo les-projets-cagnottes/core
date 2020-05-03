@@ -32,4 +32,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Optional<Organization> findByIdAndMembers_Id(Long id, Long userId);
 
     Set<Organization> findAllByIdAndMembers_Id(Set<Long> id, Long userId);
+
+    Set<Organization> findAllByContents_Id(Long contentId);
 }

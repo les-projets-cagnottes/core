@@ -151,6 +151,43 @@ public class OrganizationController {
         return OrganizationModel.fromEntity(entity);
     }
 
+    @Operation(summary = "Get list of organizations by a list of IDs", description = "Find a list of organizations by a list of IDs", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return the organizations", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
+    public Set<OrganizationModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
+
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<OrganizationModel> models = new LinkedHashSet<>();
+
+        for(Long id : ids) {
+
+            // Retrieve full referenced objects
+            Organization entity = organizationRepository.findById(id).orElse(null);
+            if(entity == null) {
+                LOGGER.error("Impossible to get organization {} : it doesn't exist", id);
+                continue;
+            }
+
+            // Verify that principal share an organization with the user
+            if(!userLoggedInOrganizations.contains(entity) && userLoggedIn_isNotAdmin) {
+                LOGGER.error("Impossible to get organization {} : principal {} is not in it", id, userLoggedInId);
+                continue;
+            }
+
+            // Add the user to returned list
+            models.add(OrganizationModel.fromEntity(entity));
+        }
+
+        return models;
+    }
+
     @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = { "Organizations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all budgets for an organization", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
@@ -754,12 +791,14 @@ public class OrganizationController {
             user = userRepository.findByEmail(slackUser.getEmail());
             if(user == null) {
                 user = UserGenerator.newUser(new User());
+                user.setCreatedBy("Slack Sync");
                 user.setFirstname(slackUserEditted.getName());
                 user.setUsername(slackUserEditted.getEmail());
                 user.setEmail(slackUserEditted.getEmail());
                 user.setAvatarUrl(slackUserEditted.getImage_192());
                 user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
             }
+            user.setUpdatedBy("Slack Sync");
             user.setEnabled(!slackUser.getDeleted());
 
             // Save data

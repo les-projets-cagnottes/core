@@ -20,13 +20,13 @@ public class AccountModel extends AuditEntity<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountModel.class);
 
+    @Column(name = "initial_amount")
+    @NotNull
+    protected float initialAmount;
+
     @Column(name = "amount")
     @NotNull
     protected float amount;
-
-    @Column(name = "total_donations")
-    @NotNull
-    protected Float totalDonations = 0f;
 
     @Transient
     protected GenericModel owner;
@@ -41,6 +41,7 @@ public class AccountModel extends AuditEntity<String> {
         model.setUpdatedAt(entity.getUpdatedAt());
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
+        model.setInitialAmount(entity.getInitialAmount());
         model.setAmount(entity.getAmount());
         model.setOwner(new GenericModel(entity.getOwner()));
         model.setBudget(new GenericModel(entity.getBudget()));

@@ -7,7 +7,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Set;
@@ -27,6 +29,10 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     Set<Campaign> findAllByStatus(CampaignStatus status);
 
     Page<Campaign> findAllByStatusIn(Set<CampaignStatus> status, Pageable pageable);
+
+    @Transactional
+    @Procedure(procedureName = "update_campaigns_total_donations")
+    void updateTotalDonations();
 
     @Query(nativeQuery = true,
             value = "select c.* from campaigns c WHERE c.status IN (:status) " +

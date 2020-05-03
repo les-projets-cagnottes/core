@@ -147,12 +147,14 @@ public class AuthenticationController {
                     User user = repository.findByEmail(jsonUser.get("email").getAsString());
                     if(user == null) {
                         user = new User();
+                        user.setCreatedBy("Slack Login");
                         user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                         user.setFirstname(jsonUser.get("name").getAsString());
                         user.setEmail(jsonUser.get("email").getAsString());
                     } else if(user.getPassword().isEmpty()) {
                         user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                     }
+                    user.setUpdatedBy("Slack Login");
                     user.setUsername(jsonUser.get("email").getAsString());
                     user.setAvatarUrl(jsonUser.get("image_192").getAsString());
                     final User userInDb = repository.save(UserGenerator.newUser(user));

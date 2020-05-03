@@ -28,6 +28,7 @@ public class ContentModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setName(entity.getName());
+        model.setValue(entity.getValue());
         return model;
     }
 

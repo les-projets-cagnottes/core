@@ -125,6 +125,44 @@ public class UserController {
         return model;
     }
 
+    @Operation(summary = "Get list of user by a list of IDs", description = "Find a list of user by a list of IDs", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return the users", content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
+    public Set<UserModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
+
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<UserModel> models = new LinkedHashSet<>();
+
+        for(Long id : ids) {
+
+            // Retrieve full referenced objects
+            User user = userRepository.findById(id).orElse(null);
+            if(user == null) {
+                LOGGER.error("Impossible to get user {} : it doesn't exist", id);
+                continue;
+            }
+
+            // Verify that principal share an organization with the user
+            Set<Organization> userOrganizations = organizationRepository.findAllByMembers_Id(id);
+            if(!userOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+                LOGGER.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
+                continue;
+            }
+
+            // Add the user to returned list
+            models.add(UserModel.fromEntity(user));
+        }
+
+        return models;
+    }
+
     @Operation(summary = "Get user by its email", description = "Find a user by its email", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return the user", content = @Content(schema = @Schema(implementation = UserModel.class))),
@@ -171,7 +209,7 @@ public class UserController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/user/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<CampaignModel> getByMemberId(Principal principal, @PathVariable("id") Long id) {
+    public Set<CampaignModel> getCampaigns(Principal principal, @PathVariable("id") Long id) {
 
         // Fails if user ID is missing
         if(id <= 0) {

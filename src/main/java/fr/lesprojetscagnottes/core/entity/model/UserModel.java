@@ -56,7 +56,6 @@ public class UserModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setUsername(entity.getUsername());
-        model.setPassword(entity.getPassword());
         model.setEmail(entity.getEmail());
         model.setFirstname(entity.getFirstname());
         model.setLastname(entity.getLastname());

@@ -336,7 +336,7 @@ public class BudgetController {
             @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
     })
-    @RequestMapping(value = "/budget/{id}/distribute", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/budget/{id}/distribute", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void distribute(Principal principal, @PathVariable("id") Long id) {
@@ -355,32 +355,29 @@ public class BudgetController {
         }
 
         // Verify that principal is member of organization
-        User userLoggedIn = userService.get(principal);
-        Optional<Organization> principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
-        if(principalOrganization.isEmpty()) {
-            LOGGER.error("Impossible to distribute budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
-            throw new ForbiddenException();
-        }
-
-        // Test that user logged in has correct rights
-        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(budget.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null &&
-                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
-            LOGGER.error("Impossible to distribute budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+        Long userLoggedInId = userService.get(principal).getId();
+        Long organizationId = budget.getOrganization().getId();
+        if(userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to distribute budget {} : principal {} is not sponsor of organization {}", budget.getName(), userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
 
         // Create personal accounts for all members
-        Set<User> members = userRepository.findAllByOrganizations_id(id);
+        Set<User> members = userRepository.findAllByOrganizations_id(organizationId);
         members.forEach(member -> {
-            Account account = new Account();
-            account.setAmount(budget.getAmountPerMember());
-            account.setBudget(budget);
+            Account account = accountRepository.findByOwnerIdAndBudgetId(member.getId(), budget.getId());
+            if(account == null) {
+                account = new Account();
+                account.setAmount(budget.getAmountPerMember());
+                account.setBudget(budget);
+            }
+            account.setInitialAmount(budget.getAmountPerMember());
             account.setOwner(member);
             accountRepository.save(account);
         });
 
         // Distribute budget
-        budget.setIsDistributed(!budget.getIsDistributed());
+        budget.setIsDistributed(true);
         budgetRepository.save(budget);
     }
 
