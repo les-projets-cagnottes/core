@@ -12,6 +12,8 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -27,6 +29,9 @@ public class OrganizationModel extends AuditEntity<String> {
     @Transient
     private GenericModel slackTeam;
 
+    @Transient
+    private Set<Long> membersRef = new LinkedHashSet<>();
+
     public static OrganizationModel fromEntity(Organization entity) {
         OrganizationModel model = new OrganizationModel();
         model.setCreatedAt(entity.getCreatedAt());
@@ -36,6 +41,7 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setId(entity.getId());
         model.setName(entity.getName());
         model.setSlackTeam(new GenericModel(entity.getSlackTeam()));
+        entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
         LOGGER.debug("Generated : " + model.toString());
         return model;
     }
