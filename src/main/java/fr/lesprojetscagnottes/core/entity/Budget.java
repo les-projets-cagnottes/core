@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.entity.model.BudgetModel;
+import fr.lesprojetscagnottes.core.model.BudgetModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

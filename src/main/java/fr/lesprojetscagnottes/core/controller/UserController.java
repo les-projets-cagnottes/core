@@ -1,11 +1,11 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
+import fr.lesprojetscagnottes.core.model.*;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.service.UserService;
@@ -39,6 +39,9 @@ import java.util.Set;
 public class UserController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -198,6 +201,48 @@ public class UserController {
         UserModel model = UserModel.fromEntity(entity);
         model.emptyPassword();
         return model;
+    }
+
+    @Operation(summary = "Get user accounts", description = "Get user accounts", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding accounts", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountModel.class)))),
+            @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/accounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<AccountModel> getAccounts(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if user ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to get accounts by user ID : User ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the user OR Principal is admin
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get accounts by user ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        User user = userRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null) {
+            LOGGER.error("Impossible to get accounts by user ID : user {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform entities
+        Set<AccountModel> models = new LinkedHashSet<>();
+        Set<Account> entities = accountRepository.findAllByOwnerId(id);
+        entities.forEach(entity -> models.add(AccountModel.fromEntity(entity)));
+
+        return models;
     }
 
     @Operation(summary = "Get user campaigns", description = "Get user campaigns", tags = { "Users" })

@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.entity.model;
+package fr.lesprojetscagnottes.core.model;
 
 import lombok.AccessLevel;
 import lombok.Getter;

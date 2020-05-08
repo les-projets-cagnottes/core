@@ -4,7 +4,7 @@ import fr.lesprojetscagnottes.core.entity.Authority;
 import fr.lesprojetscagnottes.core.entity.User;
 import fr.lesprojetscagnottes.core.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.service.UserService;
-import fr.lesprojetscagnottes.core.entity.model.AuthorityModel;
+import fr.lesprojetscagnottes.core.model.AuthorityModel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;

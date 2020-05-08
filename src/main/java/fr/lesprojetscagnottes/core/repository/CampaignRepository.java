@@ -3,7 +3,6 @@ package fr.lesprojetscagnottes.core.repository;
 import fr.lesprojetscagnottes.core.entity.Campaign;
 import fr.lesprojetscagnottes.core.entity.CampaignStatus;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,7 +23,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
 
     Set<Campaign> findAllByStatusAndFundingDeadlineLessThan(CampaignStatus inProgress, Date date);
 
-    Page<Campaign> findByBudgets_id(Long id, PageRequest pageable);
+    Page<Campaign> findByBudgets_id(Long id, Pageable pageable);
 
     Set<Campaign> findAllByStatus(CampaignStatus status);
 

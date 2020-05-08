@@ -2,7 +2,7 @@ package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.Content;
 import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.entity.model.ContentModel;
+import fr.lesprojetscagnottes.core.model.ContentModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;

@@ -1,11 +1,12 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
-import fr.lesprojetscagnottes.core.exception.InternalServerException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.model.DonationModel;
+import fr.lesprojetscagnottes.core.queue.DonationOperationType;
+import fr.lesprojetscagnottes.core.queue.DonationQueue;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,9 @@ import java.util.Set;
 public class DonationController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DonationController.class);
+
+    @Autowired
+    private DonationQueue donationQueue;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -117,7 +121,8 @@ public class DonationController {
         }
 
         // Verify that donation budgets is associated with the campaign
-        if(campaign.getBudgets().stream().noneMatch(projectBudget -> projectBudget.getId().equals(budget.getId()))) {
+        Long budgetId = budget.getId();
+        if(campaign.getBudgets().stream().noneMatch(projectBudget -> projectBudget.getId().equals(budgetId))) {
             LOGGER.error("Impossible to create donation : budgets is not associated with the campaign");
             throw new BadRequestException();
         }
@@ -134,23 +139,16 @@ public class DonationController {
         }
 
         // Otherwise save donation
+        float amount = donation.getAmount();
         Donation donationToSave = new Donation();
         donationToSave.setAccount(account);
         donationToSave.setCampaign(campaign);
         donationToSave.setBudget(budget);
         donationToSave.setContributor(contributor);
-        donationToSave.setAmount(donation.getAmount());
-        donationToSave = donationRepository.save(donationToSave);
+        donationToSave.setAmount(amount);
 
-        // Update account
-        Long accountId = account.getId();
-        account = accountRepository.findById(accountId).orElse(null);
-        if(account == null) {
-            LOGGER.error("Error while updating account {} after donation {} creation", accountId, donationToSave.getId());
-            throw new InternalServerException();
-        }
-        account.setAmount(account.getAmount() - donation.getAmount());
-        accountRepository.save(account);
+        // Add donation to queue
+        donationQueue.insert(donationToSave, DonationOperationType.CREATION);
     }
 
     @Operation(summary = "Delete a donation by its ID", description = "Delete a donation by its ID", tags = { "Donations" })
@@ -195,17 +193,7 @@ public class DonationController {
         }
 
         // Delete donation
-        donationRepository.deleteById(id);
-
-        // Update account
-        Long accountId = donation.getAccount().getId();
-        Account account = accountRepository.findById(accountId).orElse(null);
-        if(account == null) {
-            LOGGER.error("Error while updating account {} after donation {} of \"{}\"€ deletion", accountId, id, donation.getAmount());
-            throw new InternalServerException();
-        }
-        account.setAmount(account.getAmount() - donation.getAmount());
-        accountRepository.save(account);
+        donationQueue.insert(donation, DonationOperationType.DELETION);
     }
 
 

@@ -5,7 +5,7 @@ import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.DonationHttpClient;
 import fr.lesprojetscagnottes.core.component.ProjectHttpClient;
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.repository.DonationRepository;

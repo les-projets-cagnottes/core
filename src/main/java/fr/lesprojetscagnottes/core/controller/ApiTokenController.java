@@ -3,7 +3,7 @@ package fr.lesprojetscagnottes.core.controller;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
 import fr.lesprojetscagnottes.core.entity.User;
-import fr.lesprojetscagnottes.core.entity.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.repository.ApiTokenRepository;
 import fr.lesprojetscagnottes.core.security.TokenProvider;

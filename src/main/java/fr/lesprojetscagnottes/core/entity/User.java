@@ -2,7 +2,7 @@ package fr.lesprojetscagnottes.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.entity.model.UserModel;
+import fr.lesprojetscagnottes.core.model.UserModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -59,7 +59,7 @@ public class User extends UserModel implements UserDetails {
     @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
     private Set<Budget> budgets = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "leader")
+    @ManyToMany(mappedBy = "peopleGivingTime", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<Campaign> campaigns = new LinkedHashSet<>();
 

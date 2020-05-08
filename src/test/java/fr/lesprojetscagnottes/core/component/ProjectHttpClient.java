@@ -2,7 +2,7 @@ package fr.lesprojetscagnottes.core.component;
 
 import fr.lesprojetscagnottes.core.entity.Donation;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.DonationModel;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;

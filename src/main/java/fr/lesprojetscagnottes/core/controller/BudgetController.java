@@ -1,9 +1,10 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.BudgetModel;
-import fr.lesprojetscagnottes.core.entity.model.CampaignModel;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.AccountModel;
+import fr.lesprojetscagnottes.core.model.BudgetModel;
+import fr.lesprojetscagnottes.core.model.CampaignModel;
+import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -97,6 +98,46 @@ public class BudgetController {
         return models;
     }
 
+    @Operation(summary = "Get accounts using a budget", description = "Get accounts using a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding accounts", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget/{id}/accounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public DataPage<AccountModel> getAccounts(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+
+        // Fails if budget ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to get accounts by budget ID : budget ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is in one organization of the campaign
+        Long userLoggedInId = userService.get(principal).getId();
+        if(budgetRepository.findAllByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get accounts by budget ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        Budget budget = budgetRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(budget == null) {
+            LOGGER.error("Impossible to get accounts by budget ID : budget {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Page<Account> entities = accountRepository.findByBudgetId(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
+        DataPage<AccountModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(AccountModel.fromEntity(entity)));
+        return models;
+    }
+
     @Operation(summary = "Get campaigns using a budget", description = "Get campaigns using a budget", tags = { "Budgets" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding campaigns", content = @Content(schema = @Schema(implementation = DataPage.class))),
@@ -131,7 +172,7 @@ public class BudgetController {
         }
 
         // Get and transform donations
-        Page<Campaign> entities = campaignRepository.findByBudgets_id(id, PageRequest.of(offset, limit, Sort.by("id")));
+        Page<Campaign> entities = campaignRepository.findByBudgets_id(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
         DataPage<CampaignModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(CampaignModel.fromEntity(entity)));
         return models;

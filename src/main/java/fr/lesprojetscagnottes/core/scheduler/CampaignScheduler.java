@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Set;
@@ -45,6 +46,7 @@ public class CampaignScheduler {
     }
 
     @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
     public void processCampaignFundingDeadlines() {
         LOGGER.info("[processCampaignFundingDeadlines] Start Campaign Funding Deadlines Processing");
         Set<Campaign> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.A_IN_PROGRESS, new Date());

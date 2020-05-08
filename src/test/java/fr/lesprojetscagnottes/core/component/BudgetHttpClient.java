@@ -2,7 +2,7 @@ package fr.lesprojetscagnottes.core.component;
 
 import fr.lesprojetscagnottes.core.entity.Donation;
 import fr.lesprojetscagnottes.core.entity.Budget;
-import fr.lesprojetscagnottes.core.entity.model.BudgetModel;
+import fr.lesprojetscagnottes.core.model.BudgetModel;
 import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;

@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.pagination;
 
-import fr.lesprojetscagnottes.core.entity.model.GenericModel;
+import fr.lesprojetscagnottes.core.model.GenericModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

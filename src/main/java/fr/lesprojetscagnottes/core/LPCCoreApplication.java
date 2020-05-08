@@ -5,6 +5,7 @@ import fr.lesprojetscagnottes.core.entity.AuthorityName;
 import fr.lesprojetscagnottes.core.entity.User;
 import fr.lesprojetscagnottes.core.generator.StringGenerator;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
+import fr.lesprojetscagnottes.core.queue.DonationQueue;
 import fr.lesprojetscagnottes.core.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,16 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.Timer;
+
 @SpringBootApplication
 @EnableScheduling
 public class LPCCoreApplication {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LPCCoreApplication.class);
+
+	@Autowired
+	private DonationQueue donationQueue;
 
 	@Autowired
 	private AuthorityRepository authorityRepository;
@@ -66,6 +72,8 @@ public class LPCCoreApplication {
 
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
 		}
+
+		new Timer().schedule(donationQueue, 0, 500);
 	}
 
 }

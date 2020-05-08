@@ -2,9 +2,9 @@ package fr.lesprojetscagnottes.core.controller;
 
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.entity.model.CampaignModel;
-import fr.lesprojetscagnottes.core.entity.model.DonationModel;
-import fr.lesprojetscagnottes.core.entity.model.OrganizationModel;
+import fr.lesprojetscagnottes.core.model.CampaignModel;
+import fr.lesprojetscagnottes.core.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -296,6 +296,7 @@ public class CampaignController {
         campaignToSave.setFundingDeadline(campaign.getFundingDeadline());
         campaignToSave.setTotalDonations(0f);
         campaignToSave.setLeader(leader);
+        campaignToSave.getPeopleGivingTime().add(leader);
         final Campaign campaignFinal = campaignRepository.save(campaignToSave);
 
         // Associate the campaign with organizations

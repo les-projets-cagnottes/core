@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.entity.model;
+package fr.lesprojetscagnottes.core.model;
 
 import fr.lesprojetscagnottes.core.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.entity.Donation;
