@@ -1,10 +1,7 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.model.AccountModel;
-import fr.lesprojetscagnottes.core.model.BudgetModel;
-import fr.lesprojetscagnottes.core.model.CampaignModel;
-import fr.lesprojetscagnottes.core.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -71,6 +68,43 @@ public class BudgetController {
 
     @Autowired
     private UserService userService;
+
+    @Operation(summary = "Get list of budgets by a list of IDs", description = "Find a list of budgets by a list of IDs", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return the budgets", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
+    public Set<BudgetModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
+
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<BudgetModel> models = new LinkedHashSet<>();
+
+        for(Long id : ids) {
+
+            // Retrieve full referenced objects
+            Budget budget = budgetRepository.findById(id).orElse(null);
+            if(budget == null) {
+                LOGGER.error("Impossible to get budget {} : it doesn't exist", id);
+                continue;
+            }
+
+            // Verify that principal share an organization with the user
+            if(!userLoggedInOrganizations.contains(budget.getOrganization()) && userLoggedIn_isNotAdmin) {
+                LOGGER.error("Impossible to get budget {} : principal {} is not in its organization", id, userLoggedInId);
+                continue;
+            }
+
+            // Add the user to returned list
+            models.add(BudgetModel.fromEntity(budget));
+        }
+
+        return models;
+    }
 
     @Operation(summary = "Find all usable budgets for the current user", description = "A usable budget has an unreached end date and is distributed", tags = { "Budgets" })
     @ApiResponses(value = {

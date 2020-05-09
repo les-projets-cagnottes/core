@@ -2,12 +2,12 @@ package fr.lesprojetscagnottes.core.controller;
 
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.model.CampaignModel;
-import fr.lesprojetscagnottes.core.model.DonationModel;
-import fr.lesprojetscagnottes.core.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.model.CampaignModel;
+import fr.lesprojetscagnottes.core.model.DonationModel;
+import fr.lesprojetscagnottes.core.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.scheduler.CampaignScheduler;
@@ -151,6 +151,45 @@ public class CampaignController {
         // Transform and return organization
         return CampaignModel.fromEntity(entity);
     }
+
+    @Operation(summary = "Get list of campaigns by a list of IDs", description = "Find a list of campaigns by a list of IDs", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return the campaigns", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CampaignModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/campaign", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
+    public Set<CampaignModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
+
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<CampaignModel> models = new LinkedHashSet<>();
+
+        for(Long id : ids) {
+
+            // Retrieve full referenced objects
+            Campaign campaign = campaignRepository.findById(id).orElse(null);
+            if(campaign == null) {
+                LOGGER.error("Impossible to get campaign {} : it doesn't exist", id);
+                continue;
+            }
+
+            // Verify that principal share an organization with the user
+            Set<Organization> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
+            if(!campaignOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+                LOGGER.error("Impossible to get campaign {} : principal {} is not in its organizations", id, userLoggedInId);
+                continue;
+            }
+
+            // Add the user to returned list
+            models.add(CampaignModel.fromEntity(campaign));
+        }
+
+        return models;
+    }
+
 
     @Operation(summary = "Get campaign organizations", description = "Get campaign organizations", tags = { "Campaigns" })
     @ApiResponses(value = {
