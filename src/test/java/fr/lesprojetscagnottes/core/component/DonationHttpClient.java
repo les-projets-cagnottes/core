@@ -71,8 +71,4 @@ public class DonationHttpClient {
         headers.setBearerAuth(token);
     }
 
-    public ResponseEntity<?> getLastResponse() {
-        return response;
-    }
-
 }
