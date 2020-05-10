@@ -44,7 +44,6 @@ public class DonationQueue extends TimerTask {
 
     @Override
     public void run() {
-        LOGGER.debug("Trigger donation queue");
         DonationOperation operation = queue.poll();
         if(operation != null) {
             Donation donation = operation.getDonation();
