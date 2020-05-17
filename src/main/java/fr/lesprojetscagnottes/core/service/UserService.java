@@ -110,7 +110,7 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean isMemberOfOrganization(long userId, long organizationId) {
-        return organizationRepository.findByIdAndMembers_Id(organizationId, userId).isPresent();
+        return organizationRepository.findByIdAndMembers_Id(organizationId, userId) != null;
     }
 
     public boolean isSponsorOfOrganization(long userId, long organizationId) {

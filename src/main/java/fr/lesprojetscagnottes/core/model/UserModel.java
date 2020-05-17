@@ -7,12 +7,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -48,6 +47,9 @@ public class UserModel extends AuditEntity<String> {
     @NotNull
     protected Date lastPasswordResetDate = new Date();
 
+    @Transient
+    protected Set<Long> userOrganizationAuthoritiesRef = new LinkedHashSet<>();
+
     public static UserModel fromEntity(User entity) {
         UserModel model = new UserModel();
         model.setCreatedAt(entity.getCreatedAt());
@@ -62,6 +64,7 @@ public class UserModel extends AuditEntity<String> {
         model.setAvatarUrl(entity.getAvatarUrl());
         model.setEnabled(entity.getEnabled());
         model.setLastPasswordResetDate(entity.getLastPasswordResetDate());
+        entity.getUserOrganizationAuthorities().forEach(organizationAuthority -> model.getUserOrganizationAuthoritiesRef().add(organizationAuthority.getId()));
         return model;
     }
 

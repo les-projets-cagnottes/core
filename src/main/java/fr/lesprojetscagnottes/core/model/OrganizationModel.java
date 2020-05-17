@@ -30,6 +30,9 @@ public class OrganizationModel extends AuditEntity<String> {
     private GenericModel slackTeam;
 
     @Transient
+    private Set<Long> contentsRef = new LinkedHashSet<>();
+
+    @Transient
     private Set<Long> membersRef = new LinkedHashSet<>();
 
     public static OrganizationModel fromEntity(Organization entity) {
@@ -42,6 +45,7 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setName(entity.getName());
         model.setSlackTeam(new GenericModel(entity.getSlackTeam()));
         entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
+        entity.getContents().forEach(content -> model.getContentsRef().add(content.getId()));
         LOGGER.debug("Generated : " + model.toString());
         return model;
     }

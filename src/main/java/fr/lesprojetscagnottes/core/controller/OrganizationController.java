@@ -136,7 +136,7 @@ public class OrganizationController {
         Organization entity;
         long userLoggedInId = userService.get(principal).getId();
         if(userService.isNotAdmin(userLoggedInId)) {
-            entity = organizationRepository.findByIdAndMembers_Id(id, userLoggedInId).orElse(null);
+            entity = organizationRepository.findByIdAndMembers_Id(id, userLoggedInId);
         } else {
             entity = organizationRepository.findById(id).orElse(null);
         }
@@ -205,8 +205,8 @@ public class OrganizationController {
 
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
-        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(organizationId, userLoggedInId);
-        if(organization.isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+        Organization organization = organizationRepository.findByIdAndMembers_Id(organizationId, userLoggedInId);
+        if(organization == null && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to get budgets of organization {} : principal is not a member of organization", organizationId);
             throw new ForbiddenException();
         }
@@ -368,9 +368,9 @@ public class OrganizationController {
             @ApiResponse(responseCode = "404", description = "Organization or User not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/members", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/organization/{id}/members/{userId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void addMember(Principal principal, @PathVariable long id, @RequestBody long userId) {
+    public void addMember(Principal principal, @PathVariable long id, @PathVariable long userId) {
 
         // Verify that IDs are corrects
         if(id <= 0 || userId <= 0) {
@@ -417,8 +417,8 @@ public class OrganizationController {
             @ApiResponse(responseCode = "404", description = "Organization or User not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/members", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void removeMember(Principal principal, @PathVariable long id, @RequestBody long userId) {
+    @RequestMapping(value = "/organization/{id}/members/{userId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void removeMember(Principal principal, @PathVariable long id, @PathVariable long userId) {
 
         // Verify that IDs are corrects
         if(id <= 0 || userId <= 0) {
@@ -577,10 +577,10 @@ public class OrganizationController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/organization/{id}/contents", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void addContent(Principal principal, @PathVariable("id") long id, @RequestBody ContentModel contentModel) {
+    public void addContent(Principal principal, @PathVariable("id") long id, @RequestBody ContentModel model) {
 
         // Verify that body is complete
-        if(contentModel == null || contentModel.getName() == null) {
+        if(model == null || model.getName() == null) {
             LOGGER.error("Impossible to create content in organization : body is incomplete");
             throw new BadRequestException();
         }
@@ -600,7 +600,9 @@ public class OrganizationController {
         }
 
         // Save content
-        Content content = (Content) contentModel;
+        Content content = new Content();
+        content.setName(model.getName());
+        content.setValue(model.getValue());
         content = contentRepository.save(content);
 
         // Add content to organization
@@ -710,6 +712,7 @@ public class OrganizationController {
                 JsonObject jsonBot = json.get("bot").getAsJsonObject();
                 slackTeam.setAccessToken(json.get("access_token").getAsString());
                 slackTeam.setTeamId(json.get("team_id").getAsString());
+                slackTeam.setTeamName(json.get("team_name").getAsString());
                 slackTeam.setBotAccessToken(jsonBot.get("bot_access_token").getAsString());
                 slackTeam.setBotUserId(jsonBot.get("bot_user_id").getAsString());
                 slackTeam.setOrganization(organization);
@@ -864,7 +867,9 @@ public class OrganizationController {
         }
 
         // Delete Slack Team
-        slackTeamRepository.deleteById(organization.getSlackTeam().getId());
+        Long slackTeamId = organization.getSlackTeam().getId();
+        slackUserRepository.deleteAllBySlackTeamId(slackTeamId);
+        slackTeamRepository.deleteById(slackTeamId);
     }
 
     private static String basicAuth() {

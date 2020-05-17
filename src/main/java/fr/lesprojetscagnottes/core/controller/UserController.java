@@ -50,6 +50,9 @@ public class UserController {
     private BudgetRepository budgetRepository;
 
     @Autowired
+    private CampaignRepository campaignRepository;
+
+    @Autowired
     private DonationRepository donationRepository;
 
     @Autowired
@@ -59,7 +62,10 @@ public class UserController {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private CampaignRepository campaignRepository;
+    private SlackTeamRepository slackTeamRepository;
+
+    @Autowired
+    private SlackUserRepository slackUserRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -84,7 +90,7 @@ public class UserController {
         }
 
         // Get and transform contents
-        Pageable pageable = PageRequest.of(offset, limit, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(offset, limit, Sort.by("firstname").ascending());
         Page<User> entities = userRepository.findAll(pageable);
         DataPage<UserModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(UserModel.fromEntity(entity)));
@@ -483,6 +489,39 @@ public class UserController {
         userRepository.save(user);
     }
 
+    @Operation(summary = "Find all organization authorities", description = "Find all organization authorities", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all organization authorities", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationAuthorityModel.class)))),
+            @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/orgauthorities", method = RequestMethod.GET)
+    public Set<OrganizationAuthorityModel> getUserOrganizationAuthorities(Principal principal, @PathVariable Long id) {
+
+        // Fails if ID is incorrect
+        if(id <= 0) {
+            LOGGER.error("Impossible to get organization authorities for user {} : ID is incorrect", id);
+            throw new BadRequestException();
+        }
+
+        // Verify that current user is the same as requested
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get organization authorities for user {} : principal is not the requested user", id);
+            throw new ForbiddenException();
+        }
+
+        // Get user organizations
+        Set<OrganizationAuthority> entities = organizationAuthorityRepository.findAllByUsers_Id(id);
+
+        // Convert all entities to models
+        Set<OrganizationAuthorityModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(OrganizationAuthorityModel.fromEntity(entity)));
+
+        return models;
+    }
+
     @Operation(summary = "Grant a user with an organization authority", description = "Grant a user with an organization authority", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User granted", content = @Content(schema = @Schema())),
@@ -517,9 +556,9 @@ public class UserController {
         }
 
         // Verify that user we want to grant is member of target organization
-        Organization organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).orElse(null);
+        Organization organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId());
         LOGGER.debug(String.valueOf(organization));
-        if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()).isEmpty()) {
+        if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()) == null) {
             LOGGER.error("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
             throw new BadRequestException();
         }
@@ -538,50 +577,6 @@ public class UserController {
                         }
                 );
         userRepository.save(userInDb);
-    }
-
-    @Operation(summary = "Delete a user", description = "Delete a user by its ID", tags = { "Users" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
-    })
-    @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void delete(@PathVariable("id") long id) {
-
-        // Fails if campaign ID is missing
-        if(id <= 0) {
-            LOGGER.error("Impossible to delete user : ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        User user = userRepository.findById(id).orElse(null);
-
-        // Verify that any of references are not null
-        if(user == null) {
-            LOGGER.error("Impossible to delete user : user {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Remove user from organizations
-        Set<Organization> organizations = organizationRepository.findAllByMembers_Id(id);
-        organizations.forEach(organization -> {
-            organization.getMembers().remove(user);
-            organizationRepository.save(organization);
-        });
-
-        // Remove user from projects
-        Set<Campaign> campaigns = campaignRepository.findAllByPeopleGivingTime_Id(id);
-        campaigns.forEach(campaign -> {
-            campaign.getPeopleGivingTime().remove(user);
-            campaignRepository.save(campaign);
-        });
-
-        // Delete user
-        userRepository.deleteById(id);
     }
 
 }

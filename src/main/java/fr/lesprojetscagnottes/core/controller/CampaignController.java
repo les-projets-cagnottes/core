@@ -33,10 +33,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -92,12 +89,9 @@ public class CampaignController {
         }
 
         // Prepare filter
-        Set<CampaignStatus> status = new LinkedHashSet<>();
-        for(String filter : filters) {
-            status.add(CampaignStatus.valueOf(filter));
-        }
-        if(status.isEmpty()) {
-            status.addAll(List.of(CampaignStatus.values()));
+        final List<String> status = filters;
+        if(filters.isEmpty()) {
+            Arrays.stream(CampaignStatus.values()).forEach(label -> status.add(label.name()));
         }
 
         // Get corresponding entities according to principal
@@ -442,8 +436,8 @@ public class CampaignController {
         campaign.setLongDescription(campaign.getLongDescription());
         campaign.setLeader(campaign.getLeader());
         campaign.setPeopleRequired(campaign.getPeopleRequired());
-        if (campaign.getDonationsRequired() > campaign.getDonationsRequired()) {
-            campaign.setDonationsRequired(campaign.getDonationsRequired());
+        if (campaignModel.getDonationsRequired() > campaign.getDonationsRequired()) {
+            campaign.setDonationsRequired(campaignModel.getDonationsRequired());
         }
 
         return CampaignModel.fromEntity(campaignRepository.save(campaign));

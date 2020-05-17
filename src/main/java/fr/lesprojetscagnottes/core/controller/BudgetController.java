@@ -239,9 +239,8 @@ public class BudgetController {
         }
 
         // Verify that principal is member of organization
-        long userLoggedInId = userService.get(principal).getId();
-        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedInId);
-        if(organization.isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to get donations by budget ID : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
@@ -299,23 +298,15 @@ public class BudgetController {
             throw new NotFoundException();
         }
 
-        // Verify that principal is member of organization
-        User userLoggedIn = userService.get(principal);
-        Optional<Organization> sponsorOrganization = organizationRepository.findByIdAndMembers_Id(organization.getId(), userLoggedIn.getId());
-        if(sponsorOrganization.isEmpty()) {
-            LOGGER.error("Impossible to create budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), organization.getId());
-            throw new ForbiddenException();
-        }
-
         // Test that user logged in has correct rights
-        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organization.getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null &&
-                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
+        User userLoggedIn = userService.get(principal);
+        if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
             LOGGER.error("Impossible to create budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
             throw new ForbiddenException();
         }
 
         // Test that sponsor has correct rights
-        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organization.getId(), sponsor.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null) {
+        if(userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
             LOGGER.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
             throw new ForbiddenException();
         }
@@ -344,7 +335,7 @@ public class BudgetController {
 
         // Fails if body is null
         if(budgets == null) {
-            LOGGER.error("Impossible to save null budgets");
+            LOGGER.error("Impossible to update null budgets");
             throw new BadRequestException();
         }
 
@@ -356,7 +347,7 @@ public class BudgetController {
             // Fails if any of references are null
             if(budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
                     || budget.getOrganization().getId() == null || budget.getSponsor().getId() == null || budget.getRules().getId() == null) {
-                LOGGER.error("Impossible to save budget {} : some references are missing", budget.getId());
+                LOGGER.error("Impossible to update budget {} : some references are missing", budget.getId());
                 continue;
             }
 
@@ -366,27 +357,19 @@ public class BudgetController {
             User sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
             fr.lesprojetscagnottes.core.entity.Content rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
             if(budgetInDb == null || organization == null || sponsor == null || rules == null) {
-                LOGGER.error("Impossible to save budget {} : one or more reference(s) doesn't exist", budget.getId());
-                continue;
-            }
-
-            // Verify that principal is member of organization
-            Optional<Organization> sponsorOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
-            if(sponsorOrganization.isEmpty()) {
-                LOGGER.error("Impossible to create budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
+                LOGGER.error("Impossible to update budget {} : one or more reference(s) doesn't exist", budget.getId());
                 continue;
             }
 
             // Test that user logged in has correct rights
-            if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(budget.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null &&
-                    userLoggedIn_isAdmin) {
-                LOGGER.error("Impossible to create budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+            if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
+                LOGGER.error("Impossible to update budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
                 continue;
             }
 
             // Test that sponsor has correct rights
-            if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(budget.getOrganization().getId(), budget.getSponsor().getId(), OrganizationAuthorityName.ROLE_SPONSOR) == null) {
-                LOGGER.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), budget.getSponsor().getId());
+            if(userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
+                LOGGER.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
                 continue;
             }
 
@@ -483,8 +466,8 @@ public class BudgetController {
 
         // Verify that principal is member of organization
         User userLoggedIn = userService.get(principal);
-        Optional<Organization> principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
-        if(principalOrganization.isEmpty()) {
+        Organization principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
+        if(principalOrganization == null) {
             LOGGER.error("Impossible to delete budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
             throw new ForbiddenException();
         }

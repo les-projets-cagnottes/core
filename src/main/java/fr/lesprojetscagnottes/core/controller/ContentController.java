@@ -2,14 +2,15 @@ package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.entity.Content;
 import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.model.ContentModel;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.model.ContentModel;
 import fr.lesprojetscagnottes.core.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,12 +18,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @RequestMapping("/api")
@@ -78,24 +79,42 @@ public class ContentController {
         return ContentModel.fromEntity(entity);
     }
 
-    @Operation(summary = "Create a content", description = "Create a content", tags = { "Contents" })
+    @Operation(summary = "Get list of contents by a list of IDs", description = "Find a list of contents by a list of IDs", tags = { "Contents" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Content is created", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+            @ApiResponse(responseCode = "200", description = "Return the contents", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = ContentModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
     })
-    @PreAuthorize("hasRole('ADMIN')")
-    @RequestMapping(value = "/content", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public void create(@RequestBody ContentModel contentModel) {
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/content", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
+    public Set<ContentModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
 
-        // Verify that body is complete
-        if(contentModel == null || contentModel.getName() == null) {
-            LOGGER.error("Impossible to create content : body is incomplete");
-            throw new BadRequestException();
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<ContentModel> models = new LinkedHashSet<>();
+
+        for(Long id : ids) {
+
+            // Retrieve full referenced objects
+            Content content = contentRepository.findById(id).orElse(null);
+            if(content == null) {
+                LOGGER.error("Impossible to get content {} : it doesn't exist", id);
+                continue;
+            }
+
+            // Verify that principal share an organization with the user
+            Set<Organization> contentOrganizations = organizationRepository.findAllByContents_Id(id);
+            if(!contentOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+                LOGGER.error("Impossible to get content {} : principal {} is not in its organization", id, userLoggedInId);
+                continue;
+            }
+
+            // Add the user to returned list
+            models.add(ContentModel.fromEntity(content));
         }
 
-        // Save content
-        contentRepository.save((Content) contentModel);
+        return models;
     }
 
     @Operation(summary = "Update a content", description = "Update a content", tags = { "Contents" })

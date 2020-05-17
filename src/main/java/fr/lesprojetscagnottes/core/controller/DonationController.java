@@ -25,8 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
 
 @RequestMapping("/api")
 @Tag(name = "Donations", description = "The Donations API")
@@ -101,8 +99,7 @@ public class DonationController {
         }
 
         // Verify that principal is member of organization
-        Optional<Organization> organization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedInId);
-        if(organization.isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
@@ -127,14 +124,9 @@ public class DonationController {
             throw new BadRequestException();
         }
 
-        // Verify that contributor has enough amount on the budget
-        Set<Donation> contributorDonations = donationRepository.findAllByContributorIdAndBudgetId(contributor.getId(), budget.getId());
-        float totalAmount = 0;
-        for(Donation contributorDonation : contributorDonations) {
-            totalAmount+= contributorDonation.getAmount();
-        }
-        if(totalAmount + donation.getAmount() > budget.getAmountPerMember()) {
-            LOGGER.error("Impossible to create donation : contributor has not enough amount budget");
+        // Verify that amount is lower than account initial amount
+        if(account.getInitialAmount() < donation.getAmount()) {
+            LOGGER.error("Impossible to create donation : donation amount is greater than account initial amount");
             throw new BadRequestException();
         }
 

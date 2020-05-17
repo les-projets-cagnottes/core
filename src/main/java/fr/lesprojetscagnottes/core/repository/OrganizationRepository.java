@@ -29,7 +29,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Page<Organization> findAllByMembers_Id(long userLoggedInId, Pageable pageable);
 
     @EntityGraph(value = "Organization.withLinkedEntities")
-    Optional<Organization> findByIdAndMembers_Id(Long id, Long userId);
+    Organization findByIdAndMembers_Id(Long id, Long userId);
 
     Set<Organization> findAllByIdAndMembers_Id(Set<Long> id, Long userId);
 

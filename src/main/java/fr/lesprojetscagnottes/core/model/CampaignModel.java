@@ -35,7 +35,7 @@ public class CampaignModel extends AuditEntity<String> {
     @Column(name = "donations_required")
     protected Float donationsRequired;
 
-    @Column(name = "peopleRequired")
+    @Column(name = "people_required")
     protected Integer peopleRequired;
 
     @Column(name = "funding_deadline")
