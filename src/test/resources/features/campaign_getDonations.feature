@@ -26,9 +26,9 @@ Feature: Campaign - Get Donations
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
     And The following accounts are created
-      | owner | budget              | amount |
-      | Mike  | Unnamed Company Pot | 150    |
-      | Mike  | Another Company Pot | 200    |
+      | owner | budget              | amount | initialAmount |
+      | Mike  | Unnamed Company Pot | 150    | 150           |
+      | Mike  | Another Company Pot | 200    | 200           |
     And The following campaigns are running
       | title            | leader  | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
@@ -80,9 +80,9 @@ Feature: Campaign - Get Donations
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
     And The following accounts are created
-      | owner | budget              | amount |
-      | Mike  | Unnamed Company Pot | 150    |
-      | Mike  | Another Company Pot | 200    |
+      | owner | budget              | amount | initialAmount |
+      | Mike  | Unnamed Company Pot | 150    | 150           |
+      | Mike  | Another Company Pot | 200    | 200           |
     And The following campaigns are running
       | title            | leader  | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |

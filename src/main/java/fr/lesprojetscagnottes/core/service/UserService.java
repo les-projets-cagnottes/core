@@ -1,14 +1,11 @@
 package fr.lesprojetscagnottes.core.service;
 
-import fr.lesprojetscagnottes.core.security.UserPrincipal;
-import fr.lesprojetscagnottes.core.entity.Authority;
-import fr.lesprojetscagnottes.core.entity.AuthorityName;
-import fr.lesprojetscagnottes.core.entity.OrganizationAuthorityName;
-import fr.lesprojetscagnottes.core.entity.User;
+import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.repository.UserRepository;
+import fr.lesprojetscagnottes.core.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +19,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service(value = "userService")
@@ -131,6 +131,18 @@ public class UserService implements UserDetailsService {
 
     public boolean isNotAdmin(long userId) {
         return authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userId) == null;
+    }
+
+    public boolean hasNoACommonOrganization(Set<Organization> organizations1, Set<Organization> organizations2) {
+        final boolean[] notFound = {true};
+        organizations1.forEach(organization1 -> {
+            int k = 0;
+            while(notFound[0] && k < organizations2.size()) {
+                notFound[0] = organizations2.stream().noneMatch(organization2 -> organization2.getId().equals(organization1.getId()));
+                k++;
+            }
+        });
+        return notFound[0];
     }
 
 }

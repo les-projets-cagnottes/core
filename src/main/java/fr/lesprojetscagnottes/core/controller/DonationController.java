@@ -25,6 +25,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @RequestMapping("/api")
 @Tag(name = "Donations", description = "The Donations API")
@@ -59,6 +62,40 @@ public class DonationController {
 
     @Autowired
     private UserService userService;
+
+    @Operation(summary = "Control donation amounts ", description = "Control donation amounts with accounts, campaigns and budgets", tags = { "Donations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Control started", content = @Content(schema = @Schema()))
+    })
+    @RequestMapping(value = "/donation", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @PreAuthorize("hasRole('ADMIN')")
+    public void control(Principal principal) {
+        LOGGER.info("Donation amounts control started");
+        List<User> users = userRepository.findAll();
+        users.forEach(user -> {
+            LOGGER.info("User {} - {} {}", user.getId(), user.getFirstname(), user.getLastname());
+            Set<Budget> budgets = budgetRepository.findAllByUser(user.getId());
+            Set<Account> accounts = accountRepository.findAllByOwnerId(user.getId());
+            if(budgets.size() != accounts.size()) {
+                LOGGER.error("Accounts and budgets for user {} dont match", user.getId());
+            }
+            budgets.forEach(budget -> {
+                LOGGER.info("|- Budget {} - {}", budget.getId(), budget.getAmountPerMember());
+                Optional<Account> accountOptional = accounts.stream().filter(account -> account.getBudget().getId().equals(budget.getId())).findFirst();
+                if(accountOptional.isEmpty()) {
+                    LOGGER.error("Not account found for budget {} and user {}", budget.getId(), user.getId());
+                } else {
+                    Account account = accountOptional.get();
+                    LOGGER.info("|- Account {} - {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
+                    if(account.getInitialAmount() != budget.getAmountPerMember()) {
+                        LOGGER.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
+                    }
+                }
+            });
+        });
+        LOGGER.info("Donation amounts control stopped");
+    }
 
     @Operation(summary = "Submit a donation", description = "Submit a new donation", tags = { "Donations" })
     @ApiResponses(value = {
@@ -99,7 +136,7 @@ public class DonationController {
         }
 
         // Verify that principal is member of organization
-        if(userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if(!userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }

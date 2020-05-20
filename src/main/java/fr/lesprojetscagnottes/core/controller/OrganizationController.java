@@ -69,6 +69,9 @@ public class OrganizationController {
     private BudgetRepository budgetRepository;
 
     @Autowired
+    private CampaignRepository campaignRepository;
+
+    @Autowired
     private ContentRepository contentRepository;
 
     @Autowired
@@ -112,6 +115,25 @@ public class OrganizationController {
         // Transform organizations
         DataPage<OrganizationModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(OrganizationModel.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Find all organizations for current user", description = "Find all organizations for current user", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all organizations for current user", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class))))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organizations", method = RequestMethod.GET)
+    public Set<OrganizationModel> getAll(Principal principal) {
+
+        // Get user organizations
+        User user = userService.get(principal);
+        Set<Organization> entities = organizationRepository.findAllByMembers_Id(user.getId());
+
+        // Convert all entities to models
+        Set<OrganizationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
+
         return models;
     }
 
@@ -280,6 +302,7 @@ public class OrganizationController {
 
         // Update entity
         entity.setName(organizationModel.getName());
+        entity.setLogoUrl(organizationModel.getLogoUrl());
         organizationRepository.save(entity);
     }
 
@@ -452,6 +475,55 @@ public class OrganizationController {
         organization.getMembers().remove(user);
         organizationRepository.save(organization);
         LOGGER.info("User {} has been removed from organization {}", user.getId(), organization.getId());
+    }
+
+    @Operation(summary = "Get paginated organization campaigns", description = "Get paginated organization campaigns", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return paginated campaigns", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filters"})
+    public DataPage<CampaignModel> list(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filters") List<String> filters) {
+
+        // Verify that params are correct
+        if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
+            LOGGER.error("Impossible to get organization campaigns : params are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that organization exists
+        Organization organization = organizationRepository.findById(id).orElse(null);
+        if(organization == null) {
+            LOGGER.error("Impossible to get organization campaigns : organization not found");
+            throw new NotFoundException();
+        }
+
+        // Prepare filter
+        Set<CampaignStatus> status = new LinkedHashSet<>();
+        for(String filter : filters) {
+            status.add(CampaignStatus.valueOf(filter));
+        }
+        if(status.isEmpty()) {
+            status.addAll(List.of(CampaignStatus.values()));
+        }
+
+        // Get corresponding entities according to principal
+        Long userLoggedInId = userService.get(principal).getId();
+        Pageable pageable = PageRequest.of(offset, limit, Sort.by("status").ascending().and(Sort.by("fundingDeadline").ascending()));
+        Page<Campaign> entities;
+        if(userService.isNotAdmin(userLoggedInId)) {
+            entities = campaignRepository.findAllByOrganizations_IdAndStatusIn(id, status, pageable);
+            //entities = campaignRepository.findAllByUserAndStatus(userLoggedInId, status, pageable);
+        } else {
+            entities = campaignRepository.findAllByStatusIn(status, pageable);
+        }
+
+        // Convert and return data
+        DataPage<CampaignModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(Campaign.fromEntity(entity)));
+        return models;
     }
 
     @Operation(summary = "Get organization authorities", description = "Get organization authorities", tags = { "Organizations" })

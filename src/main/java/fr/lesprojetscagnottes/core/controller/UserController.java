@@ -114,10 +114,12 @@ public class UserController {
             throw new BadRequestException();
         }
 
-        // Verify that current user is the same as requested
+        // Verify that current user and user requested shares an organization
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get user by ID : principal is not the requested user");
+        Set<Organization> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        Set<Organization> userOrganizations = organizationRepository.findAllByMembers_Id(id);
+        if(userService.hasNoACommonOrganization(userLoggedInOrganizations, userOrganizations) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -160,7 +162,7 @@ public class UserController {
 
             // Verify that principal share an organization with the user
             Set<Organization> userOrganizations = organizationRepository.findAllByMembers_Id(id);
-            if(!userOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+            if(userService.hasNoACommonOrganization(userLoggedInOrganizations, userOrganizations) && userLoggedIn_isNotAdmin) {
                 LOGGER.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
                 continue;
             }

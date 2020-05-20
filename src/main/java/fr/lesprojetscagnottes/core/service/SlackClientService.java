@@ -100,6 +100,36 @@ public class SlackClientService {
         }
     }
 
+    public SlackUser getUser(String token) {
+        String url = "https://slack.com/api/users.identity";
+        LOGGER.debug("GET " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + token)
+                .build();
+        HttpResponse<String> response;
+        SlackUser slackUser = null;
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.debug("response : " + response.body());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+                JsonObject jsonUser = json.get("user").getAsJsonObject();
+                slackUser = new SlackUser();
+                slackUser.setSlackId(jsonUser.get("id").getAsString());
+                slackUser.setName(jsonUser.get("name").getAsString());
+                slackUser.setEmail(jsonUser.get("email").getAsString());
+                slackUser.setImage_192(jsonUser.get("image_192").getAsString());
+            }
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return slackUser;
+    }
+
     public List<SlackUser> listUsers(SlackTeam slackTeam) {
         String url = "https://slack.com/api/users.list";
         String body = "{}";

@@ -72,44 +72,6 @@ public class CampaignController {
     @Autowired
     private UserService userService;
 
-    @Operation(summary = "Get paginated campaigns", description = "Get paginated campaigns", tags = { "Campaigns" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Return paginated campaigns", content = @Content(schema = @Schema(implementation = DataPage.class))),
-            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/campaign", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filters"})
-    public DataPage<CampaignModel> list(Principal principal, @RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filters") List<String> filters) {
-
-        // Verify that params are correct
-        if(offset < 0 || limit <= 0 || filters == null) {
-            LOGGER.error("Impossible to get campaigns : params are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Prepare filter
-        final List<String> status = filters;
-        if(filters.isEmpty()) {
-            Arrays.stream(CampaignStatus.values()).forEach(label -> status.add(label.name()));
-        }
-
-        // Get corresponding entities according to principal
-        Long userLoggedInId = userService.get(principal).getId();
-        Pageable pageable = PageRequest.of(offset, limit, Sort.by("status").ascending().and(Sort.by("fundingDeadline").ascending()));
-        Page<Campaign> entities;
-        if(userService.isNotAdmin(userLoggedInId)) {
-            entities = campaignRepository.findAllByUserAndStatus(userLoggedInId, status, pageable);
-        } else {
-            entities = campaignRepository.findAllByStatusIn(status, pageable);
-        }
-
-        // Convert and return data
-        DataPage<CampaignModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(Campaign.fromEntity(entity)));
-        return models;
-    }
-
     @Operation(summary = "Find a campaign by its ID", description = "Find a campaign by its ID", tags = { "Campaigns" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return the campaign", content = @Content(schema = @Schema(implementation = CampaignModel.class))),

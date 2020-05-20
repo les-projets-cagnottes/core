@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {
@@ -28,7 +27,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
 
     Set<Campaign> findAllByStatus(CampaignStatus status);
 
-    Page<Campaign> findAllByStatusIn(List<String> status, Pageable pageable);
+    Page<Campaign> findAllByStatusIn(Set<CampaignStatus> status, Pageable pageable);
 
     @Transactional
     @Procedure(procedureName = "update_campaigns_total_donations")
@@ -47,7 +46,8 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
                     "inner join organizations_users on organizations_users.organization_id = o.id " +
                     "inner join users u on u.id = organizations_users.user_id " +
                     "where u.id = ?1 c.status IN (?2)")
-    Page<Campaign> findAllByUserAndStatus(Long userId, List<String> status, Pageable pageable);
+    Page<Campaign> findAllByUserAndStatus(Long userId, Set<CampaignStatus> status, Pageable pageable);
+    Page<Campaign> findAllByOrganizations_IdAndStatusIn(Long id, Set<CampaignStatus> status, Pageable pageable);
 
     @Query(nativeQuery = true, value = "select c.* from campaigns c " +
             "inner join campaigns_organizations on c.id = campaigns_organizations.campaign_id " +

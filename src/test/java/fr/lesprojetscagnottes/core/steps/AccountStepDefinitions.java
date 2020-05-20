@@ -7,7 +7,6 @@ import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.nio.FloatBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +31,7 @@ public class AccountStepDefinitions {
             account.setOwner(context.getUsers().get(columns.get("owner")));
             account.setBudget(context.getBudgets().get(columns.get("budget")));
             account.setAmount(Float.parseFloat(columns.get("amount")));
+            account.setInitialAmount(Float.parseFloat(columns.get("initialAmount")));
             accountRepository.save(account);
 
             // Save in Test Map

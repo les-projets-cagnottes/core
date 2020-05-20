@@ -17,8 +17,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -50,8 +50,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -85,8 +85,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns have a deadline reached
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -118,8 +118,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status    | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | C_AVORTED | 2              | 200               |
@@ -153,8 +153,8 @@ Feature: Donation - Create
       | Unnamed Company | Annual Company Pot Previous Year | 150             | true          | Sabrina | Terms of Use |
       | Unnamed Company | Annual Company Pot               | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget                           | amount |
-      | Mike  | Annual Company Pot Previous Year | 150    |
+      | owner | budget                           | amount | initialAmount |
+      | Mike  | Annual Company Pot Previous Year | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -186,8 +186,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
@@ -219,8 +219,8 @@ Feature: Donation - Create
       | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
     And The following accounts are created
-      | owner | budget             | amount |
-      | Mike  | Annual Company Pot | 150    |
+      | owner | budget             | amount | initialAmount |
+      | Mike  | Annual Company Pot | 150    | 150           |
     And The following campaigns are running
       | title            | leader | status        | peopleRequired | donationsRequired |
       | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |

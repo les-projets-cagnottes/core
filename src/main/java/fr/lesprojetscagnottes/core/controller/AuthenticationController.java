@@ -15,6 +15,7 @@ import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
 import fr.lesprojetscagnottes.core.security.TokenProvider;
 import fr.lesprojetscagnottes.core.service.HttpClientService;
+import fr.lesprojetscagnottes.core.service.SlackClientService;
 import fr.lesprojetscagnottes.core.service.UserService;
 import fr.lesprojetscagnottes.core.model.UserModel;
 import fr.lesprojetscagnottes.core.generator.StringGenerator;
@@ -76,6 +77,9 @@ public class AuthenticationController {
     private UserRepository repository;
 
     @Autowired
+    private SlackClientService slackClientService;
+
+    @Autowired
     private UserService userService;
 
     @Operation(summary = "Sign in with email and password", description = "Sign in with email and password", tags = { "Authentication" })
@@ -127,7 +131,7 @@ public class AuthenticationController {
     })
     @RequestMapping(value = "/auth/login/slack", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponseModel slack(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-        String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        String url = "https://slack.com/api/oauth.v2.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
@@ -140,36 +144,36 @@ public class AuthenticationController {
             LOGGER.debug("Response from {} : {}", url, response.body());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
-            if (json.get("user") != null && json.get("team") != null) {
+            if (json.get("authed_user") != null && json.get("team") != null) {
                 final SlackTeam slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
                 if(slackTeam != null) {
-                    JsonObject jsonUser = json.get("user").getAsJsonObject();
-                    User user = repository.findByEmail(jsonUser.get("email").getAsString());
+                    JsonObject jsonUser = json.get("authed_user").getAsJsonObject();
+
+                    // Import SlackUser from Slack API
+                    SlackUser slackUser = slackUserRepository.findBySlackId(jsonUser.get("id").getAsString());
+                    if(slackUser == null) {
+                        slackUser = slackClientService.getUser(jsonUser.get("access_token").getAsString());
+                    }
+                    slackUser.setSlackTeam(slackTeam);
+
+                    // Build user from SlackUser
+                    User user = repository.findByEmail(slackUser.getEmail());
                     if(user == null) {
                         user = new User();
                         user.setCreatedBy("Slack Login");
                         user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
-                        user.setFirstname(jsonUser.get("name").getAsString());
-                        user.setEmail(jsonUser.get("email").getAsString());
+                        user.setFirstname(slackUser.getName());
+                        user.setEmail(slackUser.getEmail());
                     } else if(user.getPassword().isEmpty()) {
                         user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
                     }
                     user.setUpdatedBy("Slack Login");
-                    user.setUsername(jsonUser.get("email").getAsString());
-                    user.setAvatarUrl(jsonUser.get("image_192").getAsString());
+                    user.setUsername(slackUser.getEmail());
+                    user.setAvatarUrl(slackUser.getImage_192());
                     final User userInDb = repository.save(UserGenerator.newUser(user));
 
-                    String slackuserId = json.get("user_id").getAsString();
-                    SlackUser slackUser = slackUserRepository.findBySlackId(slackuserId);
-                    if(slackUser == null) {
-                        slackUser = new SlackUser();
-                        slackUser.setSlackId(slackuserId);
-                    }
-                    slackUser.setSlackTeam(slackTeam);
-                    slackUser.setUser(user);
-                    slackUser.setName(jsonUser.get("name").getAsString());
-                    slackUser.setImage_192(jsonUser.get("image_192").getAsString());
-                    slackUser.setEmail(jsonUser.get("email").getAsString());
+                    // Save SlackUser with link to user
+                    slackUser.setUser(userInDb);
                     final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
 
                     // If the User doesnt have the SlackUser -> Add it

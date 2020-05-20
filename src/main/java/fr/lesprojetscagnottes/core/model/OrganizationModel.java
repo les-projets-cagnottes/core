@@ -22,9 +22,12 @@ public class OrganizationModel extends AuditEntity<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationModel.class);
 
-    @Column(name = "name")
+    @Column
     @NotNull
     private String name;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
 
     @Transient
     private GenericModel slackTeam;
@@ -43,6 +46,7 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setName(entity.getName());
+        model.setLogoUrl(entity.getLogoUrl());
         model.setSlackTeam(new GenericModel(entity.getSlackTeam()));
         entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
         entity.getContents().forEach(content -> model.getContentsRef().add(content.getId()));
