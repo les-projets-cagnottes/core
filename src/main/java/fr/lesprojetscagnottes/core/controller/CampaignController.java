@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,7 +32,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -254,8 +255,8 @@ public class CampaignController {
 
         // Retrieve full referenced objects
         User leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
-        Set<Organization> organizations = organizationRepository.findAllById(campaign.getOrganizationsRef());
-        Set<Budget> budgets = budgetRepository.findAllById(campaign.getBudgetsRef());
+        Set<Organization> organizations = organizationRepository.findAllByIdIn(campaign.getOrganizationsRef());
+        Set<Budget> budgets = budgetRepository.findAllByIdIn(campaign.getBudgetsRef());
 
         // Fails if any of references are null
         if(leader == null || organizations.isEmpty() || budgets.isEmpty() ||
@@ -267,7 +268,7 @@ public class CampaignController {
 
         // Verify that principal is member of organizations
         User userLoggedIn = userService.get(principal);
-        Set<Organization> organizationsMatch = organizationRepository.findAllByIdAndMembers_Id(campaign.getOrganizationsRef(), userLoggedIn.getId());
+        Set<Organization> organizationsMatch = organizationRepository.findAllByIdInAndMembers_Id(campaign.getOrganizationsRef(), userLoggedIn.getId());
         if(organizationsMatch.isEmpty()) {
             LOGGER.error("Impossible to create campaign \"{}\" : principal {} is not member of all organizations", campaign.getTitle(), userLoggedIn.getId());
             throw new ForbiddenException();
@@ -437,7 +438,7 @@ public class CampaignController {
         campaign.setOrganizations(organizationRepository.findAllByCampaigns_Id(id));
         Set<Long> organizationsRef = new LinkedHashSet<>();
         campaign.getOrganizations().forEach(organization -> organizationsRef.add(organization.getId()));
-        if(organizationRepository.findAllByIdAndMembers_Id(organizationsRef, userLoggedInId).isEmpty()) {
+        if(organizationRepository.findAllByIdInAndMembers_Id(organizationsRef, userLoggedInId).isEmpty()) {
             LOGGER.error("Impossible to join campaign {} : principal {} is not member of all organizations", id, userLoggedInId);
             throw new ForbiddenException();
         }

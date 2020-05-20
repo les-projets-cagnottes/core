@@ -17,7 +17,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Page<Organization> findAll(Pageable pageable);
 
-    Set<Organization> findAllById(Set<Long> id);
+    Set<Organization> findAllByIdIn(Set<Long> id);
 
     @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findById(Long id);
@@ -31,7 +31,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @EntityGraph(value = "Organization.withLinkedEntities")
     Organization findByIdAndMembers_Id(Long id, Long userId);
 
-    Set<Organization> findAllByIdAndMembers_Id(Set<Long> id, Long userId);
+    Set<Organization> findAllByIdInAndMembers_Id(Set<Long> id, Long userId);
 
     Set<Organization> findAllByContents_Id(Long contentId);
 }
