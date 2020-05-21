@@ -14,4 +14,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Set<Account> findAllByOwnerId(Long ownerId);
 
     Page<Account> findByBudgetId(Long id, Pageable pageable);
+
+    Set<Account> findAllByBudgetId(Long id);
 }

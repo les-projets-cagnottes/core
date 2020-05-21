@@ -72,29 +72,70 @@ public class DonationController {
     @PreAuthorize("hasRole('ADMIN')")
     public void control(Principal principal) {
         LOGGER.info("Donation amounts control started");
+        LOGGER.info("Control users");
         List<User> users = userRepository.findAll();
         users.forEach(user -> {
-            LOGGER.info("User {} - {} {}", user.getId(), user.getFirstname(), user.getLastname());
+            LOGGER.info("User {} : {} {}", user.getId(), user.getFirstname(), user.getLastname());
             Set<Budget> budgets = budgetRepository.findAllByUser(user.getId());
             Set<Account> accounts = accountRepository.findAllByOwnerId(user.getId());
             if(budgets.size() != accounts.size()) {
-                LOGGER.error("Accounts and budgets for user {} dont match", user.getId());
+                LOGGER.error("Number of accounts {} and budgets {} for user {} dont match", accounts.size(), budgets.size(), user.getId());
             }
             budgets.forEach(budget -> {
-                LOGGER.info("|- Budget {} - {}", budget.getId(), budget.getAmountPerMember());
+                LOGGER.info("|- Budget {} : {}", budget.getId(), budget.getAmountPerMember());
                 Optional<Account> accountOptional = accounts.stream().filter(account -> account.getBudget().getId().equals(budget.getId())).findFirst();
                 if(accountOptional.isEmpty()) {
                     LOGGER.error("Not account found for budget {} and user {}", budget.getId(), user.getId());
                 } else {
                     Account account = accountOptional.get();
-                    LOGGER.info("|- Account {} - {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
+                    LOGGER.info("|- Account {} : {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
                     if(account.getInitialAmount() != budget.getAmountPerMember()) {
                         LOGGER.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
+                    }
+                    Set<Donation> accountDonations = donationRepository.findAllByAccountId(account.getId());
+                    final float[] totalDonationsAmount = {0f};
+                    accountDonations.forEach(donation -> {
+                        totalDonationsAmount[0] += donation.getAmount();
+                    });
+                    LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+                    if(account.getAmount() != account.getInitialAmount() - totalDonationsAmount[0]) {
+                        LOGGER.error("Total donations computed doest match with account amount ({} - {} != {})", account.getInitialAmount(), totalDonationsAmount[0], account.getAmount());
                     }
                 }
             });
         });
-        LOGGER.info("Donation amounts control stopped");
+        LOGGER.info("Control budgets");
+        List<Budget> budgets = budgetRepository.findAll();
+        budgets.forEach(budget -> {
+            LOGGER.info("Budget {} : {}", budget.getId(), budget.getAmountPerMember());
+            Set<Account> accounts = accountRepository.findAllByBudgetId(budget.getId());
+            final float[] totalDonationsAmount = {0f};
+            accounts.forEach(account -> {
+                float accountTotalDonations = account.getInitialAmount() - account.getAmount();
+                LOGGER.info("|- Account {} : {} - {} = {}", account.getId(), account.getInitialAmount(), account.getAmount(), accountTotalDonations);
+                totalDonationsAmount[0] += accountTotalDonations;
+            });
+            LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+            if(budget.getTotalDonations() != totalDonationsAmount[0]) {
+                LOGGER.error("Account amounts doest match with budget total donations registered ({} != {})", totalDonationsAmount[0], budget.getTotalDonations());
+            }
+        });
+        LOGGER.info("Control campaigns");
+        List<Campaign> campaigns = campaignRepository.findAll();
+        campaigns.forEach(campaign -> {
+            LOGGER.info("Campaign {} : {}", campaign.getId(), campaign.getTitle());
+            Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
+            final float[] totalDonationsAmount = {0f};
+            donations.forEach(donation -> {
+                LOGGER.info("|- Donation {} : {}", donation.getId(), donation.getAmount());
+                totalDonationsAmount[0] += donation.getAmount();
+            });
+            LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+            if(campaign.getTotalDonations() != totalDonationsAmount[0]) {
+                LOGGER.error("Total donations computed doest match with campaign total registered ({} != {})", totalDonationsAmount[0], campaign.getTotalDonations());
+            }
+        });
+        LOGGER.info("Donation amounts control finished");
     }
 
     @Operation(summary = "Submit a donation", description = "Submit a new donation", tags = { "Donations" })
