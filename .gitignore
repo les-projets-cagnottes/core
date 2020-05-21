@@ -19,7 +19,7 @@ logs/
 .apt_generated
 .classpath
 .factorypath
-.project
+.campaign
 .settings
 .springBeans
 .sts4-cache

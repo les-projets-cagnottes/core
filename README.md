@@ -1,6 +1,7 @@
 # Les Projets Cagnottes - core
-
-[![Build Status](https://travis-ci.org/les-projets-cagnottes/core.svg?branch=master)](https://travis-ci.org/les-projets-cagnottes/core) [![Known Vulnerabilities](https://snyk.io/test/github/les-projets-cagnottes/core/badge.svg)](https://snyk.io/test/github/les-projets-cagnottes/core)
+[![Release](https://github.com/les-projets-cagnottes/core/workflows/Release/badge.svg)](https://github.com/les-projets-cagnottes/core/actions?query=workflow%3ARelease)
+[![Integration](https://github.com/les-projets-cagnottes/core/workflows/Integration/badge.svg)](https://github.com/les-projets-cagnottes/core/actions?query=workflow%3AIntegration)
+[![Known Vulnerabilities](https://snyk.io/test/github/les-projets-cagnottes/core/badge.svg)](https://snyk.io/test/github/les-projets-cagnottes/core)
 
 ## Prerequisites
 
@@ -14,9 +15,9 @@
 1. Create a PostgreSQL database matching the configuration in `src/main/resources/application.properties`
 2. Create the following environment variables :
 ```bash
-VALYOU_SLACK_CLIENT_ID=<ask-the-team>
-VALYOU_SLACK_CLIENT_SECRET=<ask-the-team>
-VALYOU_WEB_URL=http://localhost:4200
+LPC_SLACK_CLIENT_ID=<ask-the-team>
+LPC_SLACK_CLIENT_SECRET=<ask-the-team>
+LPC_WEB_URL=http://localhost:4200
 HTTP_PROXY=http://<host>:<port>
 ```
 3. Run the following command :

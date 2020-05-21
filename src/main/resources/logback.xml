@@ -24,7 +24,7 @@
         </encoder>
     </appender>
 
-    <logger name="fr.thomah" additivity="false">
+    <logger name="fr.lesprojetscagnottes" additivity="false">
         <level value="DEBUG" />
         <appender-ref ref="dailyRollingFileAppender"/>
         <appender-ref ref="consoleAppender" />
