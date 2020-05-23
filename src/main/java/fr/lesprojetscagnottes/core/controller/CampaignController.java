@@ -5,6 +5,7 @@ import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.model.BudgetModel;
 import fr.lesprojetscagnottes.core.model.CampaignModel;
 import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.model.OrganizationModel;
@@ -147,29 +148,27 @@ public class CampaignController {
         return models;
     }
 
-
-    @Operation(summary = "Get campaign organizations", description = "Get campaign organizations", tags = { "Campaigns" })
+    @Operation(summary = "Get campaign budgets", description = "Get campaign budgets", tags = { "Campaigns" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding organizations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
-            @ApiResponse(responseCode = "200", description = "Returns corresponding organizations", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "200", description = "Returns corresponding budgets", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
             @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "User is not member of concerned organizations", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/campaign/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<OrganizationModel> getOrganizations(Principal principal, @PathVariable("id") Long id) {
+    @RequestMapping(value = "/campaign/{id}/budgets", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<BudgetModel> getBudgets(Principal principal, @PathVariable("id") Long id) {
 
         // Fails if campaign ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get organizations by campaign ID : Campaign ID is incorrect");
+            LOGGER.error("Impossible to get budgets by campaign ID : Campaign ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         long userLoggedInId = userService.get(principal).getId();
         if(campaignRepository.findByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get organizations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
+            LOGGER.error("Impossible to get budgets by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -178,14 +177,14 @@ public class CampaignController {
 
         // Verify that any of references are not null
         if(campaign == null) {
-            LOGGER.error("Impossible to get organizations by campaign ID : campaign {} not found", id);
+            LOGGER.error("Impossible to get budgets by campaign ID : campaign {} not found", id);
             throw new NotFoundException();
         }
 
         // Get and transform entities
-        Set<Organization> entities = organizationRepository.findAllByCampaigns_Id(id);
-        Set<OrganizationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
+        Set<Budget> entities = budgetRepository.findAllByCampaigns_Id(id);
+        Set<BudgetModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(BudgetModel.fromEntity(entity)));
         return models;
     }
 
@@ -226,6 +225,46 @@ public class CampaignController {
         Page<Donation> entities = donationRepository.findByCampaign_idOrderByIdAsc(campaignId, PageRequest.of(offset, limit, Sort.by("id")));
         DataPage<DonationModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(DonationModel.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Get campaign organizations", description = "Get campaign organizations", tags = { "Campaigns" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding organizations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User is not member of concerned organizations", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/campaign/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<OrganizationModel> getOrganizations(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if campaign ID is missing
+        if(id <= 0) {
+            LOGGER.error("Impossible to get organizations by campaign ID : Campaign ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is in one organization of the campaign
+        long userLoggedInId = userService.get(principal).getId();
+        if(campaignRepository.findByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get organizations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        Campaign campaign = campaignRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(campaign == null) {
+            LOGGER.error("Impossible to get organizations by campaign ID : campaign {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform entities
+        Set<Organization> entities = organizationRepository.findAllByCampaigns_Id(id);
+        Set<OrganizationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
         return models;
     }
 
