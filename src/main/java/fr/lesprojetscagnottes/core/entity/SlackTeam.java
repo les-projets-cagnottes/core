@@ -21,7 +21,7 @@ public class SlackTeam extends SlackTeamModel {
     @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "slackTeam", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = {"organization", "slackTeam", "user"})
     private Set<SlackUser> slackUsers = new LinkedHashSet<>();
 

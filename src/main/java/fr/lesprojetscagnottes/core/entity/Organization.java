@@ -52,7 +52,7 @@ public class Organization extends OrganizationModel {
     @JsonIgnoreProperties(value = {"organization"})
     private Set<Content> contents = new LinkedHashSet<>();
 
-    @OneToMany(cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthority> organizationAuthorities = new LinkedHashSet<>();
 

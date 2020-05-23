@@ -27,7 +27,7 @@ public class Account extends AccountModel {
     @JsonIgnoreProperties(value = {"organization", "sponsor", "donations", "accounts"})
     private Budget budget = new Budget();
 
-    @OneToMany
+    @OneToMany(mappedBy = "account")
     @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
     private Set<Donation> donations = new LinkedHashSet<>();
 

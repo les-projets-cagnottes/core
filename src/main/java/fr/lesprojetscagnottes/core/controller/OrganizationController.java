@@ -879,15 +879,7 @@ public class OrganizationController {
             // Save data
             final User userInDb = userRepository.save(user);
             slackUserEditted.setUser(userInDb);
-            final SlackUser slackUserInDb = slackUserRepository.save(slackUserEditted);
-
-            // Add Slack user to Slack Team users
-            slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserInDb.getId()))
-                    .findAny()
-                    .ifPresentOrElse(
-                            slackTeamUser -> slackTeamUser = slackUserInDb,
-                            () -> slackTeam.getSlackUsers().add(slackUserInDb));
-            slackTeamRepository.save(slackTeam);
+            slackUserRepository.save(slackUserEditted);
 
             // Add or remove user from organization according to enable parameter
             if(userInDb.getEnabled()) {
