@@ -415,7 +415,7 @@ public class BudgetController {
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
         Long organizationId = budget.getOrganization().getId();
-        if(userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+        if(!userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to distribute budget {} : principal {} is not sponsor of organization {}", budget.getName(), userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }

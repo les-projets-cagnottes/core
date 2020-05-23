@@ -135,7 +135,7 @@ public class CampaignController {
 
             // Verify that principal share an organization with the user
             Set<Organization> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
-            if(!campaignOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+            if(userService.hasNoACommonOrganization(userLoggedInOrganizations, campaignOrganizations) && userLoggedIn_isNotAdmin) {
                 LOGGER.error("Impossible to get campaign {} : principal {} is not in its organizations", id, userLoggedInId);
                 continue;
             }

@@ -105,7 +105,7 @@ public class ContentController {
 
             // Verify that principal share an organization with the user
             Set<Organization> contentOrganizations = organizationRepository.findAllByContents_Id(id);
-            if(!contentOrganizations.retainAll(userLoggedInOrganizations) && userLoggedIn_isNotAdmin) {
+            if(userService.hasNoACommonOrganization(userLoggedInOrganizations, contentOrganizations) && userLoggedIn_isNotAdmin) {
                 LOGGER.error("Impossible to get content {} : principal {} is not in its organization", id, userLoggedInId);
                 continue;
             }
