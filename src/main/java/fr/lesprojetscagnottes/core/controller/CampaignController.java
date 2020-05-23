@@ -323,7 +323,7 @@ public class CampaignController {
                 .append("* et vous êtes tous invités à y participer !")
                 .append("\nDécouvrez le vite sur ")
                 .append(WEB_URL)
-                .append("/projects/")
+                .append("/campaigns/")
                 .append(campaignFinal.getId())
                 .toString();
 

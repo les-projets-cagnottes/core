@@ -158,14 +158,14 @@ public class CampaignScheduler {
                                     stringBuilderUser.append(endMessage.toString())
                                             .append("\nRendez-vous à l'adresse suivante pour participer : \n")
                                             .append(WEB_URL)
-                                            .append("/projects/")
+                                            .append("/campaigns/")
                                             .append(campaign.getId());
                                 },() -> {
                                     stringBuilderUser.append(defaultUser)
                                             .append(endMessage.toString())
                                             .append("\nRendez-vous à l'adresse suivante pour participer : \n")
                                             .append(WEB_URL)
-                                            .append("/projects/")
+                                            .append("/campaigns/")
                                             .append(campaign.getId());
                                 });
                         LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
