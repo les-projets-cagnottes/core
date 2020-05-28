@@ -27,18 +27,24 @@ jobs:
       id: test_version
       run: echo ::set-output name=IS_SNAPSHOT::$(if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1"; else echo "0"; fi)
 
-  build:
+  prepare-release:
     runs-on: ubuntu-latest
+    if: ${{ jobs.verify-version.outputs.is_snapshot == "1" }}
     steps:
-
     - uses: actions/checkout@v2
-
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 13
         server-id: github
         settings-path: ${{ github.workspace }}
-
     - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
+      run: ./mvnw versions:set -DremoveSnapshot
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - name: Push released version
+    - run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+    - run: git add .
+    - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
+    - run: git push
