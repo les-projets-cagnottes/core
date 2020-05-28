@@ -28,6 +28,7 @@ jobs:
       run: echo ::set-output name=IS_SNAPSHOT::$(if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1"; else echo "0"; fi)
 
   prepare-release:
+    needs: verify-version
     runs-on: ubuntu-latest
     if: ${{ needs.verify-version.outputs.is_snapshot }} == "1"
     steps:
@@ -45,6 +46,6 @@ jobs:
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Push released version
       run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
-    - run: git add .
+    - run: git add pom.xml
     - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
     - run: git push
