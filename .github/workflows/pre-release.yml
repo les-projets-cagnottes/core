@@ -29,7 +29,7 @@ jobs:
 
   prepare-release:
     runs-on: ubuntu-latest
-    if: ${{ jobs.verify-version.outputs.is_snapshot == "1" }}
+    if: ${{ needs.verify-version.outputs.is_snapshot == "1" }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
