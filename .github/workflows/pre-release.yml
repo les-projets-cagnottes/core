@@ -25,7 +25,7 @@ jobs:
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Test version
       id: test_version
-      run: echo ::set-output name=IS_SNAPSHOT::if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1" else echo "0" fi
+      run: echo ::set-output name=IS_SNAPSHOT::if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1"; else echo "0"; fi
 
   build:
     runs-on: ubuntu-latest
