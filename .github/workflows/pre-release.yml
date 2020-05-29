@@ -31,6 +31,8 @@ jobs:
     needs: verify-version
     runs-on: ubuntu-latest
     if: ${{ needs.verify-version.outputs.is_snapshot }} == "1"
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
@@ -48,7 +50,8 @@ jobs:
       run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
     - run: git add pom.xml
     - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
-    - run: git push
+    - run: git tag ${{ steps.get_version.outputs.VERSION }}
+    - run: git push origin --tags
 
   build:
     needs: prepare-release
@@ -63,3 +66,20 @@ jobs:
         settings-path: ${{ github.workspace }}
     - name: Build with Maven
       run: ./mvnw -B clean install --file pom.xml -P docker
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.version }}
+          release_name: Release ${{ needs.prepare-release.outputs.version }}
+          draft: false
+          prerelease: false
