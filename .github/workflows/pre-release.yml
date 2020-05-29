@@ -30,7 +30,7 @@ jobs:
   prepare-release:
     needs: verify-version
     runs-on: ubuntu-latest
-    if: needs.verify-version.outputs.is_snapshot == "1"
+    if: needs.verify-version.outputs.is_snapshot == 1
     outputs:
       version: ${{ steps.get_version.outputs.VERSION }}
     steps:
