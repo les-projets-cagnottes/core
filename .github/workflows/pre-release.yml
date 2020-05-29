@@ -30,7 +30,7 @@ jobs:
   prepare-release:
     needs: verify-version
     runs-on: ubuntu-latest
-    if: ${{ needs.verify-version.outputs.is_snapshot }} == "1"
+    if: needs.verify-version.outputs.is_snapshot == "1"
     outputs:
       version: ${{ steps.get_version.outputs.VERSION }}
     steps:
@@ -68,13 +68,11 @@ jobs:
       run: ./mvnw -B clean install --file pom.xml -P docker
 
   release:
-    name: Create Release
+    needs: [prepare-release, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: Create Release
-        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
