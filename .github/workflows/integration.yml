@@ -3,25 +3,63 @@ name: Integration
 on:
   push:
     branches:
-      - master
+      - develop
 
 jobs:
 
   build:
     runs-on: ubuntu-latest
     steps:
-
     - uses: actions/checkout@v2
-
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 13
         server-id: github
         settings-path: ${{ github.workspace }}
-
     - name: Build with Maven
       run: ./mvnw -B clean install --file pom.xml -P docker
+
+  cucumber:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Test with Maven
+      id: tests_run
+      run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - name: Generate Cluecumber report
+      run: ./mvnw -B cluecumber-report:reporting --file pom-cluecumber.xml
+    - name: Checkout private tools
+      uses: actions/checkout@v2
+      with:
+        repository: les-projets-cagnottes/les-projets-cagnottes.github.io
+        token: ${{ secrets.GITHUB_IO_PAT }}
+        path: les-projets-cagnottes.github.io
+    - name: Clean previous version
+      run: rm -rf les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+    - name: Prepare Cucumber output directory
+      run: mkdir -p les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+    - name: Copy Cucumber Report
+      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber/
+    - name: Publish https://les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+      run: |
+        cd les-projets-cagnottes.github.io
+        git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+        git status
+        git add .
+        git commit --allow-empty -m "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
+        git push
+        exit ${{ steps.tests_run.outputs.EXIT_CODE }}
 
   publish-docker:
     needs: build

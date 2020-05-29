@@ -1,76 +1,172 @@
 name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - master
 
 jobs:
 
-  build:
+  verify-version:
     runs-on: ubuntu-latest
+    outputs:
+      is_snapshot: ${{ steps.test_version.outputs.IS_SNAPSHOT }}
+      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
-
     - uses: actions/checkout@v2
-
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 13
         server-id: github
         settings-path: ${{ github.workspace }}
-
-    - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
-
-  publish-docker:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    
-    - uses: actions/checkout@v2
-
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
-
-    - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
-
-    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
-
-    - name: Tag the image
-      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
-    
-    - name: Login to Registry
-      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-
-    - name: Publish to Registry
-      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
-
-  deploy-production:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-
-    - uses: actions/checkout@v1
-
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
-
-    - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml
-  
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - name: Test version
+      id: test_version
+      run: echo ::set-output name=IS_SNAPSHOT::$(if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1"; else echo "0"; fi)
 
+  prepare-release:
+    needs: verify-version
+    runs-on: ubuntu-latest
+    if: needs.verify-version.outputs.is_snapshot == 1
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Build with Maven
+      run: ./mvnw versions:set -DremoveSnapshot
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - name: Push released version
+      run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+    - run: git add pom.xml
+    - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
+    - run: git tag ${{ steps.get_version.outputs.VERSION }}
+    - run: git push origin --tags
+
+  build:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
+      
+  cucumber:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Test with Maven
+      id: tests_run
+      run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - name: Generate Cluecumber report
+      run: ./mvnw -B cluecumber-report:reporting --file pom-cluecumber.xml
+    - name: Checkout private tools
+      uses: actions/checkout@v2
+      with:
+        repository: les-projets-cagnottes/les-projets-cagnottes.github.io
+        token: ${{ secrets.GITHUB_IO_PAT }}
+        path: les-projets-cagnottes.github.io
+    - name: Clean previous version
+      run: rm -rf les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+    - name: Prepare Cucumber output directory
+      run: mkdir -p les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+    - name: Copy Cucumber Report
+      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber/
+    - name: Publish https://les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+      run: |
+        cd les-projets-cagnottes.github.io
+        git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+        git status
+        git add .
+        git commit --allow-empty -m "Update Cucumber for version '${{ steps.get_version.outputs.VERSION }}'"
+        git push
+        exit ${{ steps.tests_run.outputs.EXIT_CODE }}
+
+  release:
+    needs: [prepare-release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.version }}
+          release_name: ${{ needs.prepare-release.outputs.version }}
+          draft: false
+          prerelease: false
+
+  publish-docker:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
+    - name: Tag the image as latest
+      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
+    - name: Tag the image with version
+      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
+    - name: Login to Registry
+      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
+    - name: Publish latest to Registry
+      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
+    - name: Publish version to Registry
+      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
+
+  deploy-production:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 13
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Create temp directory to copy files
       uses: appleboy/ssh-action@v0.0.7
       with:
@@ -79,7 +175,6 @@ jobs:
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: mkdir -p /opt/les-projets-cagnottes/core/deployment
-
     - name: Copy content recursively to production
       uses: appleboy/scp-action@v0.0.7
       with:
@@ -90,7 +185,6 @@ jobs:
         source: "bin/deploy.sh,bin/les-projets-cagnottes-core.service,bin/setenv.sh.template,bin/les-projets-cagnottes-core.sh,target/core-${{ steps.get_version.outputs.VERSION }}.jar"
         target: /opt/les-projets-cagnottes/core/deployment
         rm: true
-        
     - name: Execute deployment remotely
       uses: appleboy/ssh-action@v0.0.7
       with:
