@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @RequestMapping("/api")
@@ -315,8 +316,9 @@ public class UserController {
 
         // Verify that principal has correct privileges :
         // Principal is the user OR Principal is admin
-        long userLoggedInId = userService.get(principal).getId();
-        if(userLoggedInId != id && userService.isNotAdmin(userLoggedInId)) {
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        if(userLoggedInId != id && isNotAdmin) {
             LOGGER.error("Impossible to get organizations by user ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
@@ -331,9 +333,14 @@ public class UserController {
         }
 
         // Get and transform entities
-        Set<Organization> entities = organizationRepository.findAllByMembers_Id(id);
         Set<OrganizationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
+        if(isNotAdmin) {
+            Set<Organization> entities = organizationRepository.findAllByMembers_Id(id);
+            entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
+        } else {
+            List<Organization> entities = organizationRepository.findAll();
+            entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
+        }
         return models;
     }
 

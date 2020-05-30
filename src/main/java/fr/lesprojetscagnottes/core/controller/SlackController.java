@@ -1,10 +1,7 @@
 package fr.lesprojetscagnottes.core.controller;
 
 import fr.lesprojetscagnottes.core.common.StringsCommon;
-import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.entity.SlackTeam;
-import fr.lesprojetscagnottes.core.entity.SlackUser;
-import fr.lesprojetscagnottes.core.entity.User;
+import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -25,6 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Date;
+import java.util.Set;
 
 @RequestMapping("/api")
 @Tag(name = "Slack", description = "The Slack API")
@@ -34,6 +33,12 @@ public class SlackController {
     private static final String WEB_URL = System.getenv("LPC_WEB_URL");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackController.class);
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;
@@ -145,7 +150,7 @@ public class SlackController {
     public void teamJoin(@PathVariable String teamId, @RequestBody User user) {
 
         // Fails if Team ID or User is missing
-        if(teamId == null || teamId.isEmpty() || user == null) {
+        if(teamId == null || teamId.isEmpty() || user == null || user.getSlackUsers().size() != 1) {
             LOGGER.error("Impossible to register a new member in organization : Team ID is incorrect or body is incomplete");
             throw new BadRequestException();
         }
@@ -166,68 +171,87 @@ public class SlackController {
             throw new NotFoundException();
         }
 
-        user.getSlackUsers().stream()
-                .findFirst()
-                .ifPresent(slackUser -> {
-                    SlackUser slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
-                    slackUserInDb.setEmail(slackUser.getEmail());
-                    slackUserInDb.setSlackTeam(slackTeam);
-                    slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
-                    final SlackUser slackUserFinal = slackUserRepository.save(slackUserInDb);
+        user.getSlackUsers().forEach(slackUser -> {
 
-                    // Create User if not exists in DB
-                    User userInDb = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
-                    if (userInDb == null) {
-                        userInDb = UserGenerator.newUser(user);
-                    }
-                    userInDb.setEmail(user.getEmail());
-                    userInDb.setFirstname(user.getFirstname());
-                    userInDb.setLastname(user.getLastname());
-                    userInDb.setAvatarUrl(user.getAvatarUrl());
-                    userInDb.setPassword(StringsCommon.EMPTY_STRING);
-                    final User userInDbFinal = userInDb;
+            SlackUser slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
+            slackUserInDb.setEmail(slackUser.getEmail());
+            slackUserInDb.setSlackTeam(slackTeam);
+            slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
+            final SlackUser slackUserFinal = slackUserRepository.save(slackUserInDb);
 
-                    // If the User doesnt have the SlackUser -> Add it
-                    // Else -> replace by the new one
-                    userInDbFinal.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDbFinal.getId()))
-                            .findAny()
-                            .ifPresentOrElse(
-                                    userSlackUser -> userSlackUser = slackUserFinal,
-                                    () -> userInDbFinal.getSlackUsers().add(slackUserFinal));
+            // Create User if not exists in DB
+            User userInDb = userRepository.findBySlackUsers_Id(slackUserFinal.getId());
+            if (userInDb == null) {
+                userInDb = UserGenerator.newUser(user);
+            }
+            userInDb.setEmail(user.getEmail());
+            userInDb.setFirstname(user.getFirstname());
+            userInDb.setLastname(user.getLastname());
+            userInDb.setAvatarUrl(user.getAvatarUrl());
+            userInDb.setPassword(StringsCommon.EMPTY_STRING);
+            final User userInDbFinal = userInDb;
 
-                    userInDb = userRepository.save(userInDbFinal);
+            // If the User doesnt have the SlackUser -> Add it
+            userInDbFinal.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDbFinal.getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            userSlackUser -> userSlackUser = slackUserFinal,
+                            () -> userInDbFinal.getSlackUsers().add(slackUserFinal));
 
-                    // Complete SlackUser with user saved
-                    slackUserInDb.setUser(userInDb);
-                    final SlackUser slackUserFinal2 = slackUserRepository.save(slackUserInDb);
+            final User userWithSlackUser = userRepository.save(userInDbFinal);
 
-                    // If the SlackTeam doesnt have the SlackUser -> Add it
-                    // Else - replace by the new one
-                    slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
-                            .findAny()
-                            .ifPresentOrElse(
-                                    slackTeamUser -> slackTeamUser = slackUserFinal2,
-                                    () -> slackTeam.getSlackUsers().add(slackUserFinal2));
-                    slackTeamRepository.save(slackTeam);
+            // Complete SlackUser with user saved
+            slackUserInDb.setUser(userInDb);
+            final SlackUser slackUserFinal2 = slackUserRepository.save(slackUserInDb);
 
-                    String welcomeMessage = new StringBuilder("Bienvenue sur le Slack ")
-                            .append(slackTeam.getOrganization().getName())
-                            .append(" ! :tada:\n\nVotre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?\n")
-                            .append("Eh bien c'est très simple : avec les projets cagnottes, chacun est libre de :\n")
-                            .append("- Lancer un projet\n")
-                            .append("- Rejoindre un projet\n")
-                            .append("- Financer un projet avec sa part du budget de l'organisation\n\n")
-                            .append("Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :\n")
-                            .append(WEB_URL)
-                            .toString();
+            // If the SlackTeam doesnt have the SlackUser -> Add it
+            slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            slackTeamUser -> {},
+                            () -> {
+                                slackTeam.getSlackUsers().add(slackUserFinal2);
+                                slackTeamRepository.save(slackTeam);
+                            });
 
-                    slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
+            // If the User is not member of organization => Add it
+            organization.getMembers().stream().filter(member -> member.getId().equals(userWithSlackUser.getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            member -> {},
+                            () -> {
+                                organization.getMembers().add(userWithSlackUser);
+                                organizationRepository.save(organization);
+                            }
+                    );
 
-                    organization.getMembers().add(userInDb);
+            // Distribute usable budgets
+            Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            budgets.forEach(budget -> {
+                Account account = accountRepository.findByOwnerIdAndBudgetId(userWithSlackUser.getId(), budget.getId());
+                if(account == null) {
+                    account = new Account();
+                    account.setAmount(budget.getAmountPerMember());
+                    account.setBudget(budget);
+                }
+                account.setInitialAmount(budget.getAmountPerMember());
+                account.setOwner(userWithSlackUser);
+                accountRepository.save(account);
+            });
 
-                    organizationRepository.save(organization);
-                    userRepository.save(userInDb);
-                });
+            String welcomeMessage = new StringBuilder("Bienvenue sur le Slack ")
+                    .append(slackTeam.getOrganization().getName())
+                    .append(" ! :tada:\n\nVotre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?\n")
+                    .append("Eh bien c'est très simple : avec les projets cagnottes, chacun est libre de :\n")
+                    .append("- Lancer un projet\n")
+                    .append("- Rejoindre un projet\n")
+                    .append("- Financer un projet avec sa part du budget de l'organisation\n\n")
+                    .append("Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :\n")
+                    .append(WEB_URL)
+                    .toString();
+
+            slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
+        });
     }
 
     @Operation(summary = "Update a user in an organization", description = "Update a user in a Slack Team organization", tags = { "Slack" })
