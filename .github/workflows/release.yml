@@ -50,8 +50,9 @@ jobs:
       run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
     - run: git add pom.xml
     - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
+    - run: git push origin
     - run: git tag ${{ steps.get_version.outputs.VERSION }}
-    - run: git push origin --follow-tags
+    - run: git push origin --tags
 
   build:
     needs: prepare-release
