@@ -3,25 +3,21 @@ package fr.lesprojetscagnottes.core.controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
-import fr.lesprojetscagnottes.core.entity.SlackTeam;
-import fr.lesprojetscagnottes.core.entity.SlackUser;
-import fr.lesprojetscagnottes.core.entity.User;
-import fr.lesprojetscagnottes.core.model.AuthenticationRequestModel;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.InternalServerException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.generator.StringGenerator;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
+import fr.lesprojetscagnottes.core.model.AuthenticationRequestModel;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.UserModel;
+import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.security.TokenProvider;
 import fr.lesprojetscagnottes.core.service.HttpClientService;
 import fr.lesprojetscagnottes.core.service.SlackClientService;
 import fr.lesprojetscagnottes.core.service.UserService;
-import fr.lesprojetscagnottes.core.model.UserModel;
-import fr.lesprojetscagnottes.core.generator.StringGenerator;
-import fr.lesprojetscagnottes.core.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,6 +42,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Principal;
 import java.time.Duration;
+import java.util.Date;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -68,13 +66,22 @@ public class AuthenticationController {
     private TokenProvider jwtTokenUtil;
 
     @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private BudgetRepository budgetRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
     private SlackTeamRepository slackTeamRepository;
 
     @Autowired
     private SlackUserRepository slackUserRepository;
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository userRepository;
 
     @Autowired
     private SlackClientService slackClientService;
@@ -111,9 +118,9 @@ public class AuthenticationController {
         String authToken = request.getHeader(TOKEN_HEADER);
         final String token = authToken.substring(7);
         String username = jwtTokenUtil.getUsernameFromToken(token);
-        User user = repository.findByUsername(username);
+        User user = userRepository.findByUsername(username);
         if(user == null) {
-            user = repository.findByEmail(username);
+            user = userRepository.findByEmail(username);
         }
         if (jwtTokenUtil.canTokenBeRefreshed(token, user.getLastPasswordResetDate())) {
             String refreshedToken = jwtTokenUtil.refreshToken(token);
@@ -146,61 +153,89 @@ public class AuthenticationController {
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("authed_user") != null && json.get("team") != null) {
                 final SlackTeam slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
-                if(slackTeam != null) {
-                    JsonObject jsonUser = json.get("authed_user").getAsJsonObject();
-
-                    // Import SlackUser from Slack API
-                    SlackUser slackUser = slackUserRepository.findBySlackId(jsonUser.get("id").getAsString());
-                    if(slackUser == null) {
-                        slackUser = slackClientService.getUser(jsonUser.get("access_token").getAsString());
-                    }
-                    slackUser.setSlackTeam(slackTeam);
-
-                    // Build user from SlackUser
-                    User user = repository.findByEmail(slackUser.getEmail());
-                    if(user == null) {
-                        user = new User();
-                        user.setCreatedBy("Slack Login");
-                        user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
-                        user.setFirstname(slackUser.getName());
-                        user.setEmail(slackUser.getEmail());
-                    } else if(user.getPassword().isEmpty()) {
-                        user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
-                    }
-                    user.setUpdatedBy("Slack Login");
-                    user.setUsername(slackUser.getEmail());
-                    user.setAvatarUrl(slackUser.getImage_192());
-                    final User userInDb = repository.save(UserGenerator.newUser(user));
-
-                    // Save SlackUser with link to user
-                    slackUser.setUser(userInDb);
-                    final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
-
-                    // If the User doesnt have the SlackUser -> Add it
-                    // Else -> replace by the new one
-                    userInDb.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDb.getId()))
-                            .findAny()
-                            .ifPresentOrElse(
-                                    userSlackUser -> userSlackUser = slackUserInDb,
-                                    () -> userInDb.getSlackUsers().add(slackUserInDb));
-                    repository.save(userInDb);
-
-                    // If the SlackTeam doesnt have the SlackUser -> Add it
-                    // Else -> replace by the new one
-                    slackTeam.getSlackUsers().stream().filter(slackTeamSlackUser -> slackTeamSlackUser.getUser().getId().equals(userInDb.getId()))
-                            .findAny()
-                            .ifPresentOrElse(
-                                    slackTeamSlackUser -> slackTeamSlackUser = slackUserInDb,
-                                    () -> slackTeam.getSlackUsers().add(slackUserInDb));
-                    slackTeamRepository.save(slackTeam);
-
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    final String token = jwtTokenUtil.generateToken(authentication);
-                    return new AuthenticationResponseModel(token);
-                } else {
+                if(slackTeam == null) {
                     throw new NotFoundException();
                 }
+
+                Organization organization = slackTeam.getOrganization();
+                if(organization == null) {
+                    throw new NotFoundException();
+                }
+
+                JsonObject jsonUser = json.get("authed_user").getAsJsonObject();
+
+                // Import SlackUser from Slack API
+                SlackUser slackUser = slackUserRepository.findBySlackId(jsonUser.get("id").getAsString());
+                if(slackUser == null) {
+                    slackUser = slackClientService.getUser(jsonUser.get("access_token").getAsString());
+                }
+                slackUser.setSlackTeam(slackTeam);
+
+                // Build user from SlackUser
+                User user = userRepository.findByEmail(slackUser.getEmail());
+                if(user == null) {
+                    user = new User();
+                    user.setCreatedBy("Slack Login");
+                    user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
+                    user.setFirstname(slackUser.getName());
+                    user.setEmail(slackUser.getEmail());
+                } else if(user.getPassword().isEmpty()) {
+                    user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
+                }
+                user.setUpdatedBy("Slack Login");
+                user.setUsername(slackUser.getEmail());
+                user.setAvatarUrl(slackUser.getImage_192());
+                final User userInDb = userRepository.save(UserGenerator.newUser(user));
+
+                // Save SlackUser with link to user
+                slackUser.setUser(userInDb);
+                final SlackUser slackUserInDb = slackUserRepository.save(slackUser);
+
+                // If the User doesnt have the SlackUser -> Add it
+                // Else -> replace by the new one
+                userInDb.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDb.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                userSlackUser -> userSlackUser = slackUserInDb,
+                                () -> userInDb.getSlackUsers().add(slackUserInDb));
+                userRepository.save(userInDb);
+
+                // If the SlackTeam doesnt have the SlackUser -> Add it
+                // Else -> replace by the new one
+                slackTeam.getSlackUsers().stream().filter(slackTeamSlackUser -> slackTeamSlackUser.getUser().getId().equals(userInDb.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                slackTeamSlackUser -> slackTeamSlackUser = slackUserInDb,
+                                () -> slackTeam.getSlackUsers().add(slackUserInDb));
+                slackTeamRepository.save(slackTeam);
+
+                // If the User is not member of organization => Add it
+                // Else -> replace by the new one
+                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                member -> member = userInDb,
+                                () -> organization.getMembers().add(userInDb)
+                        );
+                organizationRepository.save(organization);
+
+                Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+                budgets.forEach(budget -> {
+                    Account account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                    if(account == null) {
+                        account = new Account();
+                        account.setAmount(budget.getAmountPerMember());
+                        account.setBudget(budget);
+                    }
+                    account.setInitialAmount(budget.getAmountPerMember());
+                    account.setOwner(userInDb);
+                    accountRepository.save(account);
+                });
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                final String token = jwtTokenUtil.generateToken(authentication);
+                return new AuthenticationResponseModel(token);
             } else {
                 throw new InternalServerException();
             }

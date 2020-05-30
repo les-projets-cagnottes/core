@@ -243,6 +243,50 @@ public class OrganizationController {
         return models;
     }
 
+    @Operation(summary = "Find all usable budgets for an organization", description = "Find all usable budgets for an organization", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all usable budgets for an organization", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Organization not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization/{id}/budgets/usable", method = RequestMethod.GET)
+    public Set<BudgetModel> getUsableBudgets(Principal principal, @PathVariable("id") Long id) {
+
+        if(id < 0) {
+            LOGGER.error("Impossible to get usable budgets of organization {} : ID is incorrect", id);
+            throw new BadRequestException();
+        }
+
+        // Verify that any of references are not null
+        Organization organization = organizationRepository.findById(id).orElse(null);
+        if(organization == null) {
+            LOGGER.error("Impossible to delete organization : donation {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Verify that principal is member of organization
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get usable budgets of organization {} : principal {} has not enough privileges", id, userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Put all organization IDs in a single list
+        Set<Long> organizationIds = new LinkedHashSet<>();
+        organizationIds.add(id);
+
+        // Retrieve all corresponding entities
+        Set<Budget> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
+
+        // Convert all entities to models
+        Set<BudgetModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(BudgetModel.fromEntity(entity)));
+
+        return models;
+    }
+
     @Operation(summary = "Create an organization", description = "Create an organization", tags = { "Organizations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Return the created organization", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = OrganizationModel.class))),
