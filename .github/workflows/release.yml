@@ -51,7 +51,7 @@ jobs:
     - run: git add pom.xml
     - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
     - run: git tag ${{ steps.get_version.outputs.VERSION }}
-    - run: git push origin --tags
+    - run: git push origin --follow-tags
 
   build:
     needs: prepare-release
