@@ -125,10 +125,12 @@ jobs:
           prerelease: false
 
   publish-docker:
-    needs: release
+    needs: [prepare-release, release]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: '${{ needs.prepare-release.outputs.version }}'
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
@@ -153,10 +155,12 @@ jobs:
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
 
   deploy-production:
-    needs: release
+    needs: [prepare-release, release]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: '${{ needs.prepare-release.outputs.version }}'
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
@@ -196,10 +200,12 @@ jobs:
         script: (sudo chmod 755 /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh) && (nohup /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh ${{ steps.get_version.outputs.VERSION }} &>  /opt/les-projets-cagnottes/core/deployment/bin/console.log < /dev/null &) && exit 0
 
   prepare-next-version:
-    needs: [publish-docker, deploy-production]
+    needs: [prepare-release, publish-docker, deploy-production]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: '${{ needs.prepare-release.outputs.version }}'
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
