@@ -198,30 +198,3 @@ jobs:
         key : ${{ secrets.PRODUCTION_KEY }}
         port: ${{ secrets.PRODUCTION_PORT }}
         script: (sudo chmod 755 /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh) && (nohup /opt/les-projets-cagnottes/core/deployment/bin/deploy.sh ${{ steps.get_version.outputs.VERSION }} &>  /opt/les-projets-cagnottes/core/deployment/bin/console.log < /dev/null &) && exit 0
-
-  prepare-next-version:
-    needs: [prepare-release, publish-docker, deploy-production]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: '${{ needs.prepare-release.outputs.version }}'
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
-    - name: Get the version
-      id: get_version
-      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-    - name: Get next version
-      id: get_next_version
-      run: echo ::set-output name=VERSION::$(bin/increment_version.sh -p ${{ steps.get_version.outputs.VERSION }})
-    - name: Set next version in project
-      run: ./mvnw versions:set -DnewVersion=${{ steps.get_next_version.outputs.VERSION }}-SNAPSHOT
-    - name: Push next version
-      run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
-    - run: git add pom.xml
-    - run: git commit -m "Prepare next version"
-    - run: git push origin
