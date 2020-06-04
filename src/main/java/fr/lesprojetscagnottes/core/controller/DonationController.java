@@ -79,7 +79,7 @@ public class DonationController {
             Set<Budget> budgets = budgetRepository.findAllByUser(user.getId());
             Set<Account> accounts = accountRepository.findAllByOwnerId(user.getId());
             if(budgets.size() != accounts.size()) {
-                LOGGER.error("Number of accounts {} and budgets {} for user {} dont match", accounts.size(), budgets.size(), user.getId());
+                LOGGER.warn("Number of accounts {} and budgets {} for user {} don't match", accounts.size(), budgets.size(), user.getId());
             }
             budgets.forEach(budget -> {
                 LOGGER.info("|- Budget {} : {}", budget.getId(), budget.getAmountPerMember());
