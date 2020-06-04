@@ -99,7 +99,7 @@ jobs:
     - name: Pull Docker Image
       run: docker pull docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
     - name: Tag the image
-      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core/core:latest registry.heroku.com/les-projets-cagnottes-api/web
+      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }} registry.heroku.com/les-projets-cagnottes-api/web
     - name: Get Heroku Tools
       run: wget -qO- https://toolbelt.heroku.com/install.sh | sh
     - name: Login to Heroku Registry
