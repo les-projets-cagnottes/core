@@ -11,8 +11,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 13
-    - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
     - name: Get version in pom.xml
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
@@ -21,3 +19,5 @@ jobs:
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Compare versions
       run: if [[ "${{ steps.get_version.outputs.VERSION }}" -eq "${{ steps.get_version_cluecumber.outputs.VERSION }}" ]]; then exit 0; else exit 1; fi
+    - name: Build with Maven
+      run: ./mvnw -B clean install --file pom.xml -P docker
