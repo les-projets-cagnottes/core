@@ -10,7 +10,6 @@ jobs:
   verify-version:
     runs-on: ubuntu-latest
     outputs:
-      is_snapshot: ${{ steps.test_version.outputs.IS_SNAPSHOT }}
       version: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - uses: actions/checkout@v2
@@ -23,39 +22,16 @@ jobs:
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-    - name: Test version
-      id: test_version
-      run: echo ::set-output name=IS_SNAPSHOT::$(if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then echo "1"; else echo "0"; fi)
-
-  prepare-release:
-    needs: verify-version
-    runs-on: ubuntu-latest
-    if: needs.verify-version.outputs.is_snapshot == 1
-    outputs:
-      version: ${{ steps.get_version.outputs.VERSION }}
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
-    - name: Build with Maven
-      run: ./mvnw versions:set -DremoveSnapshot
-    - name: Get the version
-      id: get_version
-      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-    - name: Push released version
-      run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
-    - run: git add pom.xml
-    - run: git commit -m "Release '${{ steps.get_version.outputs.VERSION }}'"
-    - run: git push origin
-    - run: git tag ${{ steps.get_version.outputs.VERSION }}
-    - run: git push origin --tags
+    - name: Test snapshot
+      run: if [[ "${{ steps.get_version.outputs.VERSION }}" == *"-SNAPSHOT" ]]; then exit 1; else exit 0; fi
+    - name: Get release
+      id: get_release
+      run: echo ::set-output name=RELEASE_HTTP_CODE::$(curl -s -o out.html -w '%{http_code}'  https://github.com/les-projets-cagnottes/core/releases/tag/${{ steps.get_version.outputs.VERSION }};)
+    - name: Test release existence
+      run: if [[ "${{ steps.get_release.outputs.RELEASE_HTTP_CODE }}" -eq "200" ]]; then exit 1; else exit 0; fi
 
   build:
-    needs: prepare-release
+    needs: verify-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -69,7 +45,7 @@ jobs:
       run: ./mvnw -B clean install --file pom.xml -P docker
       
   cucumber:
-    needs: build
+    needs: [verify-version, build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -99,6 +75,8 @@ jobs:
       run: mkdir -p les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
     - name: Copy Cucumber Report
       run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber/
+    - name: Copy Cucumber Report
+      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/master/cucumber/
     - name: Publish https://les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
       run: |
         cd les-projets-cagnottes.github.io
@@ -110,27 +88,31 @@ jobs:
         exit ${{ steps.tests_run.outputs.EXIT_CODE }}
 
   release:
-    needs: [prepare-release, build]
+    needs: [verify-version, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Config Git
+        run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
+      - run: git tag ${{ needs.verify-version.outputs.version }}
+      - run: git push origin ${{ needs.verify-version.outputs.version }}
       - name: Create Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.prepare-release.outputs.version }}
-          release_name: ${{ needs.prepare-release.outputs.version }}
+          tag_name: ${{ needs.verify-version.outputs.version }}
+          release_name: ${{ needs.verify-version.outputs.version }}
           draft: false
           prerelease: false
 
   publish-docker:
-    needs: [prepare-release, release]
+    needs: [verify-version, release]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: '${{ needs.prepare-release.outputs.version }}'
+        ref: '${{ needs.verify-version.outputs.version }}'
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
@@ -155,12 +137,12 @@ jobs:
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
 
   deploy-production:
-    needs: [prepare-release, release]
+    needs: [verify-version, release]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: '${{ needs.prepare-release.outputs.version }}'
+        ref: '${{ needs.verify-version.outputs.version }}'
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
