@@ -63,7 +63,7 @@ public class ContentController {
         Long userLoggedInId = userService.get(principal).getId();
         Set<Organization> organizationsContent = organizationRepository.findAllByContents_Id(id);
         Set<Organization> organizationsPrincipal = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        if(!organizationsContent.retainAll(organizationsPrincipal) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.hasNoACommonOrganization(organizationsPrincipal, organizationsContent) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to get content by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
