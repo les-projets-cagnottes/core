@@ -304,7 +304,9 @@ public class OrganizationController {
         }
 
         // Create organization
-        Organization organization = (Organization) organizationModel;
+        Organization organization = new Organization();
+        organization.setName(organizationModel.getName());
+        organization.setLogoUrl(organizationModel.getLogoUrl());
         organization = organizationRepository.save(organization);
 
         // Create authorities
@@ -329,7 +331,7 @@ public class OrganizationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/organization", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void update(@RequestBody OrganizationModel organizationModel) {
+    public void update(Principal principal, @RequestBody OrganizationModel organizationModel) {
 
         // Verify that body is complete
         if(organizationModel == null || organizationModel.getName() == null || organizationModel.getId() <= 0) {
@@ -342,6 +344,14 @@ public class OrganizationController {
         if(entity == null) {
             LOGGER.error("Impossible to update organization : organization {} not found", organizationModel.getId());
             throw new NotFoundException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is owner of the organization OR Principal is admin
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
         }
 
         // Update entity
