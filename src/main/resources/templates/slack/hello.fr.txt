@@ -1,0 +1,12 @@
+Bonjour à tous :wave:
+
+Connaissez-vous *Les Projets Cagnottes* ?
+Avec ces projets, chacun est libre de :
+:rocket: Lancer un projet
+:handshake: Rejoindre un projet
+:moneybag: Financer un projet avec sa part du budget de l'organisation
+
+Découvrez vite les projets en cours ou lancer le vôtre à l'adresse suivante :
+[(${URL})]
+
+Pour toute question, vous pouvez contacter : [(${contact})]
