@@ -928,7 +928,7 @@ public class OrganizationController {
                 user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
             }
             user.setUpdatedBy("Slack Sync");
-            user.setEnabled(!slackUser.getDeleted());
+            user.setEnabled(!(slackUser.getDeleted() || slackUser.getIsRestricted()));
 
             // Save data
             final User userInDb = userRepository.save(user);

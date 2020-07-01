@@ -44,4 +44,7 @@ public class SlackUser extends AuditEntity<String> {
     @Column
     private Boolean deleted;
 
+    @Column(name = "is_restricted")
+    private Boolean isRestricted;
+
 }

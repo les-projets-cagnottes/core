@@ -16,7 +16,7 @@ jobs:
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Get version in pom-cluecumber.xml 
       id: get_version_cluecumber
-      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+      run: echo ::set-output name=VERSION::$(mvn -q -f pom-cluecumber.xml -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Compare versions
       run: if [ "${{ steps.get_version.outputs.VERSION }}" = "${{ steps.get_version_cluecumber.outputs.VERSION }}" ]; then exit 0; else exit 1; fi
     - name: Build with Maven
