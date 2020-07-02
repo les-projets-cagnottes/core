@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.model;
 
 import fr.lesprojetscagnottes.core.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
+import fr.lesprojetscagnottes.core.entity.Constants;
 import fr.lesprojetscagnottes.core.entity.User;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -66,6 +67,10 @@ public class UserModel extends AuditEntity<String> {
         model.setLastPasswordResetDate(entity.getLastPasswordResetDate());
         entity.getUserOrganizationAuthorities().forEach(organizationAuthority -> model.getUserOrganizationAuthoritiesRef().add(organizationAuthority.getId()));
         return model;
+    }
+
+    public String getFullname() {
+        return this.firstname + Constants.SPACE + this.lastname;
     }
 
     public void emptyPassword() {

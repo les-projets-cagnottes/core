@@ -39,7 +39,7 @@ public class SlackController {
     private static final Logger LOGGER = LoggerFactory.getLogger(SlackController.class);
 
     @Autowired
-    SpringTemplateEngine templateEngine;
+    private SpringTemplateEngine templateEngine;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -83,11 +83,11 @@ public class SlackController {
 
         Context context = new Context();
         context.setVariables(model);
-        StringBuilder helloMessage = new StringBuilder(templateEngine.process("slack/hello.fr", context));
+        String slackMessage = templateEngine.process("slack/fr/hello", context);
 
         String channelId = slackClientService.joinChannel(slackTeam);
         slackClientService.inviteInChannel(slackTeam, channelId);
-        slackClientService.postMessage(slackTeam, channelId, helloMessage.toString());
+        slackClientService.postMessage(slackTeam, channelId, slackMessage);
     }
 
     @Operation(summary = "Send an hello world message", description = "Send an hello world message on the Slack workspace", tags = { "Slack" })
@@ -236,18 +236,15 @@ public class SlackController {
                 accountRepository.save(account);
             });
 
-            String welcomeMessage = new StringBuilder("Bienvenue sur le Slack ")
-                    .append(slackTeam.getOrganization().getName())
-                    .append(" ! :tada:\n\nVotre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?\n")
-                    .append("Eh bien c'est très simple : avec les projets cagnottes, chacun est libre de :\n")
-                    .append("- Lancer un projet\n")
-                    .append("- Rejoindre un projet\n")
-                    .append("- Financer un projet avec sa part du budget de l'organisation\n\n")
-                    .append("Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :\n")
-                    .append(WEB_URL)
-                    .toString();
+            Map<String, Object> model = new HashMap<>();
+            model.put("slackTeamName", slackTeam.getOrganization().getName());
+            model.put("URL", WEB_URL);
 
-            slackClientService.postMessage(slackTeam, slackUser.getImId(), welcomeMessage);
+            Context context = new Context();
+            context.setVariables(model);
+            String slackMessage = templateEngine.process("slack/fr/new-member", context);
+
+            slackClientService.postMessage(slackTeam, slackUser.getImId(), slackMessage);
         });
     }
 

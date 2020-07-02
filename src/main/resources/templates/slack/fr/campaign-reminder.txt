@@ -1,0 +1,9 @@
+:timer_clock: [(${leader})] a besoin de vous !
+Il reste [(${daysUntilDeadline})] jours(s) pour compléter la campagne du projet *[(${campaign.title})]* !
+
+A ce jour, il manque :
+[# th:if="${teamMatesMissing gt 0}"] - [(${teamMatesMissing})] personne(s) dans l'équipe [/]
+[# th:if="${donationsMissing gt 0}"] - [(${donationsMissingFormatted})] € de budget [/]
+
+Rendez-vous à l'adresse suivante pour participer :
+[(${URL})]/campaigns/[(${campaign.id})]
