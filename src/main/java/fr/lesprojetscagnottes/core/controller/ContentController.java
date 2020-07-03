@@ -1,11 +1,13 @@
 package fr.lesprojetscagnottes.core.controller;
 
+import fr.lesprojetscagnottes.core.entity.Budget;
 import fr.lesprojetscagnottes.core.entity.Content;
 import fr.lesprojetscagnottes.core.entity.Organization;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.model.ContentModel;
+import fr.lesprojetscagnottes.core.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.service.UserService;
@@ -32,6 +34,9 @@ import java.util.Set;
 public class ContentController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentController.class);
+
+    @Autowired
+    private BudgetRepository budgetRepository;
 
     @Autowired
     private ContentRepository contentRepository;
@@ -125,7 +130,7 @@ public class ContentController {
     })
     @RequestMapping(value = "/content", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public void update(@RequestBody ContentModel contentModel) {
+    public void update(Principal principal, @RequestBody ContentModel contentModel) {
 
         // Verify that body is complete
         if(contentModel == null || contentModel.getId() < 0 || contentModel.getName() == null) {
@@ -138,6 +143,23 @@ public class ContentController {
         if(content == null) {
             LOGGER.error("Impossible to update content : content {} not found", contentModel.getId());
             throw new NotFoundException();
+        }
+
+        // If the content is associated as rules on a budget, only a sponsor can update it
+        Long userLoggedInId = userService.get(principal).getId();
+        Set<Budget> budgets = budgetRepository.findAllByRulesId(content.getId());
+        LOGGER.debug(budgets.toString());
+        Set<Organization> organizations = new LinkedHashSet<>();
+        budgets.forEach(budget -> organizations.add(budget.getOrganization()));
+        LOGGER.debug(organizations.toString());
+        boolean isSponsorOfNoneOrganization = true;
+        for (Organization organization : organizations) {
+            isSponsorOfNoneOrganization &= !this.userService.isSponsorOfOrganization(userLoggedInId, organization.getId());
+            LOGGER.debug(String.valueOf(isSponsorOfNoneOrganization));
+        }
+        if(isSponsorOfNoneOrganization && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to update content : principal has not enough privileges");
+            throw new ForbiddenException();
         }
 
         // Update content
