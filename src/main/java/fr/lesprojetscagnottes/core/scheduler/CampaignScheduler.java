@@ -14,8 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +29,9 @@ public class CampaignScheduler {
     private static final String WEB_URL = System.getenv("LPC_WEB_URL");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CampaignScheduler.class);
+
+    @Autowired
+    private SpringTemplateEngine templateEngine;
 
     @Autowired
     private SlackClientService slackClientService;
@@ -112,66 +119,38 @@ public class CampaignScheduler {
         } else {
             if(teamMatesMissing > 0 || donationsMissing > 0) {
 
-                String defaultUser = new StringBuilder("*")
-                        .append(leader.getFirstname())
-                        .append(" ")
-                        .append(leader.getLastname())
-                        .append("*")
-                        .toString();
-
-                StringBuilder endMessage = new StringBuilder(" a besoin de vous !\n")
-                        .append("Il reste *")
-                        .append(daysUntilDeadline)
-                        .append(" jour(s)* pour compléter la campagne du projet *")
-                        .append(campaign.getTitle())
-                        .append("* !\n\nA ce jour, il manque :\n");
-
-                if(teamMatesMissing > 0) {
-                    endMessage.append(" - ")
-                            .append(teamMatesMissing)
-                            .append(" personne(s) dans l'équipe\n");
-                }
-                if(donationsMissing > 0) {
-                    endMessage.append(" - ")
-                            .append(String.format("%.2f", donationsMissing))
-                            .append(" € de budget\n");
-                }
+                Map<String, Object> model = new HashMap<>();
+                model.put("URL", WEB_URL);
+                model.put("campaign", campaign);
+                model.put("daysUntilDeadline", daysUntilDeadline);
+                model.put("teamMatesMissing", teamMatesMissing);
+                model.put("donationsMissing", donationsMissing);
+                model.put("donationsMissingFormatted", String.format("%.2f", donationsMissing));
 
                 campaign.getOrganizations().forEach(organization -> {
                     if(organization.getSlackTeam() != null) {
-                        StringBuilder stringBuilderUser = new StringBuilder(":timer_clock: ");
                         organization.getMembers().stream()
-                                .filter(member -> member.getId() == leader.getId())
+                                .filter(member -> member.getId().equals(leader.getId()))
                                 .findAny()
                                 .ifPresentOrElse(member -> {
                                     organization.getSlackTeam().getSlackUsers().stream()
                                             .filter(slackUser -> slackUser.getUser().getId() == leader.getId())
                                             .findAny()
-                                            .ifPresentOrElse(slackUser -> {
-                                                stringBuilderUser.append("<@")
-                                                        .append(slackUser.getSlackId())
-                                                        .append(">");
-                                            }, () -> {
-                                                stringBuilderUser.append(defaultUser);
-                                            });
+                                            .ifPresentOrElse(
+                                                slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
+                                                        () -> model.put("leader", leader.getFullname()));
+                                            },
+                                        () -> model.put("leader", leader.getFullname())
+                                );
 
-                                    stringBuilderUser.append(endMessage.toString())
-                                            .append("\nRendez-vous à l'adresse suivante pour participer : \n")
-                                            .append(WEB_URL)
-                                            .append("/campaigns/")
-                                            .append(campaign.getId());
-                                },() -> {
-                                    stringBuilderUser.append(defaultUser)
-                                            .append(endMessage.toString())
-                                            .append("\nRendez-vous à l'adresse suivante pour participer : \n")
-                                            .append(WEB_URL)
-                                            .append("/campaigns/")
-                                            .append(campaign.getId());
-                                });
-                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
+                        Context context = new Context();
+                        context.setVariables(model);
+                        String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
+
+                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + slackMessage);
                         String channelId = slackClientService.joinChannel(organization.getSlackTeam());
                         slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
-                        slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
+                        slackClientService.postMessage(organization.getSlackTeam(), channelId, slackMessage);
                         LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
                     }
                 });

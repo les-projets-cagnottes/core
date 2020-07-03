@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.entity.SlackTeam;
@@ -158,6 +159,10 @@ public class SlackClientService {
                     SlackUser slackUser = new SlackUser();
                     slackUser.setSlackId(memberJson.get("id").getAsString());
                     slackUser.setDeleted(memberJson.get("deleted").getAsBoolean());
+
+                    JsonElement isRestricted = memberJson.get("is_restricted");
+                    if(isRestricted != null)
+                        slackUser.setIsRestricted(isRestricted.getAsBoolean());
 
                     memberJson = memberJson.get("profile").getAsJsonObject();
                     if(memberJson.get("email") != null) {

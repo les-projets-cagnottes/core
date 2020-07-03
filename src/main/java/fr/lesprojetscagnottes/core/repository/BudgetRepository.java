@@ -16,6 +16,8 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
 
     Set<Budget> findAllByOrganizationId(Long id);
 
+    Set<Budget> findAllByRulesId(Long id);
+
     Set<Budget> findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(Date enDate, boolean isDistributed, Long organizationId);
 
     @Query(nativeQuery =true,value = "SELECT * FROM budgets AS b WHERE b.start_date < :today AND b.end_date > :today AND b.is_distributed = true AND b.organization_id IN (:organizations)")

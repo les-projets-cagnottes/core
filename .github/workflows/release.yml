@@ -70,14 +70,14 @@ jobs:
         token: ${{ secrets.GITHUB_IO_PAT }}
         path: les-projets-cagnottes.github.io
     - name: Clean previous version
-      run: rm -rf les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+      run: rm -rf les-projets-cagnottes.github.io/cucumber/${{ steps.get_version.outputs.VERSION }}
     - name: Prepare Cucumber output directory
-      run: mkdir -p les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+      run: mkdir -p les-projets-cagnottes.github.io/cucumber/${{ steps.get_version.outputs.VERSION }}
     - name: Copy Cucumber Report
-      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber/
+      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/cucumber/${{ steps.get_version.outputs.VERSION }}/
     - name: Copy Cucumber Report
-      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/master/cucumber/
-    - name: Publish https://les-projets-cagnottes.github.io/${{ steps.get_version.outputs.VERSION }}/cucumber
+      run: cp -r target/cluecumber/* les-projets-cagnottes.github.io/cucumber/master/
+    - name: Publish https://les-projets-cagnottes.github.io/cucumber/${{ steps.get_version.outputs.VERSION }}
       run: |
         cd les-projets-cagnottes.github.io
         git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"

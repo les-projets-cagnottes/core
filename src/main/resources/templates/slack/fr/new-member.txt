@@ -1,0 +1,10 @@
+Bienvenue sur le Slack [(${slackTeamName})] ! :tada:
+
+Votre organisation a mis en place *les projets cagnottes*. Vous ignorez sans doute de quoi il s'agit ?
+Eh bien c'est très simple : avec ces projets, chacun est libre de :
+:rocket: Lancer un projet
+:handshake: Rejoindre un projet
+:moneybag: Financer un projet avec sa part du budget de l'organisation
+
+Découvrez vite les projets en cours ou lancez le vôtre à l'adresse suivante :
+[(${URL})]

@@ -31,11 +31,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import java.security.Principal;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -49,6 +49,9 @@ public class CampaignController {
 
     @Autowired
     private Gson gson;
+
+    @Autowired
+    private SpringTemplateEngine templateEngine;
 
     @Autowired
     private CampaignScheduler campaignScheduler;
@@ -348,27 +351,12 @@ public class CampaignController {
         });
         budgetRepository.saveAll(budgets);
 
-        // Send Slack message
-        // TODO : use templates and migrate to a proper notification process
-        String defaultUser = new StringBuilder("*")
-                .append(userLoggedIn.getFirstname())
-                .append(" ")
-                .append(userLoggedIn.getLastname())
-                .append("*")
-                .toString();
-
-        String endMessage = new StringBuilder(" vient de créer le projet cagnotte *")
-                .append(campaignFinal.getTitle())
-                .append("* et vous êtes tous invités à y participer !")
-                .append("\nDécouvrez le vite sur ")
-                .append(WEB_URL)
-                .append("/campaigns/")
-                .append(campaignFinal.getId())
-                .toString();
+        Map<String, Object> model = new HashMap<>();
+        model.put("URL", WEB_URL);
+        model.put("campaign", campaignFinal);
 
         organizations.forEach(organization -> {
             if(organization.getSlackTeam() != null) {
-                StringBuilder stringBuilderUser = new StringBuilder(":rocket: ");
                 organization.getMembers().stream()
                         .filter(member -> member.getId().equals(leader.getId()))
                         .findAny()
@@ -377,16 +365,18 @@ public class CampaignController {
                                     .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
                                     .findAny()
                                     .ifPresentOrElse(
-                                            slackUser -> stringBuilderUser.append("<@")
-                                                .append(slackUser.getSlackId())
-                                                .append(">"),
-                                            () -> stringBuilderUser.append(defaultUser));
-                            stringBuilderUser.append(endMessage);
-                        },() -> stringBuilderUser.append(defaultUser).append(endMessage));
-                LOGGER.info("[create][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + stringBuilderUser.toString());
+                                            slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
+                                            () -> model.put("leader", leader.getFullname()));
+                        },() -> model.put("leader", leader.getFullname()));
+
+                Context context = new Context();
+                context.setVariables(model);
+                String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
+
+                LOGGER.info("[create][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + slackMessage);
                 String channelId = slackClientService.joinChannel(organization.getSlackTeam());
                 slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
-                slackClientService.postMessage(organization.getSlackTeam(), channelId, stringBuilderUser.toString());
+                slackClientService.postMessage(organization.getSlackTeam(), channelId, slackMessage);
                 LOGGER.info("[create][" + campaign.getId() + "] Slack Message Sent");
             }
         });
