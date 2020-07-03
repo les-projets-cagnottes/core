@@ -879,7 +879,7 @@ public class OrganizationController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }
