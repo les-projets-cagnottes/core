@@ -57,7 +57,7 @@ jobs:
       run: ./mvnw -f pom-cluecumber.xml versions:set -DremoveSnapshot
     - name: Push released version
       run: git config user.email "${{ secrets.GIT_CONFIG_EMAIL }}" && git config user.name "${{ secrets.GIT_CONFIG_NAME }}"
-    - run: git add pom.xml
+    - run: git add pom.xml pom-cluecumber.xml
     - run: git commit -m "Release '${{ steps.get_released_version.outputs.VERSION }}'"
     - run: git push origin HEAD:${{ github.head_ref }}
     
