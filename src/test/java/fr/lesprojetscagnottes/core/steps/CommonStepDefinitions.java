@@ -9,7 +9,6 @@ import io.cucumber.java.en.Given;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +33,9 @@ public class CommonStepDefinitions {
 
     @Autowired
     private ContentRepository contentRepository;
+
+    @Autowired
+    private IdeaRepository ideaRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -67,6 +69,7 @@ public class CommonStepDefinitions {
         accountRepository.deleteAll();
         budgetRepository.deleteAll();
         contentRepository.deleteAll();
+        ideaRepository.deleteAll();
         userRepository.deleteAll();
         organizationRepository.deleteAll();
 
