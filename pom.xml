@@ -46,17 +46,17 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-common</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-security</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -126,19 +126,19 @@
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <version>6.1.1</version>
+            <version>6.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit</artifactId>
-            <version>6.1.1</version>
+            <version>6.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-spring</artifactId>
-            <version>6.1.1</version>
+            <version>6.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
