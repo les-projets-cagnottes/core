@@ -58,6 +58,9 @@ public class IdeaController {
     @ResponseStatus(HttpStatus.CREATED)
     public IdeaModel create(Principal principal, @RequestBody IdeaModel model) {
 
+        LOGGER.debug(model.toString());
+        LOGGER.debug(model.getHasAnonymousCreator().toString());
+
         // Fails if any of references are null
         if(model == null || model.getShortDescription() == null || model.getShortDescription().isEmpty()) {
             if(model != null ) {
@@ -89,9 +92,12 @@ public class IdeaController {
         Idea idea = new Idea();
         idea.setShortDescription(model.getShortDescription());
         idea.setLongDescription(model.getLongDescription());
+        idea.setHasAnonymousCreator(model.getHasAnonymousCreator());
+        idea.setHasLeaderCreator(model.getHasLeaderCreator());
         idea.setOrganization(organization);
         idea.setTags(tags);
-        return ideaRepository.save(idea);
+
+        return IdeaModel.fromEntity(ideaRepository.save(idea));
     }
 
 }

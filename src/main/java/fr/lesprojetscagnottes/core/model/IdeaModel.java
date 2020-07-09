@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -28,6 +29,14 @@ public class IdeaModel extends AuditEntity<String> {
     @Column(name = "long_description", columnDefinition = "TEXT")
     protected String longDescription = StringsCommon.EMPTY_STRING;
 
+    @Column(name = "has_anonymous_creator")
+    @NotNull
+    protected Boolean hasAnonymousCreator = false;
+
+    @Column(name = "has_leader_creator")
+    @NotNull
+    protected Boolean hasLeaderCreator = false;
+
     @Transient
     protected GenericModel organization;
 
@@ -37,10 +46,14 @@ public class IdeaModel extends AuditEntity<String> {
     public static IdeaModel fromEntity(Idea entity) {
         IdeaModel model = new IdeaModel();
         model.setCreatedAt(entity.getCreatedAt());
-        model.setCreatedBy(entity.getCreatedBy());
         model.setUpdatedAt(entity.getUpdatedAt());
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
+        if (entity.getHasAnonymousCreator()) {
+            model.setCreatedBy(StringsCommon.ANONYMOUS);
+        } else {
+            model.setCreatedBy(entity.getCreatedBy());
+        }
         model.setShortDescription(entity.getShortDescription());
         model.setLongDescription(entity.getLongDescription());
         model.setOrganization(new GenericModel(entity.getOrganization()));
@@ -49,4 +62,17 @@ public class IdeaModel extends AuditEntity<String> {
         return model;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("IdeaModel{");
+        sb.append("shortDescription='").append(shortDescription).append('\'');
+        sb.append(", longDescription='").append(longDescription).append('\'');
+        sb.append(", hasAnonymousCreator=").append(hasAnonymousCreator);
+        sb.append(", hasLeaderCreator=").append(hasLeaderCreator);
+        sb.append(", organization=").append(organization);
+        sb.append(", tagsRef=").append(tagsRef);
+        sb.append(", id=").append(id);
+        sb.append('}');
+        return sb.toString();
+    }
 }

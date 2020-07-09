@@ -75,6 +75,9 @@ public class OrganizationController {
     private ContentRepository contentRepository;
 
     @Autowired
+    private IdeaRepository ideaRepository;
+
+    @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
@@ -209,6 +212,46 @@ public class OrganizationController {
 
         return models;
     }
+
+    @Operation(summary = "Find all ideas for an organization", description = "Find all ideas for an organization", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding ideas", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization/{id}/ideas", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public DataPage<IdeaModel> getIdeas(Principal principal, @PathVariable("id") Long organizationId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+
+        // Verify that ID is correct
+        if(organizationId <= 0) {
+            LOGGER.error("Impossible to get ideas of organization : ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is member of organization
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userService.isMemberOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get ideas of organization {} : principal is not a member of organization", organizationId);
+            throw new ForbiddenException();
+        }
+
+        // Verify that organization and user exists
+        Organization organization = organizationRepository.findById(organizationId).orElse(null);
+        if(organization == null) {
+            LOGGER.error("Impossible to get ideas of organization {} : organization doesnt exist", organizationId);
+            throw new NotFoundException();
+        }
+
+        // Get and transform ideas
+        Page<Idea> entities = ideaRepository.findByOrganizationId(organizationId, PageRequest.of(offset, limit, Sort.by("id").ascending()));
+        DataPage<IdeaModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(IdeaModel.fromEntity(entity)));
+
+        return models;
+    }
+
 
     @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = { "Organizations" })
     @ApiResponses(value = {
