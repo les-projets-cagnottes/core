@@ -24,7 +24,7 @@ public class Tag extends TagModel {
     private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "tags")
-    @JsonIgnoreProperties({"organization", "tags"})
+    @JsonIgnoreProperties({"organization", "followers", "tags"})
     private Set<Idea> ideas = new LinkedHashSet<>();
 
 }
