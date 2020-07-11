@@ -29,7 +29,7 @@ public class Campaign extends CampaignModel {
             name = "campaigns_members",
             joinColumns = {@JoinColumn(name = "campaign_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations"})
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "followedIdeas"})
     private Set<User> peopleGivingTime = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "campaigns", fetch = FetchType.LAZY)

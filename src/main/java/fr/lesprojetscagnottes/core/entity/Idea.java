@@ -22,6 +22,14 @@ public class Idea extends IdeaModel {
 
     @ManyToMany
     @JoinTable(
+            name = "ideas_users",
+            joinColumns = {@JoinColumn(name = "idea_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "followedIdeas"})
+    private Set<User> followers = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(
             name = "ideas_tags",
             joinColumns = {@JoinColumn(name = "idea_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})

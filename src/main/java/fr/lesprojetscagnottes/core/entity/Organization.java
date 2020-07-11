@@ -47,7 +47,7 @@ public class Organization extends OrganizationModel {
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties({"organization", "tags"})
+    @JsonIgnoreProperties({"organization", "followers", "tags"})
     private Set<Idea> ideas = new LinkedHashSet<>();
 
     @ManyToMany
