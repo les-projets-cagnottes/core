@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.model;
 
-import fr.lesprojetscagnottes.core.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.entity.Idea;
 import lombok.AccessLevel;
@@ -13,15 +12,32 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
-public class IdeaModel extends AuditEntity<String> {
+public class IdeaModel extends GenericModel {
+
+    /*
+    This class is not inherited from AuditEntity in order to make createdBy attribute anonymous if desired
+     */
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdeaModel.class);
+
+    @Column(name = "created_at", updatable = false, columnDefinition = "timestamp default now()")
+    private Date createdAt;
+
+    @Column(name = "created_by", updatable = false, columnDefinition = "varchar(255) default 'System'")
+    private String createdBy;
+
+    @Column(name = "updated_at", columnDefinition = "timestamp default now()")
+    private Date updatedAt;
+
+    @Column(name = "updated_by", columnDefinition = "varchar(255) default 'System'")
+    private String updatedBy;
 
     @Column(name = "short_description")
     protected String shortDescription = StringsCommon.EMPTY_STRING;

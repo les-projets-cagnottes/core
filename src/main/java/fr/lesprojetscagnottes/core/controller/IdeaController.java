@@ -1,8 +1,10 @@
 package fr.lesprojetscagnottes.core.controller;
 
+import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.entity.Idea;
 import fr.lesprojetscagnottes.core.entity.Organization;
 import fr.lesprojetscagnottes.core.entity.Tag;
+import fr.lesprojetscagnottes.core.entity.User;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
@@ -25,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.Set;
 
 @RestController
@@ -58,9 +61,6 @@ public class IdeaController {
     @ResponseStatus(HttpStatus.CREATED)
     public IdeaModel create(Principal principal, @RequestBody IdeaModel model) {
 
-        LOGGER.debug(model.toString());
-        LOGGER.debug(model.getHasAnonymousCreator().toString());
-
         // Fails if any of references are null
         if(model == null || model.getShortDescription() == null || model.getShortDescription().isEmpty()) {
             if(model != null ) {
@@ -82,13 +82,14 @@ public class IdeaController {
         }
 
         // Verify that principal is member of organizations
-        Long userLoggedInId = userService.get(principal).getId();
+        User userLoggedIn = userService.get(principal);
+        Long userLoggedInId = userLoggedIn.getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, model.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to create idea : principal {} is not member of organization {}", userLoggedInId, model.getOrganization().getId());
             throw new ForbiddenException();
         }
 
-        // Save campaign
+        // Save idea
         Idea idea = new Idea();
         idea.setShortDescription(model.getShortDescription());
         idea.setLongDescription(model.getLongDescription());
@@ -96,6 +97,16 @@ public class IdeaController {
         idea.setHasLeaderCreator(model.getHasLeaderCreator());
         idea.setOrganization(organization);
         idea.setTags(tags);
+
+        if(idea.getHasAnonymousCreator()) {
+            idea.setCreatedBy(StringsCommon.ANONYMOUS);
+            idea.setUpdatedBy(StringsCommon.ANONYMOUS);
+        } else {
+            idea.setCreatedBy(userLoggedIn.getEmail());
+            idea.setUpdatedBy(userLoggedIn.getEmail());
+        }
+        idea.setCreatedAt(new Date());
+        idea.setUpdatedAt(idea.getCreatedAt());
 
         return IdeaModel.fromEntity(ideaRepository.save(idea));
     }

@@ -36,42 +36,12 @@ public class IdeaStepDefinitions {
     @Autowired
     private CucumberContext context;
 
-    @And("{string} submit the following ideas")
-    public void submitTheFollowingIdeas(String userFirstname, DataTable table) {
-        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-
-        IdeaModel idea;
-        for (Map<String, String> columns : rows) {
-
-            // Create donation
-            idea = new Idea();
-            idea.setShortDescription(columns.get("shortDescription"));
-            idea.setLongDescription(columns.get("longDescription"));
-            idea.setHasAnonymousCreator(Boolean.valueOf(columns.get("hasAnonymousCreator")));
-            idea.setHasLeaderCreator(Boolean.valueOf(columns.get("hasLeaderCreator")));
-            idea.setOrganization(new GenericModel(context.getOrganizations().get(columns.get("organization"))));
-            LOGGER.info(idea.toString());
-
-            // Refresh Token
-            authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-            AuthenticationResponse response = authenticationHttpClient.refresh();
-            context.getAuths().put(userFirstname, response);
-
-            // Make donation
-            ideaHttpClient.setBearerAuth(response.getToken());
-            ideaHttpClient.create(idea);
-        }
-    }
-
-
     @And("The following ideas are submitted")
     public void theFollowingIdeasAreSubmitted(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
         Idea idea;
         for (Map<String, String> columns : rows) {
-
-            // Create campaign
             idea = new Idea();
             idea.setShortDescription(columns.get("shortDescription"));
             idea.setLongDescription(columns.get("longDescription"));
@@ -82,6 +52,30 @@ public class IdeaStepDefinitions {
 
             // Save in Test Map
             context.getIdeas().put(idea.getShortDescription(), idea);
+        }
+    }
+
+    @And("{string} submit the following ideas")
+    public void submitTheFollowingIdeas(String userFirstname, DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        IdeaModel idea;
+        for (Map<String, String> columns : rows) {
+            idea = new IdeaModel();
+            idea.setShortDescription(columns.get("shortDescription"));
+            idea.setLongDescription(columns.get("longDescription"));
+            idea.setHasAnonymousCreator(Boolean.valueOf(columns.get("hasAnonymousCreator")));
+            idea.setHasLeaderCreator(Boolean.valueOf(columns.get("hasLeaderCreator")));
+            idea.setOrganization(new GenericModel(context.getOrganizations().get(columns.get("organization"))));
+
+            // Refresh Token
+            authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
+            AuthenticationResponse response = authenticationHttpClient.refresh();
+            context.getAuths().put(userFirstname, response);
+
+            // Make donation
+            ideaHttpClient.setBearerAuth(response.getToken());
+            ideaHttpClient.create(idea);
         }
     }
 
