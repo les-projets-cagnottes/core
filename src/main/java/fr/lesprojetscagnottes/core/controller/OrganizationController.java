@@ -245,7 +245,7 @@ public class OrganizationController {
         }
 
         // Get and transform ideas
-        Page<Idea> entities = ideaRepository.findByOrganizationId(organizationId, PageRequest.of(offset, limit, Sort.by("id").ascending()));
+        Page<Idea> entities = ideaRepository.findByOrganizationId(organizationId, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
         DataPage<IdeaModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(IdeaModel.fromEntity(entity)));
 

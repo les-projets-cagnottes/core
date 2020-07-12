@@ -39,6 +39,9 @@ public class IdeaModel extends GenericModel {
     @Column(name = "updated_by", columnDefinition = "varchar(255) default 'System'")
     private String updatedBy;
 
+    @Column(name = "icon")
+    protected String icon = StringsCommon.EMPTY_STRING;
+
     @Column(name = "short_description")
     protected String shortDescription = StringsCommon.EMPTY_STRING;
 
@@ -52,6 +55,9 @@ public class IdeaModel extends GenericModel {
     @Column(name = "has_leader_creator")
     @NotNull
     protected Boolean hasLeaderCreator = false;
+
+    @Transient
+    protected GenericModel submitter;
 
     @Transient
     protected GenericModel organization;
@@ -70,8 +76,12 @@ public class IdeaModel extends GenericModel {
         } else {
             model.setCreatedBy(entity.getCreatedBy());
         }
+        model.setIcon(entity.getIcon());
         model.setShortDescription(entity.getShortDescription());
         model.setLongDescription(entity.getLongDescription());
+        model.setHasAnonymousCreator(entity.getHasAnonymousCreator());
+        model.setHasLeaderCreator(entity.getHasLeaderCreator());
+        model.setSubmitter(new GenericModel(entity.getSubmitter()));
         model.setOrganization(new GenericModel(entity.getOrganization()));
         entity.getTags().forEach(tag -> model.getTagsRef().add(tag.getId()));
         LOGGER.debug("Generated : " + model.toString());
