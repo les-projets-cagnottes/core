@@ -17,6 +17,10 @@ import java.util.Set;
 public class Idea extends IdeaModel {
 
     @ManyToOne
+    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "followedIdeas"})
+    protected User submitter;
+
+    @ManyToOne
     @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private Organization organization = new Organization();
 

@@ -67,8 +67,14 @@ public class User extends UserModel implements UserDetails {
     @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
+    @OneToMany(
+            mappedBy = "submitter",
+            orphanRemoval = true)
+    @JsonIgnoreProperties({"submitter", "organization", "followers", "tags"})
+    private Set<Idea> ideas = new LinkedHashSet<>();
+
     @OneToMany(mappedBy = "followers")
-    @JsonIgnoreProperties({"organization", "followers", "tags"})
+    @JsonIgnoreProperties({"submitter", "organization", "followers", "tags"})
     private Set<Idea> followedIdeas = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "user")

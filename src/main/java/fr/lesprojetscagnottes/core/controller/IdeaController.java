@@ -91,6 +91,7 @@ public class IdeaController {
 
         // Save idea
         Idea idea = new Idea();
+        idea.setIcon(model.getIcon());
         idea.setShortDescription(model.getShortDescription());
         idea.setLongDescription(model.getLongDescription());
         idea.setHasAnonymousCreator(model.getHasAnonymousCreator());
@@ -104,11 +105,65 @@ public class IdeaController {
         } else {
             idea.setCreatedBy(userLoggedIn.getEmail());
             idea.setUpdatedBy(userLoggedIn.getEmail());
+            idea.setSubmitter(userLoggedIn);
         }
         idea.setCreatedAt(new Date());
         idea.setUpdatedAt(idea.getCreatedAt());
 
         return IdeaModel.fromEntity(ideaRepository.save(idea));
+    }
+
+    @Operation(summary = "Update an idea", description = "Update an idea", tags = { "Ideas" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Idea updated", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/idea", method = RequestMethod.PUT, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public void update(Principal principal, @RequestBody IdeaModel model) {
+
+        // Fails if any of references are null
+        if(model == null || model.getId() <= 0 || model.getShortDescription() == null || model.getShortDescription().isEmpty()) {
+            if(model != null ) {
+                LOGGER.error("Impossible to update idea : some references are missing");
+            } else {
+                LOGGER.error("Impossible to update a null idea");
+            }
+            throw new BadRequestException();
+        }
+
+        // Retrieve full referenced objects
+        Idea idea = ideaRepository.getOne(model.getId());
+        Organization organization = organizationRepository.findById(model.getOrganization().getId()).orElse(null);
+        Set<Tag> tags = tagRepository.findAllByIdIn(model.getTagsRef());
+
+        // Fails if any of references are null
+        if(idea == null || organization == null) {
+            LOGGER.error("Impossible to update idea : one or more reference(s) doesn't exist");
+            throw new NotFoundException();
+        }
+
+        // Verify that principal is member of organizations
+        User userLoggedIn = userService.get(principal);
+        Long userLoggedInId = userLoggedIn.getId();
+        if(!userService.isMemberOfOrganization(userLoggedInId, model.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to update idea : principal {} is not member of organization {}", userLoggedInId, model.getOrganization().getId());
+            throw new ForbiddenException();
+        }
+
+        // Save idea
+        idea.setIcon(model.getIcon());
+        idea.setShortDescription(model.getShortDescription());
+        idea.setLongDescription(model.getLongDescription());
+        idea.setHasAnonymousCreator(model.getHasAnonymousCreator());
+        idea.setHasLeaderCreator(model.getHasLeaderCreator());
+        idea.setOrganization(organization);
+        idea.setTags(tags);
+        idea.setUpdatedAt(idea.getCreatedAt());
+
+        ideaRepository.save(idea);
     }
 
 }
