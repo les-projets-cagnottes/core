@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core;
 
 import fr.lesprojetscagnottes.core.entity.Authority;
 import fr.lesprojetscagnottes.core.entity.AuthorityName;
+import fr.lesprojetscagnottes.core.entity.Organization;
 import fr.lesprojetscagnottes.core.entity.User;
 import fr.lesprojetscagnottes.core.generator.StringGenerator;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
@@ -69,6 +70,12 @@ public class LPCCoreApplication {
 			admin.setFirstname("Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			userRepository.save(admin);
+
+			// Creation of a default organization
+			Organization organization = new Organization();
+			organization.setName("Les Projets Cagnottes");
+			organization.getMembers().add(admin);
+			organizationRepository.save(organization);
 
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
 		}
