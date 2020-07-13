@@ -68,12 +68,14 @@ public class LPCCoreApplication {
 			User admin = UserGenerator.newUser(email, generatedPassword);
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
+			admin.setAvatarUrl("https://eu.ui-avatars.com/api/?name=Administrator");
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			userRepository.save(admin);
 
 			// Creation of a default organization
 			Organization organization = new Organization();
 			organization.setName("Les Projets Cagnottes");
+			organization.setLogoUrl("https://eu.ui-avatars.com/api/?name=Les+Projets+Cagnottes");
 			organization.getMembers().add(admin);
 			organizationRepository.save(organization);
 
