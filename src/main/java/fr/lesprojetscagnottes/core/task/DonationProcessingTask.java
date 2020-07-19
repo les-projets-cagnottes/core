@@ -1,6 +1,8 @@
-package fr.lesprojetscagnottes.core.queue;
+package fr.lesprojetscagnottes.core.task;
 
 import fr.lesprojetscagnottes.core.entity.Donation;
+import fr.lesprojetscagnottes.core.queue.DonationOperation;
+import fr.lesprojetscagnottes.core.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.repository.CampaignRepository;
@@ -15,9 +17,9 @@ import java.util.Queue;
 import java.util.TimerTask;
 
 @Component
-public class DonationQueue extends TimerTask {
+public class DonationProcessingTask extends TimerTask {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DonationQueue.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DonationProcessingTask.class);
 
     @Autowired
     private AccountRepository accountRepository;

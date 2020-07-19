@@ -1,5 +1,5 @@
 package fr.lesprojetscagnottes.core.entity;
 
-public enum ReminderName {
+public enum ReminderType {
     IDEA
 }

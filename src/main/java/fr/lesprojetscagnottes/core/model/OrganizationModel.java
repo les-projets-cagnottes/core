@@ -26,6 +26,10 @@ public class OrganizationModel extends AuditEntity<String> {
     @NotNull
     private String name;
 
+    @Column
+    @NotNull
+    private String socialName;
+
     @Column(name = "logo_url")
     private String logoUrl;
 

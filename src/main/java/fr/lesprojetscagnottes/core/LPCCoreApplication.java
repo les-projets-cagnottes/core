@@ -1,13 +1,11 @@
 package fr.lesprojetscagnottes.core;
 
-import fr.lesprojetscagnottes.core.entity.Authority;
-import fr.lesprojetscagnottes.core.entity.AuthorityName;
-import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.entity.User;
+import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.generator.StringGenerator;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
-import fr.lesprojetscagnottes.core.queue.DonationQueue;
+import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.repository.*;
+import fr.lesprojetscagnottes.core.scheduler.ReminderScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +24,19 @@ public class LPCCoreApplication {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LPCCoreApplication.class);
 
 	@Autowired
-	private DonationQueue donationQueue;
+	private ReminderScheduler reminderScheduler;
 
 	@Autowired
-	private AuthorityRepository authorityRepository;
+	private DonationProcessingTask donationProcessingTask;
 
 	@Autowired
 	private UserGenerator userGenerator;
 
 	@Autowired
-	private UserRepository userRepository;
+	private AuthorityRepository authorityRepository;
+
+	@Autowired
+	private BudgetRepository budgetRepository;
 
 	@Autowired
 	private OrganizationRepository organizationRepository;
@@ -44,7 +45,10 @@ public class LPCCoreApplication {
 	private OrganizationAuthorityRepository organizationAuthorityRepository;
 
 	@Autowired
-	private BudgetRepository budgetRepository;
+	private ReminderRepository reminderRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(LPCCoreApplication.class, args);
@@ -79,10 +83,17 @@ public class LPCCoreApplication {
 			organization.getMembers().add(admin);
 			organizationRepository.save(organization);
 
+			// Creation of default reminders
+			Reminder reminder = new Reminder();
+			reminder.setType(ReminderType.IDEA);
+			reminder.setPlanning("* * * * * *");
+			reminderRepository.save(reminder);
+
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
 		}
 
-		new Timer().schedule(donationQueue, 0, 500);
+		reminderScheduler.schedule();
+		new Timer().schedule(donationProcessingTask, 0, 500);
 	}
 
 }

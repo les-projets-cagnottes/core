@@ -11,7 +11,7 @@ import javax.persistence.Table;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@Table(name = "ideas")
+@Table(name = "reminders")
 public class Reminder extends ReminderModel {
 
 }
