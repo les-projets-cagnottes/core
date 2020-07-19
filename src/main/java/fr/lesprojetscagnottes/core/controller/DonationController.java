@@ -6,7 +6,7 @@ import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.queue.DonationOperationType;
-import fr.lesprojetscagnottes.core.queue.DonationQueue;
+import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.repository.*;
 import fr.lesprojetscagnottes.core.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +37,7 @@ public class DonationController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DonationController.class);
 
     @Autowired
-    private DonationQueue donationQueue;
+    private DonationProcessingTask donationProcessingTask;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -218,7 +218,7 @@ public class DonationController {
         donationToSave.setAmount(amount);
 
         // Add donation to queue
-        donationQueue.insert(donationToSave, DonationOperationType.CREATION);
+        donationProcessingTask.insert(donationToSave, DonationOperationType.CREATION);
     }
 
     @Operation(summary = "Delete a donation by its ID", description = "Delete a donation by its ID", tags = { "Donations" })
@@ -263,7 +263,7 @@ public class DonationController {
         }
 
         // Delete donation
-        donationQueue.insert(donation, DonationOperationType.DELETION);
+        donationProcessingTask.insert(donation, DonationOperationType.DELETION);
     }
 
 

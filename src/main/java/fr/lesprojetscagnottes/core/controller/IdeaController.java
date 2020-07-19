@@ -145,11 +145,11 @@ public class IdeaController {
             throw new NotFoundException();
         }
 
-        // Verify that principal is member of organizations
+        // Verify that principal is the author
         User userLoggedIn = userService.get(principal);
         Long userLoggedInId = userLoggedIn.getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, model.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to update idea : principal {} is not member of organization {}", userLoggedInId, model.getOrganization().getId());
+        if((idea.getSubmitter() == null || !userLoggedInId.equals(idea.getSubmitter().getId())) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to update idea : principal {} is not the author of the idea {}", userLoggedInId, model.getOrganization().getId());
             throw new ForbiddenException();
         }
 
@@ -162,6 +162,15 @@ public class IdeaController {
         idea.setOrganization(organization);
         idea.setTags(tags);
         idea.setUpdatedAt(idea.getCreatedAt());
+
+        if(idea.getHasAnonymousCreator()) {
+            idea.setCreatedBy(StringsCommon.ANONYMOUS);
+            idea.setUpdatedBy(StringsCommon.ANONYMOUS);
+        } else {
+            idea.setCreatedBy(userLoggedIn.getEmail());
+            idea.setUpdatedBy(userLoggedIn.getEmail());
+            idea.setSubmitter(null);
+        }
 
         ideaRepository.save(idea);
     }
