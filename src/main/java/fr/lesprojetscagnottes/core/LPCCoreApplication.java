@@ -79,9 +79,15 @@ public class LPCCoreApplication {
 			// Creation of a default organization
 			Organization organization = new Organization();
 			organization.setName("Les Projets Cagnottes");
+			organization.setSocialName("Les Projets Cagnottes");
 			organization.setLogoUrl("https://eu.ui-avatars.com/api/?name=Les+Projets+Cagnottes");
 			organization.getMembers().add(admin);
-			organizationRepository.save(organization);
+			organization = organizationRepository.save(organization);
+
+			// Create authorities
+			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
+				organizationAuthorityRepository.save(new OrganizationAuthority(organization, authorityName));
+			}
 
 			// Creation of default reminders
 			Reminder reminder = new Reminder();
