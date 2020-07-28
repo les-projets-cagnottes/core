@@ -181,10 +181,9 @@ public class SlackClientService {
         return slackUsers;
     }
 
-    // TODO : Change to conversation Slack API
     public String openDirectMessageChannel(SlackTeam slackTeam, String slackUserId) {
-        String url = "https://slack.com/api/im.open";
-        String body = "{\"user\": \"" + slackUserId + "\"}";
+        String url = "https://slack.com/api/conversations.open";
+        String body = "{\"users\": \"" + slackUserId + "\"}";
         LOGGER.debug("POST " + url);
         LOGGER.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()

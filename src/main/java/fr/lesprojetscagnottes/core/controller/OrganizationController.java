@@ -66,6 +66,9 @@ public class OrganizationController {
     private SlackClientService slackClientService;
 
     @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -992,6 +995,20 @@ public class OrganizationController {
                         .ifPresent(member -> organization.getMembers().remove(member));
             }
             organizationRepository.save(organization);
+
+            // Create accounts onboarding users
+            Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            budgets.forEach(budget -> {
+                Account account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                if(account == null) {
+                    account = new Account();
+                    account.setAmount(budget.getAmountPerMember());
+                    account.setBudget(budget);
+                }
+                account.setInitialAmount(budget.getAmountPerMember());
+                account.setOwner(userInDb);
+                accountRepository.save(account);
+            });
         }
         return null;
     }
