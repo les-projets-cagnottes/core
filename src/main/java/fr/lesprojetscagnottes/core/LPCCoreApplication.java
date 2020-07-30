@@ -76,7 +76,7 @@ public class LPCCoreApplication {
 
 			String email = "admin";
 			String generatedPassword = StringGenerator.randomString();
-			User admin = UserGenerator.newUser(email, "admin");
+			User admin = UserGenerator.newUser(email, generatedPassword);
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
 			admin.setAvatarUrl("https://eu.ui-avatars.com/api/?name=Administrator");
