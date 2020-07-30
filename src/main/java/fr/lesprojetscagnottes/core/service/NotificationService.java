@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -33,25 +34,38 @@ public class NotificationService {
     @Autowired
     private SlackUserRepository slackUserRepository;
 
-    public void notifyAllSlackUsers(String templateName) {
+    public void notifyAllSlackUsers(String templateName)  {
         slackTeamRepository.findAll().forEach(slackTeam -> {
             Set<SlackUser> slackUsers = slackUserRepository.findAllBySlackTeamId(slackTeam.getId());
-            slackUsers.forEach(slackUser -> {
 
-                Map<String, Object> model = new HashMap<>();
-                model.put("organization", slackTeam.getOrganization());
-                model.put("baseUrl", WEB_URL);
+            long delay;
+            long tsAfterPostMessage = (new Timestamp(System.currentTimeMillis())).getTime();
+            for(SlackUser slackUser : slackUsers) {
+                try {
+                    Map<String, Object> model = new HashMap<>();
+                    model.put("organization", slackTeam.getOrganization());
+                    model.put("baseUrl", WEB_URL);
 
-                Context context = new Context();
-                context.setVariables(model);
-                String slackMessage = templateEngine.process(templateName, context);
+                    Context context = new Context();
+                    context.setVariables(model);
+                    String slackMessage = templateEngine.process(templateName, context);
 
-                LOGGER.info("[notification-slack][{}][{}] - " + slackMessage, slackTeam.getTeamId(), slackUser.getImId());
-                slackClientService.postMessage(slackTeam, slackUser.getImId(), slackMessage);
-                LOGGER.info("[notification-slack][{}][{}] - Sent", slackTeam.getTeamId(), slackUser.getImId());
-            });
+                    // Slack chat.postMessage method is Web API Special (1 per second) so wait 1000ms
+                    delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterPostMessage;
+                    if(delay > 1000) {
+                        delay = 1000;
+                    }
+                    Thread.sleep(1000 - delay);
 
+                    LOGGER.info("[notification-slack][{}][{}] - " + slackMessage, slackTeam.getTeamId(), slackUser.getImId());
+                    slackClientService.postMessage(slackTeam, slackUser.getImId(), slackMessage);
+                    LOGGER.info("[notification-slack][{}][{}] - Sent", slackTeam.getTeamId(), slackUser.getImId());
+
+                    tsAfterPostMessage = (new Timestamp(System.currentTimeMillis())).getTime();
+                } catch (InterruptedException e) {
+                    LOGGER.error("Can't sleep Thread");
+                }
+            }
         });
     }
-
 }

@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.entity;
 
-import fr.lesprojetscagnottes.core.model.ReminderModel;
+import fr.lesprojetscagnottes.core.model.ScheduleModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +11,7 @@ import javax.persistence.Table;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@Table(name = "reminders")
-public class Reminder extends ReminderModel {
+@Table(name = "schedules")
+public class Schedule extends ScheduleModel {
 
 }

@@ -1,11 +1,13 @@
 package fr.lesprojetscagnottes.core;
 
+import com.google.gson.Gson;
+import fr.lesprojetscagnottes.core.common.ScheduleParamsCommon;
 import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.generator.StringGenerator;
 import fr.lesprojetscagnottes.core.generator.UserGenerator;
-import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.repository.*;
-import fr.lesprojetscagnottes.core.scheduler.ReminderScheduler;
+import fr.lesprojetscagnottes.core.scheduler.MainScheduler;
+import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 
 @SpringBootApplication
@@ -24,7 +28,10 @@ public class LPCCoreApplication {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LPCCoreApplication.class);
 
 	@Autowired
-	private ReminderScheduler reminderScheduler;
+	private Gson gson;
+
+	@Autowired
+	private MainScheduler mainScheduler;
 
 	@Autowired
 	private DonationProcessingTask donationProcessingTask;
@@ -45,7 +52,7 @@ public class LPCCoreApplication {
 	private OrganizationAuthorityRepository organizationAuthorityRepository;
 
 	@Autowired
-	private ReminderRepository reminderRepository;
+	private ScheduleRepository scheduleRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -69,10 +76,11 @@ public class LPCCoreApplication {
 
 			String email = "admin";
 			String generatedPassword = StringGenerator.randomString();
-			User admin = UserGenerator.newUser(email, generatedPassword);
+			User admin = UserGenerator.newUser(email, "admin");
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
 			admin.setAvatarUrl("https://eu.ui-avatars.com/api/?name=Administrator");
+			admin.setEnabled(true);
 			admin.addAuthority(authorityRepository.findByName(AuthorityName.ROLE_ADMIN));
 			userRepository.save(admin);
 
@@ -90,15 +98,18 @@ public class LPCCoreApplication {
 			}
 
 			// Creation of default reminders
-			Reminder reminder = new Reminder();
-			reminder.setType(ReminderType.IDEA);
-			reminder.setPlanning("* * * * * *");
-			reminderRepository.save(reminder);
+			Map<String, String> params = new HashMap<>();
+			params.put(ScheduleParamsCommon.SLACK_TEMPLATE, "slack/fr/idea-reminder");
+			Schedule schedule = new Schedule();
+			schedule.setType(ScheduleType.REMINDER);
+			schedule.setPlanning("0 0 8 1W 1/1 *");
+			schedule.setParams(gson.toJson(params));
+			scheduleRepository.save(schedule);
 
 			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
 		}
 
-		reminderScheduler.schedule();
+		mainScheduler.schedule();
 		new Timer().schedule(donationProcessingTask, 0, 500);
 	}
 

@@ -951,12 +951,12 @@ public class OrganizationController {
             }
             slackUserEditted.setSlackTeam(slackTeam);
 
-            // Slack Open IM is Web API Tier 4 (100+ per minute) so wait 600ms
+            // Slack conversations.open method is Web API Tier 3 (50+ per minute) so wait 1200ms
             delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterOpenIm;
-            if(delay > 600) {
-                delay = 600;
+            if(delay > 1200) {
+                delay = 1200;
             }
-            Thread.sleep(600 - delay);
+            Thread.sleep(1200 - delay);
 
             // Open IM with Slack user
             slackUserEditted.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUserEditted.getSlackId()));

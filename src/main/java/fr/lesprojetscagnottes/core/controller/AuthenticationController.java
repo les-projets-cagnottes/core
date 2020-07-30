@@ -168,6 +168,7 @@ public class AuthenticationController {
                 SlackUser slackUser = slackUserRepository.findBySlackId(jsonUser.get("id").getAsString());
                 if(slackUser == null) {
                     slackUser = slackClientService.getUser(jsonUser.get("access_token").getAsString());
+                    slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
                 }
                 slackUser.setSlackTeam(slackTeam);
 
