@@ -135,8 +135,10 @@ jobs:
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
     - name: Publish version to GitHub Registry
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Tag the image for Docker Hub
+    - name: Tag the version image for Docker Hub
       run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
+    - name: Tag the latest image for Docker Hub
+      run: docker tag core:latest lesprojetscagnottes/api:latest
     - name: Login to Docker Hub
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
     - name: Publish latest to Docker Hub
