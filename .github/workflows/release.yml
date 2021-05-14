@@ -129,12 +129,20 @@ jobs:
       run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
     - name: Tag the image with version
       run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Login to Registry
+    - name: Login to GitHub Registry
       run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-    - name: Publish latest to Registry
+    - name: Publish latest to GitHub Registry
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
-    - name: Publish version to Registry
+    - name: Publish version to GitHub Registry
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
+    - name: Tag the image for Docker Hub
+      run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
+    - name: Login to Docker Hub
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+    - name: Publish latest to Docker Hub
+      run: docker push lesprojetscagnottes/api:latest
+    - name: Publish version to Docker Hub
+      run: docker push lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
 
   deploy-production:
     needs: [verify-version, release]

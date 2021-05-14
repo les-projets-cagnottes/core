@@ -97,12 +97,18 @@ jobs:
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
-    - name: Tag the image
+    - name: Tag the image for GitHub Registry
       run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Login to Registry
+    - name: Login to GitHub Registry
       run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-    - name: Publish to Registry
+    - name: Publish to GitHub Registry
       run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
+    - name: Tag the image for Docker Hub
+      run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
+    - name: Login to Docker Hub
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+    - name: Publish to Docker Hub
+      run: docker push lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
   
   deploy-heroku:
     needs: publish-docker
