@@ -11,6 +11,7 @@ import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -57,6 +58,9 @@ public class LPCCoreApplication {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Value("${fr.lesprojetscagnottes.adminPassword}")
+	private String adminPassword;
+
 	public static void main(String[] args) {
 		SpringApplication.run(LPCCoreApplication.class, args);
 	}
@@ -65,18 +69,23 @@ public class LPCCoreApplication {
 	public void init() {
 
 		// First launch of App
-		if(authorityRepository.count() == 0) {
+		if (authorityRepository.count() == 0) {
 
 			// Creation of every roles in database
-			for(AuthorityName authorityName : AuthorityName.values()) {
+			for (AuthorityName authorityName : AuthorityName.values()) {
 				authorityRepository.save(new Authority(authorityName));
 			}
 
 			userGenerator.init(); // Refresh authorities
 
 			String email = "admin";
-			String generatedPassword = StringGenerator.randomString();
-			User admin = UserGenerator.newUser(email, generatedPassword);
+			String password;
+			if (adminPassword != null) {
+				password = adminPassword;
+			} else {
+				password = StringGenerator.randomString();
+			}
+			User admin = UserGenerator.newUser(email, password);
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
 			admin.setAvatarUrl("https://eu.ui-avatars.com/api/?name=Administrator");
@@ -106,7 +115,10 @@ public class LPCCoreApplication {
 			schedule.setParams(gson.toJson(params));
 			scheduleRepository.save(schedule);
 
-			LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + generatedPassword);
+			// If password was generated, we print it in the console
+			if (adminPassword == null) {
+				LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + password);
+			}
 		}
 
 		mainScheduler.schedule();
