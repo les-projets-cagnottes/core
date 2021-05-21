@@ -8,4 +8,5 @@ import java.util.List;
 public interface ApiTokenRepository extends JpaRepository<AuthenticationResponse, Long> {
     AuthenticationResponse findByIdAndUserId(long id, Long userId);
     List<AuthenticationResponse> findAllByUserId(long userId);
+    List<AuthenticationResponse> findAllByDescription(String description);
 }
