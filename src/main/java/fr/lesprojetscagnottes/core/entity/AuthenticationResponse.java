@@ -1,7 +1,6 @@
 package fr.lesprojetscagnottes.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,9 +24,6 @@ public class AuthenticationResponse extends AuthenticationResponseModel implemen
 
     @Column
     private Date expiration = new Date();
-
-    @Column
-    private String token = StringsCommon.EMPTY_STRING;
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})

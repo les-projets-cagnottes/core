@@ -16,6 +16,9 @@ import java.util.Date;
 public class AuthenticationResponseModel extends AuditEntity<String> {
 
     @Column
+    protected String description = StringsCommon.EMPTY_STRING;
+
+    @Column
     protected Date expiration = new Date();
 
     @Column
@@ -34,6 +37,7 @@ public class AuthenticationResponseModel extends AuditEntity<String> {
         model.setUpdatedAt(authenticationResponse.getUpdatedAt());
         model.setUpdatedBy(authenticationResponse.getUpdatedBy());
         model.setId(authenticationResponse.getId());
+        model.setDescription(authenticationResponse.getDescription());
         model.setExpiration(authenticationResponse.getExpiration());
         model.setToken(authenticationResponse.getToken());
         return model;
