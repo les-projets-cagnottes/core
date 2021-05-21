@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 
 @SpringBootApplication
@@ -79,12 +80,7 @@ public class LPCCoreApplication {
 			userGenerator.init(); // Refresh authorities
 
 			String email = "admin";
-			String password;
-			if (adminPassword != null) {
-				password = adminPassword;
-			} else {
-				password = StringGenerator.randomString();
-			}
+			String password = Objects.requireNonNullElseGet(adminPassword, StringGenerator::randomString);
 			User admin = UserGenerator.newUser(email, password);
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
