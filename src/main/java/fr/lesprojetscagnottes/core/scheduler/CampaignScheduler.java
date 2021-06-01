@@ -1,9 +1,6 @@
 package fr.lesprojetscagnottes.core.scheduler;
 
-import fr.lesprojetscagnottes.core.entity.Campaign;
-import fr.lesprojetscagnottes.core.entity.CampaignStatus;
-import fr.lesprojetscagnottes.core.entity.Donation;
-import fr.lesprojetscagnottes.core.entity.User;
+import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.repository.UserRepository;
@@ -129,12 +126,13 @@ public class CampaignScheduler {
 
                 campaign.getOrganizations().forEach(organization -> {
                     if(organization.getSlackTeam() != null) {
+                        SlackTeam slackTeam = organization.getSlackTeam();
                         organization.getMembers().stream()
                                 .filter(member -> member.getId().equals(leader.getId()))
                                 .findAny()
                                 .ifPresentOrElse(member -> {
-                                    organization.getSlackTeam().getSlackUsers().stream()
-                                            .filter(slackUser -> slackUser.getUser().getId() == leader.getId())
+                                            slackTeam.getSlackUsers().stream()
+                                            .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
                                             .findAny()
                                             .ifPresentOrElse(
                                                 slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
@@ -147,10 +145,9 @@ public class CampaignScheduler {
                         context.setVariables(model);
                         String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
 
-                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + slackMessage);
-                        String channelId = slackClientService.joinChannel(organization.getSlackTeam());
-                        slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
-                        slackClientService.postMessage(organization.getSlackTeam(), channelId, slackMessage);
+                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+                        slackClientService.inviteBotInConversation(slackTeam);
+                        slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
                         LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
                     }
                 });

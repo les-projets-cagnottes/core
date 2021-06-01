@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export JAVA_HOME=/usr/java/jdk-12.0.2
-export PATH=$PATH:$HOME/bin:$JAVA_HOME/bin
-export LPC_SLACK_CLIENT_ID=115462816321.761013265159
-export LPC_SLACK_CLIENT_SECRET=279c9eea382ac97d2f3fbc325f66c3a4

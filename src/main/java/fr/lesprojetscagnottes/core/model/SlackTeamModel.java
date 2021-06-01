@@ -32,6 +32,9 @@ public class SlackTeamModel extends AuditEntity<String> {
     @Column(name = "publication_channel")
     private String publicationChannel;
 
+    @Column(name = "publication_channel_id")
+    private String publicationChannelId;
+
     @Transient
     protected GenericModel organization;
 
@@ -48,6 +51,7 @@ public class SlackTeamModel extends AuditEntity<String> {
         model.setBotUserId(entity.getBotUserId());
         model.setBotAccessToken(entity.getBotAccessToken());
         model.setPublicationChannel(entity.getPublicationChannel());
+        model.setPublicationChannelId(entity.getPublicationChannelId());
         model.setOrganization(new GenericModel(entity.getOrganization()));
         return model;
     }
