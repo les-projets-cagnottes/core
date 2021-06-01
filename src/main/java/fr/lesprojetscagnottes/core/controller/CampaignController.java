@@ -357,11 +357,14 @@ public class CampaignController {
 
         organizations.forEach(organization -> {
             if(organization.getSlackTeam() != null) {
+
+                SlackTeam slackTeam = organization.getSlackTeam();
+
                 organization.getMembers().stream()
                         .filter(member -> member.getId().equals(leader.getId()))
                         .findAny()
                         .ifPresentOrElse(member -> {
-                            organization.getSlackTeam().getSlackUsers().stream()
+                            slackTeam.getSlackUsers().stream()
                                     .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
                                     .findAny()
                                     .ifPresentOrElse(
@@ -373,10 +376,10 @@ public class CampaignController {
                 context.setVariables(model);
                 String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
 
-                LOGGER.info("[create][" + campaign.getId() + "] Send Slack Message to " + organization.getSlackTeam().getTeamId() + " / " + organization.getSlackTeam().getPublicationChannel() + " :\n" + slackMessage);
-                String channelId = slackClientService.joinChannel(organization.getSlackTeam());
-                slackClientService.inviteInChannel(organization.getSlackTeam(), channelId);
-                slackClientService.postMessage(organization.getSlackTeam(), channelId, slackMessage);
+                LOGGER.info("[create][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+
+                slackClientService.inviteBotInConversation(slackTeam);
+                slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
                 LOGGER.info("[create][" + campaign.getId() + "] Slack Message Sent");
             }
         });

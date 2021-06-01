@@ -128,7 +128,7 @@ public class LPCCoreApplication {
 			params.put(ScheduleParamsCommon.SLACK_TEMPLATE, "slack/fr/idea-reminder");
 			Schedule schedule = new Schedule();
 			schedule.setType(ScheduleType.REMINDER);
-			schedule.setPlanning("0 0 8 1W 1/1 *");
+			schedule.setPlanning("0 0 10 1 * *");
 			schedule.setParams(gson.toJson(params));
 			scheduleRepository.save(schedule);
 

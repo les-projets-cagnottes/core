@@ -85,9 +85,8 @@ public class SlackController {
         context.setVariables(model);
         String slackMessage = templateEngine.process("slack/fr/hello", context);
 
-        String channelId = slackClientService.joinChannel(slackTeam);
-        slackClientService.inviteInChannel(slackTeam, channelId);
-        slackClientService.postMessage(slackTeam, channelId, slackMessage);
+        slackClientService.inviteBotInConversation(slackTeam);
+        slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
     }
 
     @Operation(summary = "Send an hello world message", description = "Send an hello world message on the Slack workspace", tags = { "Slack" })

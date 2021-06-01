@@ -50,38 +50,9 @@ public class SlackClientService {
         }
     }
 
-    public String joinChannel(SlackTeam slackTeam) {
-        String url = "https://slack.com/api/channels.join";
-        String body = "{\"name\":\"" + slackTeam.getPublicationChannel() + "\"}";
-        String channelId = StringsCommon.EMPTY_STRING;
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + slackTeam.getAccessToken())
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-        HttpResponse response;
-        try {
-            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body().toString());
-            Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
-            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
-                channelId = json.get("channel").getAsJsonObject().get("id").getAsString();
-            }
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage());
-            e.printStackTrace();
-        }
-        return channelId;
-    }
-
-    public void inviteInChannel(SlackTeam slackTeam, String channelId) {
-        String url = "https://slack.com/api/channels.invite";
-        String body = "{\"channel\":\"" + channelId + "\", \"user\": \"" + slackTeam.getBotUserId() + "\"}";
+    public void inviteBotInConversation(SlackTeam slackTeam) {
+        String url = "https://slack.com/api/conversations.invite";
+        String body = "{\"channel\":\"" + slackTeam.getPublicationChannelId() + "\", \"users\": \"" + slackTeam.getBotUserId() + "\"}";
         LOGGER.debug("POST " + url);
         LOGGER.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()

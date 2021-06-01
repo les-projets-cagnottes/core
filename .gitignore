@@ -24,6 +24,7 @@ files/
 .settings
 .springBeans
 .sts4-cache
+.project
 
 ### IntelliJ IDEA ###
 .idea
