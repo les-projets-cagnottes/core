@@ -75,7 +75,7 @@ public class SlackController {
         model.put("URL", WEB_URL);
 
         slackTeam.getSlackUsers().stream()
-                .filter(slackUser -> slackUser.getId().equals(orgAdminUser.getId()))
+                .filter(slackUser -> slackUser.getId().equals(orgAdminUser.getId())) // TODO Cannot work because slackUserId != UserId
                 .findAny()
                 .ifPresentOrElse(
                         slackUser -> model.put("contact", "<@" + slackUser.getSlackId() + ">"),
