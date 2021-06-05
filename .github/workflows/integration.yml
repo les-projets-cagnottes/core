@@ -12,11 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
