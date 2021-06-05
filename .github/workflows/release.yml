@@ -14,11 +14,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
@@ -36,13 +35,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
+      run: ./mvnw -B clean spring-boot:build-image --file pom.xml
       
   cucumber:
     needs: [verify-version, build]
@@ -50,11 +48,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Test with Maven
       id: tests_run
       run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
@@ -114,27 +111,15 @@ jobs:
       with:
         ref: '${{ needs.verify-version.outputs.version }}'
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
+      run: ./mvnw -B clean spring-boot:build-image --file pom.xml
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
-    - name: Tag the image as latest
-      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:latest
-    - name: Tag the image with version
-      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Login to GitHub Registry
-      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-    - name: Publish latest to GitHub Registry
-      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:latest
-    - name: Publish version to GitHub Registry
-      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
     - name: Tag the version image for Docker Hub
       run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
     - name: Tag the latest image for Docker Hub

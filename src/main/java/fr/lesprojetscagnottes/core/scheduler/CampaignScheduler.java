@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.scheduler;
 
 import fr.lesprojetscagnottes.core.entity.*;
+import fr.lesprojetscagnottes.core.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.repository.UserRepository;

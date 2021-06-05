@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
+import java.io.Serial;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -26,6 +27,7 @@ import java.util.Set;
 @Table(name = "users")
 public class User extends UserModel implements UserDetails {
 
+    @Serial
     private static final long serialVersionUID = 6210782306288115135L;
 
     @ManyToMany
@@ -58,6 +60,10 @@ public class User extends UserModel implements UserDetails {
     @OneToMany(mappedBy = "sponsor")
     @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
     private Set<Budget> budgets = new LinkedHashSet<>();
+
+    @ManyToMany(mappedBy = "peopleGivingTime")
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    private Set<Project> projects = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "peopleGivingTime")
     @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})

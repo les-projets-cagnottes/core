@@ -26,7 +26,7 @@ public class OrganizationAuthority extends OrganizationAuthorityModel {
     private Organization organization = new Organization();
 
     @ManyToMany(mappedBy = "userOrganizationAuthorities")
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<User> users = new LinkedHashSet<>();
 
     public OrganizationAuthority() {

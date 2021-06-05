@@ -4,6 +4,7 @@ import fr.lesprojetscagnottes.core.entity.*;
 import fr.lesprojetscagnottes.core.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.task.DonationProcessingTask;

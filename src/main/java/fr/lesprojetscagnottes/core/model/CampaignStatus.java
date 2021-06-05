@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.entity;
+package fr.lesprojetscagnottes.core.model;
 
 /**
  * Use a prefix *A_* to order correctly data in query outputs

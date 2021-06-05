@@ -27,8 +27,16 @@ public class Organization extends OrganizationModel {
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<User> members = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "projects_organizations",
+            joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    private Set<Project> projects = new LinkedHashSet<>();
 
     @ManyToMany
     @JoinTable(

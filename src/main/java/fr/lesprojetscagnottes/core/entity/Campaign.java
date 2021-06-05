@@ -20,6 +20,10 @@ public class Campaign extends CampaignModel {
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
     private User leader = new User();
 
+    @ManyToOne
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    private Project project = new Project();
+
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
     private Set<Donation> donations = new LinkedHashSet<>();

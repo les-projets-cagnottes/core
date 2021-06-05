@@ -29,9 +29,12 @@ Feature: Campaign - Get Donations
       | owner | budget              | amount | initialAmount |
       | Mike  | Unnamed Company Pot | 150    | 150           |
       | Mike  | Another Company Pot | 200    | 200           |
+    And The following projects are created
+      | title           | leader  | status        | peopleRequired |
+      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
-      | title            | leader  | status        | peopleRequired | donationsRequired |
-      | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
+      | project         | title            | leader  | status        | peopleRequired | donationsRequired |
+      | Awesome Project | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -83,9 +86,12 @@ Feature: Campaign - Get Donations
       | owner | budget              | amount | initialAmount |
       | Mike  | Unnamed Company Pot | 150    | 150           |
       | Mike  | Another Company Pot | 200    | 200           |
+    And The following projects are created
+      | title           | leader  | status        | peopleRequired |
+      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
-      | title            | leader  | status        | peopleRequired | donationsRequired |
-      | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
+      | project         | title            | leader  | status        | peopleRequired | donationsRequired |
+      | Awesome Project | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |

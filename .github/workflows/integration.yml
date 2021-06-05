@@ -31,13 +31,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
+      run: ./mvnw -B clean spring-boot:build-image --file pom.xml
 
   cucumber:
     needs: build
@@ -45,11 +44,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Test with Maven
       id: tests_run
       run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
@@ -86,56 +84,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: 13
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        distribution: 'adopt'
+        java-version: '16'
     - name: Build with Maven
-      run: ./mvnw -B clean install --file pom.xml -P docker
+      run: ./mvnw -B clean spring-boot:build-image --file pom.xml
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
-    - name: Tag the image for GitHub Registry
-      run: docker tag core:latest docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Login to GitHub Registry
-      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-    - name: Publish to GitHub Registry
-      run: docker push docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
     - name: Tag the image for Docker Hub
       run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
     - name: Login to Docker Hub
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
     - name: Publish to Docker Hub
       run: docker push lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
-  
-  deploy-heroku:
-    needs: publish-docker
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Get the version
-      id: get_version
-      run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-    - uses: sjdonado/heroku@0f16401029a67519b6547af7247983640996393a
-    - name: Login to Registry
-      run: docker login docker.pkg.github.com -u thomah -p ${{secrets.GITHUB_TOKEN}}
-    - name: Pull Docker Image
-      run: docker pull docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }}
-    - name: Tag the image
-      run: docker tag docker.pkg.github.com/les-projets-cagnottes/core/core:${{ steps.get_version.outputs.VERSION }} registry.heroku.com/les-projets-cagnottes-api/web
-    - name: Get Heroku Tools
-      run: wget -qO- https://toolbelt.heroku.com/install.sh | sh
-    - name: Login to Heroku Registry
-      run: echo "${{secrets.HEROKU_PASSWORD}}" | docker login -u "${{secrets.HEROKU_USERNAME}}" --password-stdin registry.heroku.com
-    - name: Login to Heroku API
-      run: heroku container:login
-      env:
-        HEROKU_API_KEY: ${{secrets.HEROKU_PASSWORD}}
-    - name: Publish to Heroku Registry
-      run: docker push registry.heroku.com/les-projets-cagnottes-api/web
-    - name: Release Heroku app
-      run: heroku container:release web --app les-projets-cagnottes-api
-      env:
-        HEROKU_API_KEY: ${{secrets.HEROKU_PASSWORD}}
