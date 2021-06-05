@@ -1,4 +1,4 @@
-Feature: Organization Authorities
+Feature: Organization Authorities - Grant
   Verifies rules for granting organization authorities
 
   Scenario: An admin can grant an organization member

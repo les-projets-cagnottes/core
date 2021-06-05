@@ -24,12 +24,14 @@ public class CucumberContext {
     private Map<String, User> users = new HashMap<>();
     private Map<String, Content> contents = new HashMap<>();
     private Map<String, Budget> budgets = new HashMap<>();
+    private Map<String, Project> projects = new HashMap<>();
     private Map<String, Campaign> campaigns = new HashMap<>();
     private Map<String, Idea> ideas = new HashMap<>();
 
     public void reset() {
         accounts = new HashMap<>();
         campaigns = new HashMap<>();
+        projects = new HashMap<>();
         budgets = new HashMap<>();
         contents = new HashMap<>();
         ideas = new HashMap<>();

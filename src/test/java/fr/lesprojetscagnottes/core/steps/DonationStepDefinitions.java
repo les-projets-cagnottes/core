@@ -3,8 +3,9 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.DonationHttpClient;
-import fr.lesprojetscagnottes.core.component.ProjectHttpClient;
+import fr.lesprojetscagnottes.core.component.CampaignHttpClient;
 import fr.lesprojetscagnottes.core.entity.*;
+import fr.lesprojetscagnottes.core.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.model.DonationModel;
 import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.BudgetRepository;
@@ -41,7 +42,7 @@ public class DonationStepDefinitions {
     private DonationHttpClient donationHttpClient;
 
     @Autowired
-    private ProjectHttpClient projectHttpClient;
+    private CampaignHttpClient campaignHttpClient;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -73,6 +74,7 @@ public class DonationStepDefinitions {
             campaign = new Campaign();
             campaign.setTitle(columns.get("title"));
             campaign.setLeader(context.getUsers().get(columns.get("leader")));
+            campaign.setProject(context.getProjects().get(columns.get("project")));
             campaign.setStatus(CampaignStatus.valueOf(columns.get("status")));
             campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
             campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
@@ -98,6 +100,7 @@ public class DonationStepDefinitions {
             // Create campaign
             campaign = new Campaign();
             campaign.setTitle(columns.get("title"));
+            campaign.setProject(context.getProjects().get(columns.get("project")));
             campaign.setLeader(context.getUsers().get(columns.get("leader")));
             campaign.setStatus(CampaignStatus.valueOf(columns.get("status")));
             campaign.setPeopleRequired(Integer.valueOf(columns.get("peopleRequired")));
@@ -223,7 +226,7 @@ public class DonationStepDefinitions {
     public void itReturnsFollowingDonations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        DataPage<DonationModel> body = (DataPage<DonationModel>) projectHttpClient.getLastResponse().getBody();
+        DataPage<DonationModel> body = (DataPage<DonationModel>) campaignHttpClient.getLastResponse().getBody();
         Assert.assertNotNull(body);
         List<DonationModel> donationsReturned = body.getContent();
         Assert.assertNotNull(donationsReturned);
@@ -263,8 +266,8 @@ public class DonationStepDefinitions {
         context.getAuths().put(userFirstname, response);
 
         // Get donations
-        projectHttpClient.setBearerAuth(response.getToken());
-        projectHttpClient.getDonations(context.getCampaigns().get(campaign).getId());
+        campaignHttpClient.setBearerAuth(response.getToken());
+        campaignHttpClient.getDonations(context.getCampaigns().get(campaign).getId());
     }
 
 }

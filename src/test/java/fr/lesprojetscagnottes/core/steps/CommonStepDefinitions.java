@@ -47,6 +47,9 @@ public class CommonStepDefinitions {
     private CampaignRepository campaignRepository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -66,6 +69,7 @@ public class CommonStepDefinitions {
         });
 
         campaignRepository.deleteAll();
+        projectRepository.deleteAll();
         accountRepository.deleteAll();
         budgetRepository.deleteAll();
         contentRepository.deleteAll();

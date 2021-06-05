@@ -6,8 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Main", description = "The Main API")
 public class MainController {
 
-    @Autowired
-    private BuildProperties buildProperties;
 
     @Operation(summary = "Component Healcheck", description = "Verify if this component is alive", tags = { "Main" })
     @ApiResponses(value = {
@@ -29,15 +25,6 @@ public class MainController {
     })
     @RequestMapping(value = "/health", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public void health() {}
-
-    @Operation(summary = "Component version", description = "Return version of this component", tags = { "Main" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Return version of this component", content = @Content(schema = @Schema()))
-    })
-    @RequestMapping(value = "/build", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public BuildProperties version() {
-        return buildProperties;
-    }
 
     @Operation(summary = "Get log file for current day", description = "Get log file for current day", tags = { "Main" })
     @ApiResponses(value = {

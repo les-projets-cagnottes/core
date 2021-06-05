@@ -22,6 +22,8 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @EntityGraph(value = "Organization.withLinkedEntities")
     Optional<Organization> findById(Long id);
 
+    Set<Organization> findAllByProjects_Id(Long projectId);
+
     Set<Organization> findAllByCampaigns_Id(Long campaignId);
 
     Set<Organization> findAllByMembers_Id(Long userId);

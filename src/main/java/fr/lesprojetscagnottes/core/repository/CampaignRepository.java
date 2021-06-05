@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.repository;
 
 import fr.lesprojetscagnottes.core.entity.Campaign;
-import fr.lesprojetscagnottes.core.entity.CampaignStatus;
+import fr.lesprojetscagnottes.core.model.CampaignStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

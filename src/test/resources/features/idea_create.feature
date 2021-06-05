@@ -1,5 +1,5 @@
-Feature: Budget
-  Verifies rules for using budgets
+Feature: Idea - Create
+  Verifies rules for creating ideas
 
   Scenario: A member can create an idea
     Given Empty database
