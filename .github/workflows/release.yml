@@ -121,9 +121,9 @@ jobs:
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
     - name: Tag the version image for Docker Hub
-      run: docker tag core:latest lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
+      run: docker tag core:${{ steps.get_version.outputs.VERSION }} lesprojetscagnottes/api:${{ steps.get_version.outputs.VERSION }}
     - name: Tag the latest image for Docker Hub
-      run: docker tag core:latest lesprojetscagnottes/api:latest
+      run: docker tag core:${{ steps.get_version.outputs.VERSION }} lesprojetscagnottes/api:latest
     - name: Login to Docker Hub
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
     - name: Publish latest to Docker Hub
