@@ -15,7 +15,7 @@
     <description>Core component of "Les Projets Cagnottes"</description>
 
     <properties>
-        <java.version>1.15</java.version>
+        <java.version>1.16</java.version>
     </properties>
 
     <distributionManagement>
@@ -115,11 +115,6 @@
             <groupId>org.hobsoft.spring</groupId>
             <artifactId>spring-rest-template-logger</artifactId>
             <version>2.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
-            <version>0.36.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
