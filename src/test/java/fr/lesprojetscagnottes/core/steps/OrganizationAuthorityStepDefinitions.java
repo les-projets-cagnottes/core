@@ -4,6 +4,8 @@ import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.OrganizationAuthorityHttpClient;
 import fr.lesprojetscagnottes.core.entity.*;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.UserModel;
 import fr.lesprojetscagnottes.core.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.repository.UserRepository;
 import io.cucumber.datatable.DataTable;
@@ -96,12 +98,12 @@ public class OrganizationAuthorityStepDefinitions {
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-            AuthenticationResponse response = authenticationHttpClient.refresh();
+            AuthenticationResponseModel response = authenticationHttpClient.refresh();
             context.getAuths().put(userFirstname, response);
 
             // Send grant request
             organizationAuthorityHttpClient.setBearerAuth(response.getToken());
-            organizationAuthorityHttpClient.grant(user, organizationAuthority);
+            organizationAuthorityHttpClient.grant(UserModel.fromEntity(user), OrganizationAuthority.fromEntity(organizationAuthority));
         }
     }
 

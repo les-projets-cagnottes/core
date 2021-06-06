@@ -3,12 +3,15 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.ProjectHttpClient;
-import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
 import fr.lesprojetscagnottes.core.entity.Project;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.ProjectModel;
 import fr.lesprojetscagnottes.core.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -67,14 +70,46 @@ public class ProjectStepDefinitions {
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-            AuthenticationResponse response = authenticationHttpClient.refresh();
+            AuthenticationResponseModel response = authenticationHttpClient.refresh();
             context.getAuths().put(userFirstname, response);
 
             // Make donation
             projectHttpClient.setBearerAuth(response.getToken());
-            projectHttpClient.post(project);
+            projectHttpClient.post(ProjectModel.fromEntity(project));
         }
     }
 
+
+    @Then("Following projects are registered")
+    public void followingProjectsAreRegistered(DataTable table) {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+
+        List<Project> projectsReturned = projectRepository.findAll();
+
+        Project project;
+        for (Map<String, String> columns : rows) {
+
+            // Create project from feature
+            project = new Project();
+            project.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
+            project.setTitle(columns.get("title"));
+            project.setShortDescription(columns.get("shortDescription"));
+            project.setLongDescription(columns.get("longDescription"));
+            project.setPeopleRequired(Integer.parseInt(columns.get("peopleRequired")));
+            final Project projectFinal = project;
+
+            projectsReturned.stream()
+                    .filter(projectReturned -> projectFinal.getTitle().equals(projectReturned.getTitle()))
+                    .filter(projectReturned -> projectFinal.getShortDescription().equals(projectReturned.getShortDescription()))
+                    .filter(projectReturned -> projectFinal.getLongDescription().equals(projectReturned.getLongDescription()))
+                    .filter(projectReturned -> projectFinal.getPeopleRequired().equals(projectReturned.getPeopleRequired()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            projectsReturned::remove,
+                            Assert::fail);
+        }
+
+        Assert.assertEquals(0, projectsReturned.size());
+    }
 
 }

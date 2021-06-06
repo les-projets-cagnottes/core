@@ -3,8 +3,9 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.BudgetHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
 import fr.lesprojetscagnottes.core.entity.Budget;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.BudgetModel;
 import fr.lesprojetscagnottes.core.repository.BudgetRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
@@ -12,23 +13,16 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
 import static java.time.temporal.TemporalAdjusters.lastDayOfYear;
 
 public class BudgetStepDefinitions {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BudgetStepDefinitions.class);
 
     @Autowired
     private AuthenticationHttpClient authenticationHttpClient;
@@ -105,7 +99,7 @@ public class BudgetStepDefinitions {
 
         // Refresh Token
         authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponse response = authenticationHttpClient.refresh();
+        AuthenticationResponseModel response = authenticationHttpClient.refresh();
         context.getAuths().put(userFirstname, response);
 
         // Get budgets
@@ -118,7 +112,7 @@ public class BudgetStepDefinitions {
 
         // Refresh Token
         authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponse response = authenticationHttpClient.refresh();
+        AuthenticationResponseModel response = authenticationHttpClient.refresh();
         context.getAuths().put(userFirstname, response);
 
         // Get budgets
@@ -149,12 +143,12 @@ public class BudgetStepDefinitions {
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-            AuthenticationResponse response = authenticationHttpClient.refresh();
+            AuthenticationResponseModel response = authenticationHttpClient.refresh();
             context.getAuths().put(userFirstname, response);
 
             // Create budget
             budgetHttpClient.setBearerAuth(response.getToken());
-            budgetHttpClient.create(budget);
+            budgetHttpClient.create(BudgetModel.fromEntity(budget));
         }
     }
 
@@ -162,7 +156,7 @@ public class BudgetStepDefinitions {
     public void updatesFollowingBudgets(String userFirstname, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<Budget> budgets = new LinkedHashSet<>();
+        Set<BudgetModel> budgets = new LinkedHashSet<>();
         Budget budget;
         for (Map<String, String> columns : rows) {
             budget = context.getBudgets().get(columns.get("name"));
@@ -172,12 +166,12 @@ public class BudgetStepDefinitions {
             budget.setRules(context.getContents().get(columns.get("rules")));
             budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
             budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
-            budgets.add(budget);
+            budgets.add(BudgetModel.fromEntity(budget));
         }
 
         // Refresh Token
         authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponse response = authenticationHttpClient.refresh();
+        AuthenticationResponseModel response = authenticationHttpClient.refresh();
         context.getAuths().put(userFirstname, response);
 
         // Create budget
@@ -189,7 +183,9 @@ public class BudgetStepDefinitions {
     public void itReturnsFollowingBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<Budget> budgetsReturned = budgetHttpClient.getLastResponse().getBody();
+        System.out.println(context.getLastBody());
+        Set<BudgetModel> budgetsReturned = new HashSet<>(Arrays.asList(context.getGson().fromJson(context.getLastBody(), BudgetModel[].class)));
+        System.out.println(budgetsReturned);
         Assert.assertNotNull(budgetsReturned);
 
         Budget budget;

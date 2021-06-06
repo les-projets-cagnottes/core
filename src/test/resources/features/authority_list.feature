@@ -1,5 +1,5 @@
-Feature: Authority
-  Verifies rules for using authorities
+Feature: Authority - List
+  Verifies rules for listing authorities
 
   Scenario: A member can list his global authorities
     Given Empty database

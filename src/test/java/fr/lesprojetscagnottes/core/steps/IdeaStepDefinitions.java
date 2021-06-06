@@ -1,13 +1,15 @@
 package fr.lesprojetscagnottes.core.steps;
 
+import com.google.gson.reflect.TypeToken;
 import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.IdeaHttpClient;
-import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
 import fr.lesprojetscagnottes.core.entity.Idea;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.model.GenericModel;
 import fr.lesprojetscagnottes.core.model.IdeaModel;
+import fr.lesprojetscagnottes.core.pagination.DataPage;
 import fr.lesprojetscagnottes.core.repository.IdeaRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
@@ -16,9 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class IdeaStepDefinitions {
 
@@ -70,7 +72,7 @@ public class IdeaStepDefinitions {
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-            AuthenticationResponse response = authenticationHttpClient.refresh();
+            AuthenticationResponseModel response = authenticationHttpClient.refresh();
             context.getAuths().put(userFirstname, response);
 
             // Make donation
@@ -84,7 +86,7 @@ public class IdeaStepDefinitions {
 
         // Refresh Token
         authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponse response = authenticationHttpClient.refresh();
+        AuthenticationResponseModel response = authenticationHttpClient.refresh();
         context.getAuths().put(userFirstname, response);
 
         // Get donations
@@ -96,7 +98,10 @@ public class IdeaStepDefinitions {
     public void itReturnsFollowingIdeas(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        List<IdeaModel> ideasReturned = Objects.requireNonNull(ideaHttpClient.getLastDataPage().getBody()).getContent();
+        Type dataPageType = new TypeToken<DataPage<IdeaModel>>(){}.getType();
+        DataPage<IdeaModel> body = context.getGson().fromJson(context.getLastBody(), dataPageType);
+        Assert.assertNotNull(body);
+        List<IdeaModel> ideasReturned = body.getContent();
         Assert.assertNotNull(ideasReturned);
 
         Idea idea;
@@ -127,7 +132,7 @@ public class IdeaStepDefinitions {
 
     @And("Last response is anonymized")
     public void lastResponseIsAnonymized() {
-        IdeaModel ideaReturned = ideaHttpClient.getLastResponse().getBody();
+        IdeaModel ideaReturned = context.getGson().fromJson(context.getLastBody(), IdeaModel.class);
         Assert.assertNotNull(ideaReturned);
         Assert.assertEquals(StringsCommon.ANONYMOUS, ideaReturned.getCreatedBy());
     }

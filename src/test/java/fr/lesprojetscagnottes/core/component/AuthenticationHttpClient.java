@@ -1,66 +1,24 @@
 package fr.lesprojetscagnottes.core.component;
 
-import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
-import org.hobsoft.spring.resttemplatelogger.LoggingCustomizer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.boot.web.server.LocalServerPort;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Component
 @Scope(SCOPE_CUCUMBER_GLUE)
-public class AuthenticationHttpClient {
+public class AuthenticationHttpClient extends GenericHttpClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationHttpClient.class);
-
-    private final String SERVER_URL = "http://localhost";
-    private final String ENDPOINT = "/api/auth";
-
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private CucumberContext context;
-
-    private final RestTemplate restTemplate;
-    private HttpHeaders headers;
-
-    public AuthenticationHttpClient() {
-        restTemplate = new RestTemplateBuilder()
-                .customizers(new LoggingCustomizer())
-                .build();
-
-        headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-    }
-
-    private String endpoint() {
-        return SERVER_URL + ":" + port + ENDPOINT;
-    }
-
-    public AuthenticationResponse login(String email, String password) {
+    public AuthenticationResponseModel login(String email, String password) {
         String body = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
-        HttpEntity<String> request = new HttpEntity<>(body, headers);
-        ResponseEntity<AuthenticationResponse> result = restTemplate.postForEntity(endpoint() + "/login", request, AuthenticationResponse.class);
-        context.setLastHttpCode(result.getStatusCodeValue());
-        return result.getBody();
+        post("/api/auth/login", body);
+        return context.getGson().fromJson(context.getLastBody(), AuthenticationResponseModel.class);
     }
 
-    public AuthenticationResponse refresh() {
-        HttpEntity<String> request = new HttpEntity<>(null, headers);
-        ResponseEntity<AuthenticationResponse> result = restTemplate.exchange(endpoint() + "/refresh", HttpMethod.GET, request, AuthenticationResponse.class);
-        context.setLastHttpCode(result.getStatusCodeValue());
-        return result.getBody();
+    public AuthenticationResponseModel refresh() {
+        get("/api/auth/refresh");
+        return context.getGson().fromJson(context.getLastBody(), AuthenticationResponseModel.class);
     }
 
-    public void setBearerAuth(String token) {
-        headers.set("Authorization", "Bearer " + token);
-    }
 }
