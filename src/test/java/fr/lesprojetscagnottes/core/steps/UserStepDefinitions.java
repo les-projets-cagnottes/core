@@ -5,13 +5,11 @@ import fr.lesprojetscagnottes.core.entity.Authority;
 import fr.lesprojetscagnottes.core.entity.AuthorityName;
 import fr.lesprojetscagnottes.core.entity.Organization;
 import fr.lesprojetscagnottes.core.entity.User;
-import fr.lesprojetscagnottes.core.repository.UserRepository;
 import fr.lesprojetscagnottes.core.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
+import fr.lesprojetscagnottes.core.repository.UserRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
@@ -23,8 +21,6 @@ import java.util.Map;
 import static org.junit.Assert.assertNotNull;
 
 public class UserStepDefinitions {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserStepDefinitions.class);
 
     @Autowired
     private AuthorityRepository authorityRepository;

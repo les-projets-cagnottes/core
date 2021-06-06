@@ -3,11 +3,10 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.entity.*;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.repository.*;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.LinkedHashSet;
@@ -19,8 +18,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 public class CommonStepDefinitions {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonStepDefinitions.class);
 
     @Autowired
     private AuthenticationHttpClient authenticationHttpClient;
@@ -65,6 +62,7 @@ public class CommonStepDefinitions {
         organizationRepository.findAll().forEach(organization -> {
             organization.setMembers(new LinkedHashSet<>());
             organization.setCampaigns(new LinkedHashSet<>());
+            organization.setProjects(new LinkedHashSet<>());
             organizationRepository.save(organization);
         });
 
@@ -86,7 +84,7 @@ public class CommonStepDefinitions {
         User user = new User();
         user.setEmail(context.getUsers().get(userFirstname).getEmail());
         user.setPassword(context.getUsers().get(userFirstname).getPassword());
-        AuthenticationResponse response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
+        AuthenticationResponseModel response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
 
         assertNotNull(response);
         assertFalse(response.getToken().isEmpty());

@@ -1,6 +1,10 @@
 package fr.lesprojetscagnottes.core.component;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import fr.lesprojetscagnottes.core.common.StringsCommon;
 import fr.lesprojetscagnottes.core.entity.*;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +19,11 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class CucumberContext {
 
+    private String lastBody = StringsCommon.EMPTY_STRING;
     private int lastHttpCode = 0;
 
     private Map<String, Account> accounts = new HashMap<>();
-    private Map<String, AuthenticationResponse> auths = new HashMap<>();
+    private Map<String, AuthenticationResponseModel> auths = new HashMap<>();
     private Map<String, OrganizationAuthority> organizationAuthorities = new HashMap<>();
     private Map<String, Organization> organizations = new HashMap<>();
     private Map<String, User> users = new HashMap<>();
@@ -27,6 +32,22 @@ public class CucumberContext {
     private Map<String, Project> projects = new HashMap<>();
     private Map<String, Campaign> campaigns = new HashMap<>();
     private Map<String, Idea> ideas = new HashMap<>();
+
+    private Gson gson;
+
+    public CucumberContext() {
+        gson = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+                .create();
+    }
+
+    public <T> T deserialize(String jsonString, Class<T> clazz) {
+        GsonBuilder builder = new GsonBuilder();
+        builder.setDateFormat("MM/dd/yy HH:mm:ss");
+
+        Gson gson = builder.create();
+        return gson.fromJson(jsonString, clazz);
+    }
 
     public void reset() {
         accounts = new HashMap<>();

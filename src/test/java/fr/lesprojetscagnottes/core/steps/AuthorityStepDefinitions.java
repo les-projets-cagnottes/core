@@ -3,24 +3,19 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.AuthorityHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.AuthenticationResponse;
 import fr.lesprojetscagnottes.core.entity.Authority;
 import fr.lesprojetscagnottes.core.entity.AuthorityName;
+import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.model.AuthorityModel;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AuthorityStepDefinitions {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorityStepDefinitions.class);
 
     @Autowired
     private AuthenticationHttpClient authenticationHttpClient;
@@ -36,7 +31,7 @@ public class AuthorityStepDefinitions {
 
         // Refresh Token
         authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponse response = authenticationHttpClient.refresh();
+        AuthenticationResponseModel response = authenticationHttpClient.refresh();
         context.getAuths().put(userFirstname, response);
 
         // Get budgets
@@ -48,7 +43,7 @@ public class AuthorityStepDefinitions {
     public void itReturnsFollowingAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Set<Authority> authoritiesReturned = authorityHttpClient.getLastResponse().getBody();
+        Set<AuthorityModel> authoritiesReturned = new HashSet<>(Arrays.asList(context.getGson().fromJson(context.getLastBody(), AuthorityModel[].class)));
         Assert.assertNotNull(authoritiesReturned);
 
         Authority authority;
