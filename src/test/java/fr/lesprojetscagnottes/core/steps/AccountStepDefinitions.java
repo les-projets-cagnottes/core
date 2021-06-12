@@ -1,8 +1,8 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.Account;
-import fr.lesprojetscagnottes.core.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.Account;
+import fr.lesprojetscagnottes.core.budget.AccountRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;

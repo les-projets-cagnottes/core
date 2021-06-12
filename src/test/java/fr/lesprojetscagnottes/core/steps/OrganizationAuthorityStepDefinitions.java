@@ -1,13 +1,16 @@
 package fr.lesprojetscagnottes.core.steps;
 
+import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.OrganizationAuthorityHttpClient;
-import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.model.UserModel;
-import fr.lesprojetscagnottes.core.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.repository.UserRepository;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.UserModel;
+import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.user.UserRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -46,15 +49,15 @@ public class OrganizationAuthorityStepDefinitions {
     public void theFollowingUsersAreGrantedWithOrganizationAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization;
-        User user;
+        OrganizationEntity organization;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             user = context.getUsers().get(columns.get("firstname"));
-            final User userFinal = userRepository.findById(user.getId()).orElse(null);
+            final UserEntity userFinal = userRepository.findById(user.getId()).orElse(null);
             organization = context.getOrganizations().get(columns.get("organization"));
             final OrganizationAuthorityName authorityNameFinal = OrganizationAuthorityName.valueOf(columns.get("authority"));
-            final OrganizationAuthority organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndName(organization.getId(), authorityNameFinal);
+            final OrganizationAuthorityEntity organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndName(organization.getId(), authorityNameFinal);
 
             assertNotNull(userFinal);
 
@@ -77,11 +80,11 @@ public class OrganizationAuthorityStepDefinitions {
     public void grantsFollowingUsersWithOrganizationAuthorities(String userFirstname, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        OrganizationAuthority organizationAuthorityContext;
-        OrganizationAuthority organizationAuthority;
-        Organization organizationContext;
-        Organization organization;
-        User user;
+        OrganizationAuthorityEntity organizationAuthorityContext;
+        OrganizationAuthorityEntity organizationAuthority;
+        OrganizationEntity organizationContext;
+        OrganizationEntity organization;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             organizationContext = context.getOrganizations().get(columns.get("organization"));
@@ -89,11 +92,11 @@ public class OrganizationAuthorityStepDefinitions {
             organizationAuthorityContext = context.getOrganizationAuthorities().get(organizationContext.getName() + columns.get("authority"));
 
             // Create simplest organization
-            organization = new Organization();
+            organization = new OrganizationEntity();
             organization.setId(organizationContext.getId());
 
             // Create simplest organization authority
-            organizationAuthority = new OrganizationAuthority();
+            organizationAuthority = new OrganizationAuthorityEntity();
             organizationAuthority.setId(organizationAuthorityContext.getId());
 
             // Refresh Token
@@ -103,7 +106,7 @@ public class OrganizationAuthorityStepDefinitions {
 
             // Send grant request
             organizationAuthorityHttpClient.setBearerAuth(response.getToken());
-            organizationAuthorityHttpClient.grant(UserModel.fromEntity(user), OrganizationAuthority.fromEntity(organizationAuthority));
+            organizationAuthorityHttpClient.grant(UserModel.fromEntity(user), OrganizationAuthorityEntity.fromEntity(organizationAuthority));
         }
     }
 
@@ -116,12 +119,12 @@ public class OrganizationAuthorityStepDefinitions {
     public void verifyThatFollowingUsersHaveTheCorrectNumberOfOrganizationAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organizationContext;
-        User userContext;
+        OrganizationEntity organizationContext;
+        UserEntity userContext;
         for (Map<String, String> columns : rows) {
             organizationContext = context.getOrganizations().get(columns.get("organization"));
             userContext = context.getUsers().get(columns.get("firstname"));
-            Set<OrganizationAuthority> authorities = organizationAuthorityRepository.findByOrganizationIdAndUsersId(organizationContext.getId(), userContext.getId());
+            Set<OrganizationAuthorityEntity> authorities = organizationAuthorityRepository.findByOrganizationIdAndUsersId(organizationContext.getId(), userContext.getId());
             assertEquals(columns.get("authorities"), String.valueOf(authorities.size()));
         }
     }
@@ -130,13 +133,13 @@ public class OrganizationAuthorityStepDefinitions {
     public void verifyThatFollowingUsersAreGrantedWithOrganizationAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organizationContext;
-        User userContext;
+        OrganizationEntity organizationContext;
+        UserEntity userContext;
         for (Map<String, String> columns : rows) {
             organizationContext = context.getOrganizations().get(columns.get("organization"));
             userContext = context.getUsers().get(columns.get("firstname"));
             final String authorityName = columns.get("authority");
-            OrganizationAuthority organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationContext.getId(), userContext.getId(), OrganizationAuthorityName.valueOf(authorityName));
+            OrganizationAuthorityEntity organizationAuthority = organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationContext.getId(), userContext.getId(), OrganizationAuthorityName.valueOf(authorityName));
             assertNotNull(organizationAuthority);
         }
     }

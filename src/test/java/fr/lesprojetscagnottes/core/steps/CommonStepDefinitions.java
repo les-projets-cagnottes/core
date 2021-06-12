@@ -1,10 +1,21 @@
 package fr.lesprojetscagnottes.core.steps;
 
+import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
+import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.budget.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.repository.*;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
+import fr.lesprojetscagnottes.core.idea.IdeaRepository;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.project.ProjectRepository;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.UserRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +92,7 @@ public class CommonStepDefinitions {
     @Given("{string} is logged in")
     public void userIsLoggedIn(String userFirstname) {
 
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setEmail(context.getUsers().get(userFirstname).getEmail());
         user.setPassword(context.getUsers().get(userFirstname).getPassword());
         AuthenticationResponseModel response = authenticationHttpClient.login(user.getEmail(), user.getPassword());
@@ -96,18 +107,18 @@ public class CommonStepDefinitions {
     public void theFollowingOrganizationsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization;
-        OrganizationAuthority organizationAuthority;
+        OrganizationEntity organization;
+        OrganizationAuthorityEntity organizationAuthority;
         for (Map<String, String> columns : rows) {
 
             // Create organization
-            organization = new Organization();
+            organization = new OrganizationEntity();
             organization.setName(columns.get("name"));
             organization = organizationRepository.save(organization);
 
             // Create organization's authorities
             for (OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
-                organizationAuthority = new OrganizationAuthority(organization, authorityName);
+                organizationAuthority = new OrganizationAuthorityEntity(organization, authorityName);
                 organizationAuthority = organizationAuthorityRepository.save(organizationAuthority);
                 organization.getOrganizationAuthorities().add(organizationAuthority);
                 context.getOrganizationAuthorities().put(organization.getName() + authorityName.name(), organizationAuthority);
@@ -123,18 +134,18 @@ public class CommonStepDefinitions {
     public void theFollowingOrganizationsAreNotRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization;
-        OrganizationAuthority organizationAuthority;
+        OrganizationEntity organization;
+        OrganizationAuthorityEntity organizationAuthority;
         for (Map<String, String> columns : rows) {
 
             // Create organization
-            organization = new Organization();
+            organization = new OrganizationEntity();
             organization.setId(generateId());
             organization.setName(columns.get("name"));
 
             // Create organization's authorities
             for (OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
-                organizationAuthority = new OrganizationAuthority(organization, authorityName);
+                organizationAuthority = new OrganizationAuthorityEntity(organization, authorityName);
                 organizationAuthority.setId(generateId());
                 organization.getOrganizationAuthorities().add(organizationAuthority);
                 context.getOrganizationAuthorities().put(organization.getName() + authorityName.name(), organizationAuthority);

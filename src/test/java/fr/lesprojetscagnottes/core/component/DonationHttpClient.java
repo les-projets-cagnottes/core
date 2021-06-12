@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.component;
 
-import fr.lesprojetscagnottes.core.model.DonationModel;
+import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

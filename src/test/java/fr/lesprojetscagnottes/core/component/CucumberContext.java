@@ -2,9 +2,17 @@ package fr.lesprojetscagnottes.core.component;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import fr.lesprojetscagnottes.core.common.StringsCommon;
-import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
+import fr.lesprojetscagnottes.core.budget.Account;
+import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
+import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.user.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,14 +32,14 @@ public class CucumberContext {
 
     private Map<String, Account> accounts = new HashMap<>();
     private Map<String, AuthenticationResponseModel> auths = new HashMap<>();
-    private Map<String, OrganizationAuthority> organizationAuthorities = new HashMap<>();
-    private Map<String, Organization> organizations = new HashMap<>();
-    private Map<String, User> users = new HashMap<>();
-    private Map<String, Content> contents = new HashMap<>();
+    private Map<String, OrganizationAuthorityEntity> organizationAuthorities = new HashMap<>();
+    private Map<String, OrganizationEntity> organizations = new HashMap<>();
+    private Map<String, UserEntity> users = new HashMap<>();
+    private Map<String, ContentEntity> contents = new HashMap<>();
     private Map<String, Budget> budgets = new HashMap<>();
-    private Map<String, Project> projects = new HashMap<>();
-    private Map<String, Campaign> campaigns = new HashMap<>();
-    private Map<String, Idea> ideas = new HashMap<>();
+    private Map<String, ProjectEntity> projects = new HashMap<>();
+    private Map<String, CampaignEntity> campaigns = new HashMap<>();
+    private Map<String, IdeaEntity> ideas = new HashMap<>();
 
     private Gson gson;
 
