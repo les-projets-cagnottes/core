@@ -3,10 +3,10 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.ProjectHttpClient;
-import fr.lesprojetscagnottes.core.entity.Project;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.model.ProjectModel;
-import fr.lesprojetscagnottes.core.repository.ProjectRepository;
+import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.project.ProjectModel;
+import fr.lesprojetscagnottes.core.project.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -35,11 +35,11 @@ public class ProjectStepDefinitions {
     public void theFollowingProjectsAreCreated(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Project project;
+        ProjectEntity project;
         for (Map<String, String> columns : rows) {
 
             // Create project
-            project = new Project();
+            project = new ProjectEntity();
             project.setLeader(context.getUsers().get(columns.get("leader")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
@@ -56,11 +56,11 @@ public class ProjectStepDefinitions {
     public void createsTheFollowingProjects(String userFirstname, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Project project;
+        ProjectEntity project;
         for (Map<String, String> columns : rows) {
 
             // Create project
-            project = new Project();
+            project = new ProjectEntity();
             project.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
@@ -84,19 +84,19 @@ public class ProjectStepDefinitions {
     public void followingProjectsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        List<Project> projectsReturned = projectRepository.findAll();
+        List<ProjectEntity> projectsReturned = projectRepository.findAll();
 
-        Project project;
+        ProjectEntity project;
         for (Map<String, String> columns : rows) {
 
             // Create project from feature
-            project = new Project();
+            project = new ProjectEntity();
             project.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
             project.setLongDescription(columns.get("longDescription"));
             project.setPeopleRequired(Integer.parseInt(columns.get("peopleRequired")));
-            final Project projectFinal = project;
+            final ProjectEntity projectFinal = project;
 
             projectsReturned.stream()
                     .filter(projectReturned -> projectFinal.getTitle().equals(projectReturned.getTitle()))

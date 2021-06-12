@@ -1,15 +1,29 @@
 package fr.lesprojetscagnottes.core;
 
 import com.google.gson.Gson;
-import fr.lesprojetscagnottes.core.common.ScheduleParamsCommon;
-import fr.lesprojetscagnottes.core.entity.*;
-import fr.lesprojetscagnottes.core.generator.StringGenerator;
-import fr.lesprojetscagnottes.core.generator.UserGenerator;
-import fr.lesprojetscagnottes.core.repository.*;
-import fr.lesprojetscagnottes.core.scheduler.MainScheduler;
-import fr.lesprojetscagnottes.core.security.TokenProvider;
-import fr.lesprojetscagnottes.core.service.UserService;
-import fr.lesprojetscagnottes.core.task.DonationProcessingTask;
+import fr.lesprojetscagnottes.core.authentication.ApiTokenRepository;
+import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
+import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
+import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
+import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
+import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.common.strings.ScheduleParamsCommon;
+import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.schedule.ScheduleEntity;
+import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
+import fr.lesprojetscagnottes.core.schedule.ScheduleName;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.common.scheduler.MainScheduler;
+import fr.lesprojetscagnottes.core.common.security.TokenProvider;
+import fr.lesprojetscagnottes.core.user.UserRepository;
+import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +86,7 @@ public class LPCCoreApplication {
 	@Autowired
 	private UserService userService;
 
-	@Value("${fr.lesprojetscagnottes.adminPassword}")
+	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
 
 	@Value("${fr.lesprojetscagnottes.core.storage}")
@@ -88,14 +102,14 @@ public class LPCCoreApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
 
-		User admin = null;
+		UserEntity admin = null;
 
 		// First launch of App
 		if (authorityRepository.count() == 0) {
 
 			// Creation of every roles in database
 			for (AuthorityName authorityName : AuthorityName.values()) {
-				authorityRepository.save(new Authority(authorityName));
+				authorityRepository.save(new AuthorityEntity(authorityName));
 			}
 
 			userGenerator.init(); // Refresh authorities
@@ -111,7 +125,7 @@ public class LPCCoreApplication {
 			admin = userRepository.save(admin);
 
 			// Creation of a default organization
-			Organization organization = new Organization();
+			OrganizationEntity organization = new OrganizationEntity();
 			organization.setName("Les Projets Cagnottes");
 			organization.setSocialName("Les Projets Cagnottes");
 			organization.setLogoUrl("https://eu.ui-avatars.com/api/?name=Les+Projets+Cagnottes");
@@ -120,14 +134,14 @@ public class LPCCoreApplication {
 
 			// Create authorities
 			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
-				organizationAuthorityRepository.save(new OrganizationAuthority(organization, authorityName));
+				organizationAuthorityRepository.save(new OrganizationAuthorityEntity(organization, authorityName));
 			}
 
 			// Creation of default reminders
 			Map<String, String> params = new HashMap<>();
 			params.put(ScheduleParamsCommon.SLACK_TEMPLATE, "slack/fr/idea-reminder");
-			Schedule schedule = new Schedule();
-			schedule.setType(ScheduleType.REMINDER);
+			ScheduleEntity schedule = new ScheduleEntity();
+			schedule.setType(ScheduleName.REMINDER);
 			schedule.setPlanning("0 0 10 1 * *");
 			schedule.setParams(gson.toJson(params));
 			scheduleRepository.save(schedule);
@@ -144,8 +158,8 @@ public class LPCCoreApplication {
 			if(admin == null) {
 				admin = userRepository.findByEmail("admin");
 			}
-			List<AuthenticationResponse> apiTokens = apiTokenRepository.findAllByDescription("slack-events-catcher");
-			AuthenticationResponse apiToken;
+			List<AuthenticationResponseEntity> apiTokens = apiTokenRepository.findAllByDescription("slack-events-catcher");
+			AuthenticationResponseEntity apiToken;
 			if(apiTokens.size() == 1) {
 				apiToken = apiTokens.get(0);
 			} else if(apiTokens.size() == 0) {
@@ -153,7 +167,7 @@ public class LPCCoreApplication {
 				cal.add(Calendar.YEAR, 1);
 				Date nextYear = cal.getTime();
 				Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, userService.getAuthorities(admin.getId()));
-				apiToken = new AuthenticationResponse(jwtTokenUtil.generateToken(authentication, nextYear));
+				apiToken = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
 				apiToken.setDescription("slack-events-catcher");
 				apiToken.setExpiration(nextYear);
 				apiToken.setUser(admin);
@@ -174,6 +188,7 @@ public class LPCCoreApplication {
 			}
 		}
 
+		prepareDirectories("img");
 		mainScheduler.schedule();
 		new Timer().schedule(donationProcessingTask, 0, 500);
 	}

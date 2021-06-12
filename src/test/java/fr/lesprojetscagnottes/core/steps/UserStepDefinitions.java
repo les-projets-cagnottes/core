@@ -1,13 +1,13 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.Authority;
-import fr.lesprojetscagnottes.core.entity.AuthorityName;
-import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.entity.User;
-import fr.lesprojetscagnottes.core.repository.AuthorityRepository;
-import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.repository.UserRepository;
+import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
+import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.user.UserRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,11 +38,11 @@ public class UserStepDefinitions {
     public void theFollowingUsersAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        User user;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             // Create user
-            user = new User();
+            user = new UserEntity();
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
             user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
@@ -62,13 +62,13 @@ public class UserStepDefinitions {
     public void theFollowingUsersAreMembersOfOrganization(String organizationName, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization = context.getOrganizations().get(organizationName);
+        OrganizationEntity organization = context.getOrganizations().get(organizationName);
 
-        User user;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             // Create user
-            user = new User();
+            user = new UserEntity();
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
             user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
@@ -97,11 +97,11 @@ public class UserStepDefinitions {
     public void theFollowingUsersAreNotRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        User user;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             // Create user
-            user = new User();
+            user = new UserEntity();
             user.setId(CucumberContext.generateId());
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
@@ -122,12 +122,12 @@ public class UserStepDefinitions {
     public void theFollowingUsersAreGrantedWithAuthorities(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        User user;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             user = context.getUsers().get(columns.get("firstname"));
-            final User userFinal = userRepository.findById(user.getId()).orElse(null);
-            Authority authority = authorityRepository.findByName(AuthorityName.valueOf(columns.get("authority")));
+            final UserEntity userFinal = userRepository.findById(user.getId()).orElse(null);
+            AuthorityEntity authority = authorityRepository.findByName(AuthorityName.valueOf(columns.get("authority")));
 
             assertNotNull(userFinal);
             userFinal.getUserAuthorities().stream().filter(userAuthority -> userAuthority.getName().equals(authority.getName()))
@@ -148,8 +148,8 @@ public class UserStepDefinitions {
     public void theFollowingUsersAreMembersOfOrganizations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization;
-        User user;
+        OrganizationEntity organization;
+        UserEntity user;
         for (Map<String, String> columns : rows) {
 
             user = context.getUsers().get(columns.get("user"));

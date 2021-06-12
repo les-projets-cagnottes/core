@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.component;
 
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

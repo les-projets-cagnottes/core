@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.component;
 
-import fr.lesprojetscagnottes.core.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.BudgetModel;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

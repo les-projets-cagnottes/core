@@ -1,16 +1,16 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import com.google.gson.reflect.TypeToken;
-import fr.lesprojetscagnottes.core.common.StringsCommon;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.IdeaHttpClient;
-import fr.lesprojetscagnottes.core.entity.Idea;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.model.GenericModel;
-import fr.lesprojetscagnottes.core.model.IdeaModel;
-import fr.lesprojetscagnottes.core.pagination.DataPage;
-import fr.lesprojetscagnottes.core.repository.IdeaRepository;
+import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.common.GenericModel;
+import fr.lesprojetscagnottes.core.idea.IdeaModel;
+import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.idea.IdeaRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import org.junit.Assert;
@@ -42,9 +42,9 @@ public class IdeaStepDefinitions {
     public void theFollowingIdeasAreSubmitted(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Idea idea;
+        IdeaEntity idea;
         for (Map<String, String> columns : rows) {
-            idea = new Idea();
+            idea = new IdeaEntity();
             idea.setShortDescription(columns.get("shortDescription"));
             idea.setLongDescription(columns.get("longDescription"));
             idea.setHasAnonymousCreator(Boolean.valueOf(columns.get("hasAnonymousCreator")));
@@ -104,16 +104,16 @@ public class IdeaStepDefinitions {
         List<IdeaModel> ideasReturned = body.getContent();
         Assert.assertNotNull(ideasReturned);
 
-        Idea idea;
+        IdeaEntity idea;
         for (Map<String, String> columns : rows) {
 
-            idea = new Idea();
+            idea = new IdeaEntity();
             idea.setShortDescription(columns.get("shortDescription"));
             idea.setLongDescription(columns.get("longDescription"));
             idea.setHasAnonymousCreator(Boolean.valueOf(columns.get("hasAnonymousCreator")));
             idea.setHasLeaderCreator(Boolean.valueOf(columns.get("hasLeaderCreator")));
             idea.setOrganization(context.getOrganizations().get(columns.get("organization")));
-            final Idea ideaFinal = idea;
+            final IdeaEntity ideaFinal = idea;
 
             ideasReturned.stream()
                     .filter(ideaReturned -> ideaFinal.getShortDescription().equals(ideaReturned.getShortDescription()))

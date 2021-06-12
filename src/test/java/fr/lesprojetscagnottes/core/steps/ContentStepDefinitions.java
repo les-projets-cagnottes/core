@@ -1,8 +1,8 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.Content;
-import fr.lesprojetscagnottes.core.repository.ContentRepository;
+import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
+import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +22,11 @@ public class ContentStepDefinitions {
     public void theFollowingContentsAreSaved(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Content content;
+        ContentEntity content;
         for (Map<String, String> columns : rows) {
 
             // Create content
-            content = new Content();
+            content = new ContentEntity();
             content.setName(columns.get("name"));
             content.setValue(columns.get("value"));
             content.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));

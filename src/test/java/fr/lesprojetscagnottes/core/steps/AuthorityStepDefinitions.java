@@ -3,10 +3,10 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.AuthorityHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.Authority;
-import fr.lesprojetscagnottes.core.entity.AuthorityName;
-import fr.lesprojetscagnottes.core.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.model.AuthorityModel;
+import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.authorization.model.AuthorityModel;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -46,13 +46,13 @@ public class AuthorityStepDefinitions {
         Set<AuthorityModel> authoritiesReturned = new HashSet<>(Arrays.asList(context.getGson().fromJson(context.getLastBody(), AuthorityModel[].class)));
         Assert.assertNotNull(authoritiesReturned);
 
-        Authority authority;
+        AuthorityEntity authority;
         for (Map<String, String> columns : rows) {
 
             // Create budget from feature
-            authority = new Authority();
+            authority = new AuthorityEntity();
             authority.setName(AuthorityName.valueOf(columns.get("authority")));
-            final Authority authorityFinal = authority;
+            final AuthorityEntity authorityFinal = authority;
 
             authoritiesReturned.stream()
                     .filter(budgetReturned -> authorityFinal.getName().equals(budgetReturned.getName()))

@@ -1,13 +1,13 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.entity.Budget;
-import fr.lesprojetscagnottes.core.entity.Campaign;
-import fr.lesprojetscagnottes.core.entity.Organization;
-import fr.lesprojetscagnottes.core.model.CampaignStatus;
-import fr.lesprojetscagnottes.core.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.repository.CampaignRepository;
-import fr.lesprojetscagnottes.core.repository.OrganizationRepository;
+import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
+import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
+import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.When;
@@ -42,11 +42,11 @@ public class CampaignStepDefinitions {
         LocalDate now = LocalDate.now();
         LocalDate fundingDeadline = now.plusMonths(1);
 
-        Campaign campaign;
+        CampaignEntity campaign;
         for (Map<String, String> columns : rows) {
 
             // Create campaign
-            campaign = new Campaign();
+            campaign = new CampaignEntity();
             campaign.setTitle(columns.get("title"));
             campaign.setLeader(context.getUsers().get(columns.get("leader")));
             campaign.setProject(context.getProjects().get(columns.get("project")));
@@ -69,11 +69,11 @@ public class CampaignStepDefinitions {
         LocalDate now = LocalDate.now();
         LocalDate fundingDeadline = now.minusMonths(1);
 
-        Campaign campaign;
+        CampaignEntity campaign;
         for (Map<String, String> columns : rows) {
 
             // Create campaign
-            campaign = new Campaign();
+            campaign = new CampaignEntity();
             campaign.setTitle(columns.get("title"));
             campaign.setProject(context.getProjects().get(columns.get("project")));
             campaign.setLeader(context.getUsers().get(columns.get("leader")));
@@ -92,17 +92,17 @@ public class CampaignStepDefinitions {
     public void theFollowingCampaignsAreAssociatedToOrganizations(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Organization organization;
-        Campaign campaign;
+        OrganizationEntity organization;
+        CampaignEntity campaign;
         for (Map<String, String> columns : rows) {
 
             // Get campaign
             campaign = context.getCampaigns().get(columns.get("campaign"));
-            final Campaign campaignFinal = campaign;
+            final CampaignEntity campaignFinal = campaign;
 
             // Get organization
             organization = organizationRepository.findById(context.getOrganizations().get(columns.get("organization")).getId()).orElse(null);
-            final Organization organizationFinal = organization;
+            final OrganizationEntity organizationFinal = organization;
             assertNotNull(organizationFinal);
 
             // Associate campaign to the organization
