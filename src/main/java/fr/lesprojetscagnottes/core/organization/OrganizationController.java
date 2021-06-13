@@ -22,6 +22,10 @@ import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.idea.IdeaEntity;
 import fr.lesprojetscagnottes.core.idea.IdeaModel;
 import fr.lesprojetscagnottes.core.idea.IdeaRepository;
+import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.ProjectModel;
+import fr.lesprojetscagnottes.core.project.ProjectRepository;
+import fr.lesprojetscagnottes.core.project.ProjectStatus;
 import fr.lesprojetscagnottes.core.user.*;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
@@ -105,6 +109,9 @@ public class OrganizationController {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private SlackUserRepository slackUserRepository;
@@ -643,6 +650,56 @@ public class OrganizationController {
         // Convert and return data
         DataPage<CampaignModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(CampaignEntity.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Get paginated organization projects", description = "Get paginated organization projects", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return paginated projects", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization/{id}/projects", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filters"})
+    public DataPage<ProjectModel> getPaginatedProjects(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filters") List<String> filters) {
+
+        // Verify that params are correct
+        if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
+            LOGGER.error("Impossible to get organization projects : params are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that organization exists
+        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
+        if(organization == null) {
+            LOGGER.error("Impossible to get organization projects : organization not found");
+            throw new NotFoundException();
+        }
+
+        // Prepare filter
+        Set<ProjectStatus> status = new LinkedHashSet<>();
+        for(String filter : filters) {
+            status.add(ProjectStatus.valueOf(filter.toUpperCase(Locale.ROOT)));
+        }
+        if(status.isEmpty()) {
+            status.addAll(List.of(ProjectStatus.values()));
+        }
+
+        // Get corresponding entities according to principal
+        Long userLoggedInId = userService.get(principal).getId();
+        Pageable pageable = PageRequest.of(offset, limit, Sort.by("title").ascending().and(Sort.by("status").ascending()));
+        Page<ProjectEntity> entities;
+        boolean isNotAdmin = userService.isNotAdmin(userLoggedInId);
+        if(isNotAdmin) {
+            entities = projectRepository.findAllByOrganizations_IdAndStatusIn(id, status, pageable);
+            //entities = campaignRepository.findAllByUserAndStatus(userLoggedInId, status, pageable);
+        } else {
+            entities = projectRepository.findAllByStatusIn(status, pageable);
+        }
+
+        // Convert and return data
+        DataPage<ProjectModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(ProjectEntity.fromEntity(entity)));
         return models;
     }
 

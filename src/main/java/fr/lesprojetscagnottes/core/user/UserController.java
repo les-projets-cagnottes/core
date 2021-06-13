@@ -7,19 +7,21 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.*;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.donation.model.DonationModel;
-import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.model.DonationModel;
+import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.ProjectModel;
+import fr.lesprojetscagnottes.core.project.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,6 +76,9 @@ public class UserController {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private SlackTeamRepository slackTeamRepository;
@@ -267,20 +272,20 @@ public class UserController {
         return models;
     }
 
-    @Operation(summary = "Get user campaigns", description = "Get user campaigns", tags = { "Users" })
+    @Operation(summary = "Get user campaigns", description = "Get user projects", tags = { "Users" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding campaignss", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CampaignModel.class)))),
+            @ApiResponse(responseCode = "200", description = "Returns corresponding projects", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CampaignModel.class)))),
             @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/user/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<CampaignModel> getCampaigns(Principal principal, @PathVariable("id") Long id) {
+    @RequestMapping(value = "/user/{id}/projects", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<ProjectModel> getProjects(Principal principal, @PathVariable("id") Long id) {
 
         // Fails if user ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get campaigns by user ID : User ID is incorrect");
+            LOGGER.error("Impossible to get projects by user ID : User ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -288,7 +293,7 @@ public class UserController {
         // Principal is the user OR Principal is admin
         long userLoggedInId = userService.get(principal).getId();
         if(userLoggedInId != id && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get campaigns by user ID : user {} has not enough privileges", userLoggedInId);
+            LOGGER.error("Impossible to get projects by user ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -297,15 +302,15 @@ public class UserController {
 
         // Verify that any of references are not null
         if(user == null) {
-            LOGGER.error("Impossible to get campaigns by user ID : user {} not found", id);
+            LOGGER.error("Impossible to get projects by user ID : user {} not found", id);
             throw new NotFoundException();
         }
 
         // Get and transform entities
-        Set<CampaignModel> models = new LinkedHashSet<>();
-        Set<CampaignEntity> entities = campaignRepository.findAllByLeaderId(id);
-        entities.addAll(campaignRepository.findAllByPeopleGivingTime_Id(id));
-        entities.forEach(entity -> models.add(CampaignModel.fromEntity(entity)));
+        Set<ProjectModel> models = new LinkedHashSet<>();
+        Set<ProjectEntity> entities = projectRepository.findAllByLeaderId(id);
+        entities.addAll(projectRepository.findAllByPeopleGivingTime_Id(id));
+        entities.forEach(entity -> models.add(ProjectModel.fromEntity(entity)));
 
         return models;
     }
