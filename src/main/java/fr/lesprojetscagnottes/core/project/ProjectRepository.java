@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.project;
 
-import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,9 +18,9 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
 
     Set<ProjectEntity> findAllByPeopleGivingTime_Id(Long memberId);
 
-    Set<ProjectEntity> findAllByStatus(CampaignStatus status);
+    Set<ProjectEntity> findAllByStatus(ProjectStatus status);
 
-    Page<ProjectEntity> findAllByStatusIn(Set<CampaignStatus> status, Pageable pageable);
+    Page<ProjectEntity> findAllByStatusIn(Set<ProjectStatus> status, Pageable pageable);
 
     @Query(nativeQuery = true,
             value = "select c.* from projects c " +

@@ -226,7 +226,7 @@ public class ProjectController {
         // Save project
         ProjectEntity projectToSave = new ProjectEntity();
         projectToSave.setTitle(project.getTitle());
-        projectToSave.setStatus(ProjectStatus.A_DRAFT);
+        projectToSave.setStatus(ProjectStatus.DRAFT);
         projectToSave.setShortDescription(project.getShortDescription());
         projectToSave.setLongDescription(project.getLongDescription());
         projectToSave.setPeopleRequired(project.getPeopleRequired());
