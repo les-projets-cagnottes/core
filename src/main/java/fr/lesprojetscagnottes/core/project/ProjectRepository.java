@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.project;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,8 +10,7 @@ import java.util.Set;
 
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
 
-    @NotNull
-    Page<ProjectEntity> findAll(@NotNull Pageable pageable);
+    Page<ProjectEntity> findAll(Pageable pageable);
 
     Set<ProjectEntity> findAllByLeaderId(Long memberId);
 
