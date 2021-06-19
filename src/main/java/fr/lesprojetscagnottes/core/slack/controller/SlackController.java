@@ -1,11 +1,11 @@
 package fr.lesprojetscagnottes.core.slack.controller;
 
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.UserEntity;
@@ -233,11 +233,11 @@ public class SlackController {
                     );
 
             // Distribute usable budgets
-            Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
-                Account account = accountRepository.findByOwnerIdAndBudgetId(userWithSlackUser.getId(), budget.getId());
+                AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userWithSlackUser.getId(), budget.getId());
                 if(account == null) {
-                    account = new Account();
+                    account = new AccountEntity();
                     account.setAmount(budget.getAmountPerMember());
                     account.setBudget(budget);
                 }

@@ -5,11 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.project.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
@@ -61,7 +62,7 @@ public class UserEntity extends UserModel implements UserDetails {
 
     @OneToMany(mappedBy = "owner")
     @JsonIgnoreProperties(value = {"owner", "budget"})
-    private Set<Account> accounts = new LinkedHashSet<>();
+    private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members")
     @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
@@ -69,10 +70,10 @@ public class UserEntity extends UserModel implements UserDetails {
 
     @OneToMany(mappedBy = "sponsor")
     @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
-    private Set<Budget> budgets = new LinkedHashSet<>();
+    private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "peopleGivingTime")
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "peopleGivingTime")
@@ -102,6 +103,12 @@ public class UserEntity extends UserModel implements UserDetails {
             orphanRemoval = true)
     @JsonIgnoreProperties(value = {"user"})
     private Set<AuthenticationResponseEntity> apiTokens = new LinkedHashSet<>();
+
+    @OneToMany(
+            mappedBy = "organization",
+            orphanRemoval = true)
+    @JsonIgnoreProperties({"author", "organization", "project"})
+    private Set<NewsEntity> news = new LinkedHashSet<>();
 
     public UserEntity() {
     }

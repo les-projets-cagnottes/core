@@ -3,8 +3,8 @@ package fr.lesprojetscagnottes.core.component;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
@@ -30,13 +30,13 @@ public class CucumberContext {
     private String lastBody = StringsCommon.EMPTY_STRING;
     private int lastHttpCode = 0;
 
-    private Map<String, Account> accounts = new HashMap<>();
+    private Map<String, AccountEntity> accounts = new HashMap<>();
     private Map<String, AuthenticationResponseModel> auths = new HashMap<>();
     private Map<String, OrganizationAuthorityEntity> organizationAuthorities = new HashMap<>();
     private Map<String, OrganizationEntity> organizations = new HashMap<>();
     private Map<String, UserEntity> users = new HashMap<>();
     private Map<String, ContentEntity> contents = new HashMap<>();
-    private Map<String, Budget> budgets = new HashMap<>();
+    private Map<String, BudgetEntity> budgets = new HashMap<>();
     private Map<String, ProjectEntity> projects = new HashMap<>();
     private Map<String, CampaignEntity> campaigns = new HashMap<>();
     private Map<String, IdeaEntity> ideas = new HashMap<>();

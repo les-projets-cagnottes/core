@@ -1,5 +1,6 @@
-package fr.lesprojetscagnottes.core.budget;
+package fr.lesprojetscagnottes.core.budget.model;
 
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.GenericModel;
@@ -48,7 +49,7 @@ public class BudgetModel extends AuditEntity<String> {
     @Transient
     private GenericModel sponsor;
 
-    public static BudgetModel fromEntity(Budget entity) {
+    public static BudgetModel fromEntity(BudgetEntity entity) {
         BudgetModel model = new BudgetModel();
         model.setCreatedAt(entity.getCreatedAt());
         model.setCreatedBy(entity.getCreatedBy());

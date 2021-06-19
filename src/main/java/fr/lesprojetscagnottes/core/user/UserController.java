@@ -6,7 +6,11 @@ import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.*;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.model.AccountModel;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
@@ -266,7 +270,7 @@ public class UserController {
 
         // Get and transform entities
         Set<AccountModel> models = new LinkedHashSet<>();
-        Set<Account> entities = accountRepository.findAllByOwnerId(id);
+        Set<AccountEntity> entities = accountRepository.findAllByOwnerId(id);
         entities.forEach(entity -> models.add(AccountModel.fromEntity(entity)));
 
         return models;
@@ -430,7 +434,7 @@ public class UserController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(budgetId).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(budgetId).orElse(null);
         UserEntity user = userRepository.findById(contributorId).orElse(null);
 
         // Verify that any of references are not null

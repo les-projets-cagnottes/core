@@ -2,8 +2,8 @@ package fr.lesprojetscagnottes.core.slack.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
@@ -12,8 +12,8 @@ import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.budget.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
@@ -187,11 +187,11 @@ public class AuthenticationController {
                         );
                 organizationRepository.save(organization);
 
-                Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+                Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
                 budgets.forEach(budget -> {
-                    Account account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                    AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
                     if (account == null) {
-                        account = new Account();
+                        account = new AccountEntity();
                         account.setAmount(budget.getAmountPerMember());
                         account.setBudget(budget);
                     }

@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.content.controller;
 
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
@@ -8,7 +8,7 @@ import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -147,7 +147,7 @@ public class ContentController {
 
         // If the content is associated as rules on a budget, only a sponsor can update it
         Long userLoggedInId = userService.get(principal).getId();
-        Set<Budget> budgets = budgetRepository.findAllByRulesId(content.getId());
+        Set<BudgetEntity> budgets = budgetRepository.findAllByRulesId(content.getId());
         LOGGER.debug(budgets.toString());
         Set<OrganizationEntity> organizations = new LinkedHashSet<>();
         budgets.forEach(budget -> organizations.add(budget.getOrganization()));

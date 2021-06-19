@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.project;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
+import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import lombok.AccessLevel;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class ProjectEntity extends ProjectModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens", "news"})
     private UserEntity leader = new UserEntity();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
@@ -37,5 +38,11 @@ public class ProjectEntity extends ProjectModel {
     @ManyToMany(mappedBy = "projects", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"})
     private Set<OrganizationEntity> organizations = new LinkedHashSet<>();
+
+    @OneToMany(
+            mappedBy = "organization",
+            orphanRemoval = true)
+    @JsonIgnoreProperties({"author", "organization", "project"})
+    private Set<NewsEntity> news = new LinkedHashSet<>();
 
 }

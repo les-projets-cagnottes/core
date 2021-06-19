@@ -1,5 +1,6 @@
-package fr.lesprojetscagnottes.core.budget;
+package fr.lesprojetscagnottes.core.budget.model;
 
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import lombok.AccessLevel;
@@ -34,7 +35,7 @@ public class AccountModel extends AuditEntity<String> {
     @Transient
     protected GenericModel budget;
 
-    public static AccountModel fromEntity(Account entity) {
+    public static AccountModel fromEntity(AccountEntity entity) {
         AccountModel model = new AccountModel();
         model.setCreatedAt(entity.getCreatedAt());
         model.setCreatedBy(entity.getCreatedBy());

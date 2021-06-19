@@ -1,10 +1,10 @@
 package fr.lesprojetscagnottes.core.donation.controller;
 
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.Budget;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
@@ -87,18 +87,18 @@ public class DonationController {
         List<UserEntity> users = userRepository.findAll();
         users.forEach(user -> {
             LOGGER.info("User {} : {} {}", user.getId(), user.getFirstname(), user.getLastname());
-            Set<Budget> budgets = budgetRepository.findAllByUser(user.getId());
-            Set<Account> accounts = accountRepository.findAllByOwnerId(user.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findAllByUser(user.getId());
+            Set<AccountEntity> accounts = accountRepository.findAllByOwnerId(user.getId());
             if(budgets.size() != accounts.size()) {
                 LOGGER.warn("Number of accounts {} and budgets {} for user {} don't match", accounts.size(), budgets.size(), user.getId());
             }
             budgets.forEach(budget -> {
                 LOGGER.info("|- Budget {} : {}", budget.getId(), budget.getAmountPerMember());
-                Optional<Account> accountOptional = accounts.stream().filter(account -> account.getBudget().getId().equals(budget.getId())).findFirst();
+                Optional<AccountEntity> accountOptional = accounts.stream().filter(account -> account.getBudget().getId().equals(budget.getId())).findFirst();
                 if(accountOptional.isEmpty()) {
                     LOGGER.error("Not account found for budget {} and user {}", budget.getId(), user.getId());
                 } else {
-                    Account account = accountOptional.get();
+                    AccountEntity account = accountOptional.get();
                     LOGGER.info("|- Account {} : {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
                     if(account.getInitialAmount() != budget.getAmountPerMember()) {
                         LOGGER.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
@@ -116,10 +116,10 @@ public class DonationController {
             });
         });
         LOGGER.info("Control budgets");
-        List<Budget> budgets = budgetRepository.findAll();
+        List<BudgetEntity> budgets = budgetRepository.findAll();
         budgets.forEach(budget -> {
             LOGGER.info("Budget {} : {}", budget.getId(), budget.getAmountPerMember());
-            Set<Account> accounts = accountRepository.findAllByBudgetId(budget.getId());
+            Set<AccountEntity> accounts = accountRepository.findAllByBudgetId(budget.getId());
             final float[] totalDonationsAmount = {0f};
             accounts.forEach(account -> {
                 float accountTotalDonations = account.getInitialAmount() - account.getAmount();
@@ -169,9 +169,9 @@ public class DonationController {
         }
 
         // Retrieve full referenced objects
-        Account account = accountRepository.findById(donation.getAccount().getId()).orElse(null);
+        AccountEntity account = accountRepository.findById(donation.getAccount().getId()).orElse(null);
         CampaignEntity campaign = campaignRepository.findById(donation.getCampaign().getId()).orElse(null);
-        Budget budget = budgetRepository.findById(donation.getBudget().getId()).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(donation.getBudget().getId()).orElse(null);
         UserEntity contributor = userRepository.findById(donation.getContributor().getId()).orElse(null);
 
         // Verify that any of references are not null

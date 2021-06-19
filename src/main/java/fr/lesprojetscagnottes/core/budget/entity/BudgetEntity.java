@@ -1,6 +1,7 @@
-package fr.lesprojetscagnottes.core.budget;
+package fr.lesprojetscagnottes.core.budget.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
@@ -18,7 +19,7 @@ import java.util.Set;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "budgets")
-public class Budget extends BudgetModel {
+public class BudgetEntity extends BudgetModel {
 
     @ManyToMany
     @JoinTable(
@@ -46,7 +47,7 @@ public class Budget extends BudgetModel {
 
     @OneToMany(mappedBy = "budget")
     @JsonIgnoreProperties(value = {"owner", "budget"})
-    private Set<Account> accounts = new LinkedHashSet<>();
+    private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
     @Override
     public String toString() {

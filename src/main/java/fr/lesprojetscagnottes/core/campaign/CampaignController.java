@@ -1,9 +1,9 @@
 package fr.lesprojetscagnottes.core.campaign;
 
 import com.google.gson.Gson;
-import fr.lesprojetscagnottes.core.budget.Budget;
-import fr.lesprojetscagnottes.core.budget.BudgetModel;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
@@ -190,7 +190,7 @@ public class CampaignController {
         }
 
         // Get and transform entities
-        Set<Budget> entities = budgetRepository.findAllByCampaigns_Id(id);
+        Set<BudgetEntity> entities = budgetRepository.findAllByCampaigns_Id(id);
         Set<BudgetModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(BudgetModel.fromEntity(entity)));
         return models;
@@ -303,7 +303,7 @@ public class CampaignController {
         // Retrieve full referenced objects
         UserEntity leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
         Set<OrganizationEntity> organizations = organizationRepository.findAllByIdIn(campaign.getOrganizationsRef());
-        Set<Budget> budgets = budgetRepository.findAllByIdIn(campaign.getBudgetsRef());
+        Set<BudgetEntity> budgets = budgetRepository.findAllByIdIn(campaign.getBudgetsRef());
 
         // Fails if any of references are null
         if(leader == null || organizations.isEmpty() || budgets.isEmpty() ||
@@ -322,7 +322,7 @@ public class CampaignController {
         }
 
         // Verify that budgets are usable
-        Set<Budget> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), campaign.getOrganizationsRef());
+        Set<BudgetEntity> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), campaign.getOrganizationsRef());
         if(!budgetsUsable.containsAll(budgets)) {
             LOGGER.error("Impossible to create campaign \"{}\" : budgets are not all usable", campaign.getTitle());
             throw new ForbiddenException();
