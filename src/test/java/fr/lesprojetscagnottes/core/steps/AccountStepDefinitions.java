@@ -1,8 +1,8 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +23,11 @@ public class AccountStepDefinitions {
 
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Account account;
+        AccountEntity account;
         for (Map<String, String> columns : rows) {
 
             // Create budget
-            account = new Account();
+            account = new AccountEntity();
             account.setOwner(context.getUsers().get(columns.get("owner")));
             account.setBudget(context.getBudgets().get(columns.get("budget")));
             account.setAmount(Float.parseFloat(columns.get("amount")));

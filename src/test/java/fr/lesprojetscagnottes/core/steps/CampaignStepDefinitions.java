@@ -1,11 +1,11 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import io.cucumber.datatable.DataTable;
@@ -123,7 +123,7 @@ public class CampaignStepDefinitions {
     @When("The following campaigns uses budgets")
     public void theFollowingCampaignsUsesBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
             budget = context.getBudgets().get(columns.get("budget"));
             budget.getCampaigns().add(context.getCampaigns().get(columns.get("campaign")));

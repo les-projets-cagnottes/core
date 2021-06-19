@@ -1,6 +1,7 @@
-package fr.lesprojetscagnottes.core.budget;
+package fr.lesprojetscagnottes.core.budget.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.lesprojetscagnottes.core.budget.model.AccountModel;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import lombok.AccessLevel;
@@ -18,7 +19,7 @@ import java.util.Set;
 @Setter(AccessLevel.PUBLIC)
 @Entity
 @Table(name = "accounts")
-public class Account extends AccountModel {
+public class AccountEntity extends AccountModel {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
@@ -26,7 +27,7 @@ public class Account extends AccountModel {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"organization", "sponsor", "donations", "accounts"})
-    private Budget budget = new Budget();
+    private BudgetEntity budget = new BudgetEntity();
 
     @OneToMany(mappedBy = "account")
     @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})

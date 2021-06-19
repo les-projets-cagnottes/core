@@ -6,7 +6,11 @@ import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEnt
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.*;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
@@ -307,7 +311,7 @@ public class OrganizationController {
         }
 
         // Get budget entities
-        Set<Budget> entities = budgetRepository.findAllByOrganizationId(organizationId);
+        Set<BudgetEntity> entities = budgetRepository.findAllByOrganizationId(organizationId);
 
         // Convert all entities to models
         Set<BudgetModel> models = new LinkedHashSet<>();
@@ -351,7 +355,7 @@ public class OrganizationController {
         organizationIds.add(id);
 
         // Retrieve all corresponding entities
-        Set<Budget> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
+        Set<BudgetEntity> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
 
         // Convert all entities to models
         Set<BudgetModel> models = new LinkedHashSet<>();
@@ -1074,11 +1078,11 @@ public class OrganizationController {
             organizationRepository.save(organization);
 
             // Create accounts onboarding users
-            Set<Budget> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
-                Account account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
                 if(account == null) {
-                    account = new Account();
+                    account = new AccountEntity();
                     account.setAmount(budget.getAmountPerMember());
                     account.setBudget(budget);
                 }

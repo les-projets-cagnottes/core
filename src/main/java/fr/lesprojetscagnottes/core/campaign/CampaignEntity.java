@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.campaign;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.project.ProjectEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
@@ -21,11 +21,11 @@ import java.util.Set;
 public class CampaignEntity extends CampaignModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens"})
+    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "slackUsers", "apiTokens", "news"})
     private UserEntity leader = new UserEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
     private ProjectEntity project = new ProjectEntity();
 
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
@@ -42,7 +42,7 @@ public class CampaignEntity extends CampaignModel {
 
     @ManyToMany(mappedBy = "campaigns", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
-    private Set<Budget> budgets = new LinkedHashSet<>();
+    private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "campaigns", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"members", "campaigns", "budgets", "contents"})

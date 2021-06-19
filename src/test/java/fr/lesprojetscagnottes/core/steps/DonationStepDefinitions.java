@@ -5,7 +5,7 @@ import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CampaignHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.DonationHttpClient;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
@@ -97,7 +97,7 @@ public class DonationStepDefinitions {
     public void followingUsersHaveCorrespondingAmountLeftOnBudgets(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Budget budget;
+        BudgetEntity budget;
         Set<Donation> donations;
         float totalAmount = 0f;
         for (Map<String, String> columns : rows) {

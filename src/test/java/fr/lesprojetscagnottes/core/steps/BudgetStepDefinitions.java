@@ -3,10 +3,10 @@ package fr.lesprojetscagnottes.core.steps;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.BudgetHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.budget.BudgetModel;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -45,11 +45,11 @@ public class BudgetStepDefinitions {
         LocalDate firstDay = now.with(firstDayOfYear());
         LocalDate lastDay = now.with(lastDayOfYear());
 
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
 
             // Create budget
-            budget = new Budget();
+            budget = new BudgetEntity();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
             budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
@@ -74,11 +74,11 @@ public class BudgetStepDefinitions {
         LocalDate firstDay = lastYear.with(firstDayOfYear());
         LocalDate lastDay = lastYear.with(lastDayOfYear());
 
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
 
             // Create budget
-            budget = new Budget();
+            budget = new BudgetEntity();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
             budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
@@ -129,9 +129,9 @@ public class BudgetStepDefinitions {
         LocalDate firstDay = lastYear.with(firstDayOfYear());
         LocalDate lastDay = lastYear.with(lastDayOfYear());
 
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
-            budget = new Budget();
+            budget = new BudgetEntity();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
             budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
@@ -157,7 +157,7 @@ public class BudgetStepDefinitions {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
         Set<BudgetModel> budgets = new LinkedHashSet<>();
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
             budget = context.getBudgets().get(columns.get("name"));
             budget.setName(columns.get("name"));
@@ -188,18 +188,18 @@ public class BudgetStepDefinitions {
         System.out.println(budgetsReturned);
         Assert.assertNotNull(budgetsReturned);
 
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
 
             // Create budget from feature
-            budget = new Budget();
+            budget = new BudgetEntity();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
             budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
             budget.setRules(context.getContents().get(columns.get("rules")));
             budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
             budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
-            final Budget budgetFinal = budget;
+            final BudgetEntity budgetFinal = budget;
 
             budgetsReturned.stream()
                     .filter(budgetReturned -> budgetFinal.getName().equals(budgetReturned.getName()))
@@ -221,20 +221,20 @@ public class BudgetStepDefinitions {
     public void followingBudgetsAreRegistered(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        List<Budget> budgetsReturned = budgetRepository.findAll();
+        List<BudgetEntity> budgetsReturned = budgetRepository.findAll();
 
-        Budget budget;
+        BudgetEntity budget;
         for (Map<String, String> columns : rows) {
 
             // Create budget from feature
-            budget = new Budget();
+            budget = new BudgetEntity();
             budget.setName(columns.get("name"));
             budget.setAmountPerMember(Float.parseFloat(columns.get("amountPerMember")));
             budget.setSponsor(context.getUsers().get(columns.get("sponsor")));
             budget.setRules(context.getContents().get(columns.get("rules")));
             budget.setOrganization(context.getOrganizations().get(columns.get("organization")));
             budget.setIsDistributed(Boolean.valueOf(columns.get("isDistributed")));
-            final Budget budgetFinal = budget;
+            final BudgetEntity budgetFinal = budget;
 
             budgetsReturned.stream()
                     .filter(budgetReturned -> budgetFinal.getName().equals(budgetReturned.getName()))

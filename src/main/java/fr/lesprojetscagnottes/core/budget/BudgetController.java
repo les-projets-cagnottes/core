@@ -2,6 +2,12 @@ package fr.lesprojetscagnottes.core.budget;
 
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.model.AccountModel;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
@@ -99,7 +105,7 @@ public class BudgetController {
         for(Long id : ids) {
 
             // Retrieve full referenced objects
-            Budget budget = budgetRepository.findById(id).orElse(null);
+            BudgetEntity budget = budgetRepository.findById(id).orElse(null);
             if(budget == null) {
                 LOGGER.error("Impossible to get budget {} : it doesn't exist", id);
                 continue;
@@ -135,7 +141,7 @@ public class BudgetController {
         organizations.forEach(organization -> organizationIds.add(organization.getId()));
 
         // Retrieve all corresponding entities
-        Set<Budget> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
+        Set<BudgetEntity> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
 
         // Convert all entities to models
         Set<BudgetModel> models = new LinkedHashSet<>();
@@ -169,7 +175,7 @@ public class BudgetController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(id).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(id).orElse(null);
 
         // Verify that any of references are not null
         if(budget == null) {
@@ -178,7 +184,7 @@ public class BudgetController {
         }
 
         // Get and transform donations
-        Page<Account> entities = accountRepository.findByBudgetId(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
+        Page<AccountEntity> entities = accountRepository.findByBudgetId(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
         DataPage<AccountModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(AccountModel.fromEntity(entity)));
         return models;
@@ -209,7 +215,7 @@ public class BudgetController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(id).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(id).orElse(null);
 
         // Verify that any of references are not null
         if(budget == null) {
@@ -242,7 +248,7 @@ public class BudgetController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(budgetId).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(budgetId).orElse(null);
 
         // Verify that any of references are not null
         if(budget == null) {
@@ -325,7 +331,7 @@ public class BudgetController {
         }
 
         // Save budget
-        Budget budgetToSave = new Budget();
+        BudgetEntity budgetToSave = new BudgetEntity();
         budgetToSave.setName(budget.getName());
         budgetToSave.setAmountPerMember(budget.getAmountPerMember());
         budgetToSave.setStartDate(budget.getStartDate());
@@ -365,7 +371,7 @@ public class BudgetController {
             }
 
             // Retrieve full referenced objects
-            Budget budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
+            BudgetEntity budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
             OrganizationEntity organization = organizationRepository.findById(budget.getOrganization().getId()).orElse(null);
             UserEntity sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
             ContentEntity rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
@@ -419,7 +425,7 @@ public class BudgetController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(id).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
             LOGGER.error("Impossible to distribute budget {} : budget not found", id);
             throw new NotFoundException();
@@ -436,9 +442,9 @@ public class BudgetController {
         // Create personal accounts for all members
         Set<UserEntity> members = userRepository.findAllByOrganizations_id(organizationId);
         members.forEach(member -> {
-            Account account = accountRepository.findByOwnerIdAndBudgetId(member.getId(), budget.getId());
+            AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(member.getId(), budget.getId());
             if(account == null) {
-                account = new Account();
+                account = new AccountEntity();
                 account.setAmount(budget.getAmountPerMember());
                 account.setBudget(budget);
             }
@@ -471,7 +477,7 @@ public class BudgetController {
         }
 
         // Retrieve full referenced objects
-        Budget budget = budgetRepository.findById(id).orElse(null);
+        BudgetEntity budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
             LOGGER.error("Impossible to delete budget {} : budget not found", id);
             throw new NotFoundException();

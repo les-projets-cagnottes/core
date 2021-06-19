@@ -9,7 +9,7 @@ import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.strings.ScheduleParamsCommon;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;

@@ -2,10 +2,11 @@ package fr.lesprojetscagnottes.core.organization;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.project.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
@@ -42,7 +43,7 @@ public class OrganizationEntity extends OrganizationModel {
             name = "projects_organizations",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "project_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations"})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
     @ManyToMany
@@ -57,7 +58,7 @@ public class OrganizationEntity extends OrganizationModel {
             mappedBy = "organization",
             orphanRemoval = true)
     @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
-    private Set<Budget> budgets = new LinkedHashSet<>();
+    private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
@@ -65,6 +66,12 @@ public class OrganizationEntity extends OrganizationModel {
     @JsonIgnoreProperties({"submitter", "organization", "followers", "tags"})
     private Set<IdeaEntity> ideas = new LinkedHashSet<>();
 
+    @OneToMany(
+            mappedBy = "organization",
+            orphanRemoval = true)
+    @JsonIgnoreProperties({"author", "organization", "project"})
+    private Set<NewsEntity> news = new LinkedHashSet<>();
+    
     @ManyToMany
     @JoinTable(
             name = "organizations_contents",

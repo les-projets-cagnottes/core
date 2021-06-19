@@ -2,8 +2,8 @@ package fr.lesprojetscagnottes.core.donation.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
-import fr.lesprojetscagnottes.core.budget.Account;
-import fr.lesprojetscagnottes.core.budget.Budget;
+import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import lombok.AccessLevel;
@@ -30,11 +30,11 @@ public class Donation extends DonationModel {
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"organization", "sponsor", "donations", "accounts"})
-    private Budget budget = new Budget();
+    private BudgetEntity budget = new BudgetEntity();
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"owner", "budget"})
-    private Account account = new Account();
+    private AccountEntity account = new AccountEntity();
 
     @Override
     public String toString() {
