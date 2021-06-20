@@ -36,6 +36,6 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
 
     Set<OrganizationEntity> findAllByContents_Id(Long contentId);
 
-    OrganizationEntity findOneByNews_Id(Long id);
+    OrganizationEntity findByNews_Id(Long id);
 
 }

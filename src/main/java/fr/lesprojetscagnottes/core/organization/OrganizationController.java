@@ -26,6 +26,9 @@ import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.idea.IdeaEntity;
 import fr.lesprojetscagnottes.core.idea.IdeaModel;
 import fr.lesprojetscagnottes.core.idea.IdeaRepository;
+import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
+import fr.lesprojetscagnottes.core.news.model.NewsModel;
+import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.project.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.ProjectModel;
 import fr.lesprojetscagnottes.core.project.ProjectRepository;
@@ -45,6 +48,7 @@ import fr.lesprojetscagnottes.core.user.UserModel;
 import fr.lesprojetscagnottes.core.user.UserController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -107,6 +111,9 @@ public class OrganizationController {
 
     @Autowired
     private IdeaRepository ideaRepository;
+
+    @Autowired
+    private NewsRepository newsRepository;
 
     @Autowired
     private OrganizationAuthorityRepository organizationAuthorityRepository;
@@ -704,6 +711,44 @@ public class OrganizationController {
         // Convert and return data
         DataPage<ProjectModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(ProjectEntity.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Get paginated news", description = "Get paginated news", tags = { "Organizations" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding news", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/organization/{id}/news", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public DataPage<NewsModel> list(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+
+        // Verify that IDs are corrects
+        if(id <= 0) {
+            LOGGER.error("Impossible to get news : parameters are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that organization exists
+        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
+        if(organization == null) {
+            LOGGER.error("Impossible to get news : organization not found");
+            throw new NotFoundException();
+        }
+
+        // Verify if principal has correct privileges
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+            LOGGER.error("Impossible to get news : principal is not a member of organization {}", id);
+            throw new ForbiddenException();
+        }
+
+        // Get and transform donations
+        Page<NewsEntity> entities = newsRepository.findAllByOrganization_IdOrOrganizationIdIsNull(id, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
+        DataPage<NewsModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
         return models;
     }
 
