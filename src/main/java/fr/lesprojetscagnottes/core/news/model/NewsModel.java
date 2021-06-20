@@ -34,6 +34,7 @@ public class NewsModel extends AuditEntity<String> {
     public static NewsModel fromEntity(NewsEntity entity) {
         NewsModel model = new NewsModel();
         model.setCreatedAt(entity.getCreatedAt());
+        model.setCreatedBy(entity.getCreatedBy());
         model.setUpdatedAt(entity.getUpdatedAt());
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());

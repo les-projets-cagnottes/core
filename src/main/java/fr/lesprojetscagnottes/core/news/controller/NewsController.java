@@ -80,19 +80,21 @@ public class NewsController {
             throw new BadRequestException();
         }
 
-        // Verify that principal is in news organizations
-        Long userLoggedInId = userService.get(principal).getId();
-        OrganizationEntity newsOrganizations = organizationRepository.findOneByNews_Id(id);
-        if(userService.isMemberOfOrganization(userLoggedInId, newsOrganizations.getId()) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to get news by ID : principal has not enough privileges");
-            throw new ForbiddenException();
-        }
-
         // Verify that entity exists
         NewsEntity entity = newsRepository.findById(id).orElse(null);
         if(entity == null) {
             log.error("Impossible to get news by ID : news not found");
             throw new NotFoundException();
+        }
+
+        // If the news is in an organization, verify that principal is in this organization
+        if(entity.getOrganization() != null) {
+            Long userLoggedInId = userService.get(principal).getId();
+            OrganizationEntity newsOrganizations = organizationRepository.findByNews_Id(id);
+            if(userService.isMemberOfOrganization(userLoggedInId, newsOrganizations.getId()) && userService.isNotAdmin(userLoggedInId)) {
+                log.error("Impossible to get news by ID : principal has not enough privileges");
+                throw new ForbiddenException();
+            }
         }
 
         // Transform and return organization
@@ -135,7 +137,6 @@ public class NewsController {
         return models;
     }
 
-
     @Operation(summary = "Create a news", description = "Create a news", tags = { "News" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "News created", content = @Content(schema = @Schema(implementation = NewsModel.class))),
@@ -160,7 +161,7 @@ public class NewsController {
 
         // Verify that principal is member of organizations
         UserEntity userLoggedIn = userService.get(principal);
-        if(organization != null && userService.isMemberOfOrganization(userLoggedIn.getId(), organization.getId())) {
+        if(organization != null && !userService.isMemberOfOrganization(userLoggedIn.getId(), organization.getId())) {
             log.error("Impossible to create news \"{}\" : principal {} is not member of organization {}", news.getTitle(), userLoggedIn.getId(), organization.getId());
             throw new ForbiddenException();
         }
