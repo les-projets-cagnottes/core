@@ -723,7 +723,7 @@ public class OrganizationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/organization/{id}/news", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    public DataPage<NewsModel> list(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+    public DataPage<NewsModel> listNews(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
 
         // Verify that IDs are corrects
         if(id <= 0) {

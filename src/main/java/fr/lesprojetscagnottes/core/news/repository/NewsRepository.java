@@ -24,4 +24,6 @@ public interface NewsRepository extends JpaRepository<NewsEntity, Long> {
     Page<NewsEntity> findAllByUser(Long userId, Pageable pageable);
 
     Page<NewsEntity> findAllByOrganization_IdOrOrganizationIdIsNull(Long organizationId, Pageable pageable);
+
+    Page<NewsEntity> findAllByProjectId(Long id, Pageable pageable);
 }
