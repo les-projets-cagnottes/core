@@ -4,6 +4,10 @@ import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
+import fr.lesprojetscagnottes.core.news.model.NewsModel;
+import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
@@ -20,6 +24,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +57,9 @@ public class ProjectController {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private NewsRepository newsRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -171,6 +181,51 @@ public class ProjectController {
         return models;
     }
 
+    @Operation(summary = "Get paginated news", description = "Get paginated news", tags = { "Projects" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding news", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/project/{id}/news", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
+    public DataPage<NewsModel> listNews(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
+
+        // Verify that IDs are corrects
+        if(id <= 0) {
+            log.error("Impossible to get news : parameters are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that organization exists
+        ProjectEntity project = projectRepository.findById(id).orElse(null);
+        if(project == null) {
+            log.error("Impossible to get news : project not found");
+            throw new NotFoundException();
+        }
+
+        // Verify if principal has correct privileges
+        Long userLoggedInId = userService.get(principal).getId();
+        boolean hasNoPrivilege = userService.isNotAdmin(userLoggedInId);
+        Set<OrganizationEntity> organizations = project.getOrganizations();
+        if(hasNoPrivilege) {
+            for(OrganizationEntity org : organizations) {
+                hasNoPrivilege &= !userService.isMemberOfOrganization(userLoggedInId, org.getId());
+            }
+        }
+        if(hasNoPrivilege) {
+            log.error("Impossible to get news : principal is not a member of any of the project organizations");
+            throw new ForbiddenException();
+        }
+
+        // Get and transform donations
+        Page<NewsEntity> entities = newsRepository.findAllByProjectId(id, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
+        DataPage<NewsModel> models = new DataPage<>(entities);
+        entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
+        return models;
+    }
+    
     @Operation(summary = "Create a project", description = "Create a project", tags = { "Projects" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Project created", content = @Content(schema = @Schema(implementation = ProjectModel.class))),

@@ -91,7 +91,7 @@ public class NewsController {
         if(entity.getOrganization() != null) {
             Long userLoggedInId = userService.get(principal).getId();
             OrganizationEntity newsOrganizations = organizationRepository.findByNews_Id(id);
-            if(userService.isMemberOfOrganization(userLoggedInId, newsOrganizations.getId()) && userService.isNotAdmin(userLoggedInId)) {
+            if(!userService.isMemberOfOrganization(userLoggedInId, newsOrganizations.getId()) && userService.isNotAdmin(userLoggedInId)) {
                 log.error("Impossible to get news by ID : principal has not enough privileges");
                 throw new ForbiddenException();
             }
@@ -210,8 +210,8 @@ public class NewsController {
 
         // Verify that principal is member of organizations
         UserEntity userLoggedIn = userService.get(principal);
-        if((organization != null && !userService.isMemberOfOrganization(userLoggedIn.getId(), organization.getId())) || userService.isNotAdmin(userLoggedIn.getId()) ) {
-            log.error("Impossible to create news \"{}\" : principal {} is not member of organization {}", newsModel.getTitle(), userLoggedIn.getId(), organization.getId());
+        if(organization != null && !userService.isMemberOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId()) ) {
+            log.error("Impossible to update news \"{}\" : principal {} is not member of organization {}", newsModel.getTitle(), userLoggedIn.getId(), organization.getId());
             throw new ForbiddenException();
         }
 
