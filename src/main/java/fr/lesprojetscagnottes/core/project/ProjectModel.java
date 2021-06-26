@@ -47,6 +47,9 @@ public class ProjectModel extends AuditEntity<String> {
     @Transient
     private Set<Long> peopleGivingTimeRef = new LinkedHashSet<>();
 
+    @Transient
+    private Set<Long> newsRef = new LinkedHashSet<>();
+
     public static ProjectModel fromEntity(ProjectEntity entity) {
         ProjectModel model = new ProjectModel();
         model.setCreatedAt(entity.getCreatedAt());
@@ -63,6 +66,7 @@ public class ProjectModel extends AuditEntity<String> {
         entity.getCampaigns().forEach(campaign -> model.getCampaignsRef().add(campaign.getId()));
         entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
         entity.getPeopleGivingTime().forEach(member -> model.getPeopleGivingTimeRef().add(member.getId()));
+        entity.getNews().forEach(news -> model.getNewsRef().add(news.getId()));
         return model;
     }
 

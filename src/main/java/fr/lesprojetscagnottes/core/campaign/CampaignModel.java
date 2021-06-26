@@ -47,6 +47,9 @@ public class CampaignModel extends AuditEntity<String> {
     protected Float totalDonations = 0f;
 
     @Transient
+    protected GenericModel project;
+
+    @Transient
     protected GenericModel leader;
 
     @Transient
@@ -82,18 +85,16 @@ public class CampaignModel extends AuditEntity<String> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("CampaignModel{");
-        sb.append("title='").append(title).append('\'');
-        sb.append(", status=").append(status);
-        sb.append(", shortDescription='").append(shortDescription).append('\'');
-        sb.append(", longDescription='").append(longDescription).append('\'');
-        sb.append(", donationsRequired=").append(donationsRequired);
-        sb.append(", peopleRequired=").append(peopleRequired);
-        sb.append(", fundingDeadline=").append(fundingDeadline);
-        sb.append(", totalDonations=").append(totalDonations);
-        sb.append(", leader=").append(leader);
-        sb.append(", id=").append(id);
-        sb.append('}');
-        return sb.toString();
+        return "CampaignModel{" + "title='" + title + '\'' +
+                ", status=" + status +
+                ", shortDescription='" + shortDescription + '\'' +
+                ", longDescription='" + longDescription + '\'' +
+                ", donationsRequired=" + donationsRequired +
+                ", peopleRequired=" + peopleRequired +
+                ", fundingDeadline=" + fundingDeadline +
+                ", totalDonations=" + totalDonations +
+                ", leader=" + leader +
+                ", id=" + id +
+                '}';
     }
 }
