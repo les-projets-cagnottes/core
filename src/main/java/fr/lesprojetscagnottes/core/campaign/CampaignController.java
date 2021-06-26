@@ -4,21 +4,25 @@ import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.donation.model.DonationModel;
-import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.model.DonationModel;
+import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.ProjectModel;
+import fr.lesprojetscagnottes.core.project.ProjectRepository;
+import fr.lesprojetscagnottes.core.project.ProjectStatus;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
+import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.user.UserService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,8 +30,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,14 +46,13 @@ import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Campaigns", description = "The Campaigns API")
 public class CampaignController {
 
     private static final String WEB_URL = System.getenv("LPC_WEB_URL");
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CampaignController.class);
 
     @Autowired
     private Gson gson;
@@ -74,6 +76,9 @@ public class CampaignController {
     private OrganizationRepository organizationRepository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private CampaignRepository campaignRepository;
 
     @Autowired
@@ -94,7 +99,7 @@ public class CampaignController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get campaign by ID : ID is incorrect");
+            log.error("Impossible to get campaign by ID : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -103,14 +108,14 @@ public class CampaignController {
         Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
         Set<OrganizationEntity> principalOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
         if(userService.isNotAdmin(userLoggedInId) && campaignOrganizations.stream().noneMatch(principalOrganizations::contains)) {
-            LOGGER.error("Impossible to get campaign by ID : principal has not enough privileges");
+            log.error("Impossible to get campaign by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
 
         // Verify that entity exists
         CampaignEntity entity = campaignRepository.findById(id).orElse(null);
         if(entity == null) {
-            LOGGER.error("Impossible to get campaign by ID : campaign not found");
+            log.error("Impossible to get campaign by ID : campaign not found");
             throw new NotFoundException();
         }
 
@@ -138,14 +143,14 @@ public class CampaignController {
             // Retrieve full referenced objects
             CampaignEntity campaign = campaignRepository.findById(id).orElse(null);
             if(campaign == null) {
-                LOGGER.error("Impossible to get campaign {} : it doesn't exist", id);
+                log.error("Impossible to get campaign {} : it doesn't exist", id);
                 continue;
             }
 
             // Verify that principal share an organization with the user
             Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
             if(userService.hasNoACommonOrganization(userLoggedInOrganizations, campaignOrganizations) && userLoggedIn_isNotAdmin) {
-                LOGGER.error("Impossible to get campaign {} : principal {} is not in its organizations", id, userLoggedInId);
+                log.error("Impossible to get campaign {} : principal {} is not in its organizations", id, userLoggedInId);
                 continue;
             }
 
@@ -169,14 +174,14 @@ public class CampaignController {
 
         // Fails if campaign ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get budgets by campaign ID : Campaign ID is incorrect");
+            log.error("Impossible to get budgets by campaign ID : Campaign ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         long userLoggedInId = userService.get(principal).getId();
         if(campaignRepository.findByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get budgets by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
+            log.error("Impossible to get budgets by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -185,7 +190,7 @@ public class CampaignController {
 
         // Verify that any of references are not null
         if(campaign == null) {
-            LOGGER.error("Impossible to get budgets by campaign ID : campaign {} not found", id);
+            log.error("Impossible to get budgets by campaign ID : campaign {} not found", id);
             throw new NotFoundException();
         }
 
@@ -209,14 +214,14 @@ public class CampaignController {
 
         // Fails if campaign ID is missing
         if(campaignId <= 0) {
-            LOGGER.error("Impossible to get donations by campaign ID : Campaign ID is incorrect");
+            log.error("Impossible to get donations by campaign ID : Campaign ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         long userLoggedInId = userService.get(principal).getId();
         if(campaignRepository.findByUserAndId(userLoggedInId, campaignId).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get donations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
+            log.error("Impossible to get donations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -225,7 +230,7 @@ public class CampaignController {
 
         // Verify that any of references are not null
         if(campaign == null) {
-            LOGGER.error("Impossible to get donations by campaign ID : campaign {} not found", campaignId);
+            log.error("Impossible to get donations by campaign ID : campaign {} not found", campaignId);
             throw new NotFoundException();
         }
 
@@ -249,14 +254,14 @@ public class CampaignController {
 
         // Fails if campaign ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get organizations by campaign ID : Campaign ID is incorrect");
+            log.error("Impossible to get organizations by campaign ID : Campaign ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         long userLoggedInId = userService.get(principal).getId();
         if(campaignRepository.findByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get organizations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
+            log.error("Impossible to get organizations by campaign ID : user {} is not member of concerned organizations", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -265,7 +270,7 @@ public class CampaignController {
 
         // Verify that any of references are not null
         if(campaign == null) {
-            LOGGER.error("Impossible to get organizations by campaign ID : campaign {} not found", id);
+            log.error("Impossible to get organizations by campaign ID : campaign {} not found", id);
             throw new NotFoundException();
         }
 
@@ -289,65 +294,48 @@ public class CampaignController {
     public CampaignModel create(Principal principal, @RequestBody CampaignModel campaign) {
 
         // Fails if any of references are null
-        if(campaign == null || campaign.getLeader() == null || campaign.getLeader().getId() < 0 ||
-            campaign.getOrganizationsRef() == null || campaign.getOrganizationsRef().isEmpty() ||
-            campaign.getBudgetsRef() == null || campaign.getBudgetsRef().isEmpty()) {
+        if(campaign == null || campaign.getProject() == null || campaign.getProject().getId() <= 0 || campaign.getBudgetsRef() == null || campaign.getBudgetsRef().isEmpty()) {
             if(campaign != null ) {
-                LOGGER.error("Impossible to create campaign \"{}\" : some references are missing", campaign.getTitle());
+                log.error("Impossible to create campaign : some references are missing");
             } else {
-                LOGGER.error("Impossible to create a null campaign");
+                log.error("Impossible to create a null campaign");
             }
             throw new BadRequestException();
         }
 
         // Retrieve full referenced objects
-        UserEntity leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
-        Set<OrganizationEntity> organizations = organizationRepository.findAllByIdIn(campaign.getOrganizationsRef());
+        ProjectEntity project = projectRepository.findById(campaign.getProject().getId()).orElse(null);
         Set<BudgetEntity> budgets = budgetRepository.findAllByIdIn(campaign.getBudgetsRef());
 
         // Fails if any of references are null
-        if(leader == null || organizations.isEmpty() || budgets.isEmpty() ||
-            organizations.size() != campaign.getOrganizationsRef().size() ||
-            budgets.size() != campaign.getBudgetsRef().size()) {
-            LOGGER.error("Impossible to create campaign \"{}\" : one or more reference(s) doesn't exist", campaign.getTitle());
+        if(project == null || budgets.isEmpty() || budgets.size() != campaign.getBudgetsRef().size()) {
+            log.error("Impossible to create campaign \"{}\" : one or more reference(s) doesn't exist", campaign.getTitle());
             throw new NotFoundException();
         }
 
-        // Verify that principal is member of organizations
-        UserEntity userLoggedIn = userService.get(principal);
-        Set<OrganizationEntity> organizationsMatch = organizationRepository.findAllByIdInAndMembers_Id(campaign.getOrganizationsRef(), userLoggedIn.getId());
-        if(organizationsMatch.isEmpty()) {
-            LOGGER.error("Impossible to create campaign \"{}\" : principal {} is not member of all organizations", campaign.getTitle(), userLoggedIn.getId());
+        // Verify that principal is project leader
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userLoggedInId.equals(project.getLeader().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to create campaign \"{}\" : principal {} is not project leader", campaign.getTitle(), userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that budgets are usable
-        Set<BudgetEntity> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), campaign.getOrganizationsRef());
+        Set<BudgetEntity> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), ProjectModel.fromEntity(project).getOrganizationsRef());
         if(!budgetsUsable.containsAll(budgets)) {
-            LOGGER.error("Impossible to create campaign \"{}\" : budgets are not all usable", campaign.getTitle());
+            log.error("Impossible to create campaign : budgets are not all usable");
             throw new ForbiddenException();
         }
 
         // Save campaign
         CampaignEntity campaignToSave = new CampaignEntity();
-        campaignToSave.setTitle(campaign.getTitle());
         campaignToSave.setStatus(CampaignStatus.A_IN_PROGRESS);
-        campaignToSave.setShortDescription(campaign.getShortDescription());
-        campaignToSave.setLongDescription(campaign.getLongDescription());
         campaignToSave.setDonationsRequired(campaign.getDonationsRequired());
-        campaignToSave.setPeopleRequired(campaign.getPeopleRequired());
         campaignToSave.setFundingDeadline(campaign.getFundingDeadline());
         campaignToSave.setTotalDonations(0f);
-        campaignToSave.setLeader(leader);
-        campaignToSave.getPeopleGivingTime().add(leader);
+        campaignToSave.setLeader(null);
+        campaignToSave.setProject(project);
         final CampaignEntity campaignFinal = campaignRepository.save(campaignToSave);
-
-        // Associate the campaign with organizations
-        organizations.forEach(organization -> {
-            organization.getCampaigns().add(campaignFinal);
-            campaignFinal.getOrganizations().add(organization);
-        });
-        organizationRepository.saveAll(organizations);
 
         // Associate the campaign with budgets
         budgets.forEach(budget -> {
@@ -360,35 +348,37 @@ public class CampaignController {
         model.put("URL", WEB_URL);
         model.put("campaign", campaignFinal);
 
-        organizations.forEach(organization -> {
-            if(organization.getSlackTeam() != null) {
+        // Send a notification if project is in progress state
+        if(project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
+            Set<OrganizationEntity> organizations = project.getOrganizations();
+            UserEntity leader = project.getLeader();
+            organizations.forEach(organization -> {
+                if(organization.getSlackTeam() != null) {
 
-                SlackTeamEntity slackTeam = organization.getSlackTeam();
+                    SlackTeamEntity slackTeam = organization.getSlackTeam();
 
-                organization.getMembers().stream()
-                        .filter(member -> member.getId().equals(leader.getId()))
-                        .findAny()
-                        .ifPresentOrElse(member -> {
-                            slackTeam.getSlackUsers().stream()
+                    organization.getMembers().stream()
+                            .filter(member -> member.getId().equals(leader.getId()))
+                            .findAny()
+                            .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
                                     .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
                                     .findAny()
                                     .ifPresentOrElse(
                                             slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
-                                            () -> model.put("leader", leader.getFullname()));
-                        },() -> model.put("leader", leader.getFullname()));
+                                            () -> model.put("leader", leader.getFullname())),() -> model.put("leader", leader.getFullname()));
 
-                Context context = new Context();
-                context.setVariables(model);
-                String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
+                    Context context = new Context();
+                    context.setVariables(model);
+                    String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
 
-                LOGGER.info("[create][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+                    log.info("[create][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
 
-                slackClientService.inviteBotInConversation(slackTeam);
-                slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                LOGGER.info("[create][" + campaign.getId() + "] Slack Message Sent");
-            }
-        });
-
+                    slackClientService.inviteBotInConversation(slackTeam);
+                    slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
+                    log.info("[create][" + campaign.getId() + "] Slack Message Sent");
+                }
+            });
+        }
         campaign.setId(campaignFinal.getId());
         return campaign;
     }
@@ -407,9 +397,9 @@ public class CampaignController {
         // Fails if any of references are null
         if(campaignModel == null || campaignModel.getId() <= 0 || campaignModel.getLeader() == null || campaignModel.getLeader().getId() < 0) {
             if(campaignModel != null ) {
-                LOGGER.error("Impossible to update campaign {} : some references are missing", campaignModel.getId());
+                log.error("Impossible to update campaign {} : some references are missing", campaignModel.getId());
             } else {
-                LOGGER.error("Impossible to update a null campaign");
+                log.error("Impossible to update a null campaign");
             }
             throw new BadRequestException();
         }
@@ -420,14 +410,14 @@ public class CampaignController {
 
         // Fails if any of references are null
         if(campaign == null || leader == null) {
-            LOGGER.error("Impossible to update campaign {} : one or more reference(s) doesn't exist", campaignModel.getId());
+            log.error("Impossible to update campaign {} : one or more reference(s) doesn't exist", campaignModel.getId());
             throw new NotFoundException();
         }
 
         // Verify that principal has enough privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!leader.getId().equals(userLoggedInId) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to update campaign {} : principal has not enough privileges", campaignModel.getId());
+            log.error("Impossible to update campaign {} : principal has not enough privileges", campaignModel.getId());
         }
 
         // Save campaign
@@ -456,7 +446,7 @@ public class CampaignController {
 
         // Fails if any of references are null
         if(id < 0) {
-            LOGGER.error("Impossible to join campaign {} : some references are missing", id);
+            log.error("Impossible to join campaign {} : some references are missing", id);
             throw new BadRequestException();
         }
 
@@ -465,7 +455,7 @@ public class CampaignController {
 
         // Fails if any of references are null
         if(campaign == null) {
-            LOGGER.error("Impossible to join campaign {} : one or more reference(s) doesn't exist", id);
+            log.error("Impossible to join campaign {} : one or more reference(s) doesn't exist", id);
             throw new NotFoundException();
         }
 
@@ -476,7 +466,7 @@ public class CampaignController {
         Set<Long> organizationsRef = new LinkedHashSet<>();
         campaign.getOrganizations().forEach(organization -> organizationsRef.add(organization.getId()));
         if(organizationRepository.findAllByIdInAndMembers_Id(organizationsRef, userLoggedInId).isEmpty()) {
-            LOGGER.error("Impossible to join campaign {} : principal {} is not member of all organizations", id, userLoggedInId);
+            log.error("Impossible to join campaign {} : principal {} is not member of all organizations", id, userLoggedInId);
             throw new ForbiddenException();
         }
 
