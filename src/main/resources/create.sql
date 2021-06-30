@@ -1,12 +1,11 @@
 CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_id bigint, _budget_id bigint, _amount real)
  RETURNS boolean
- LANGUAGE plpgsql
-AS $function$
-	declare
+ AS $BODY$
+	DECLARE
 		_account_amount FLOAT4;
 		_user_id INT8;
 		_donation_id INT8;
-	begin
+	BEGIN
 
 		-- Verify that contributor has enough amount
 		select amount into _account_amount from accounts where id = _account_id;
@@ -26,14 +25,13 @@ AS $function$
 
 		return true;
 	END;
-$function$
-;
+ $BODY$
+ LANGUAGE plpgsql;;
 
 CREATE OR REPLACE FUNCTION public.delete_donation(_donation_id bigint)
  RETURNS boolean
- LANGUAGE plpgsql
-AS $function$
-	declare
+ AS $BODY$
+	DECLARE
 		_account_id INT8;
 		_campaign_id INT8;
 		_budget_id INT8;
@@ -48,5 +46,5 @@ AS $function$
 		delete from donations where id = _donation_id;
 		return true;
 	END;
-$function$
-;
+ $BODY$
+ LANGUAGE plpgsql;;
