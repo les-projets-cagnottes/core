@@ -10,42 +10,50 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
+import fr.lesprojetscagnottes.core.common.scheduler.MainScheduler;
+import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.strings.ScheduleParamsCommon;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
+import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.schedule.ScheduleEntity;
-import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
 import fr.lesprojetscagnottes.core.schedule.ScheduleName;
+import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
-import fr.lesprojetscagnottes.core.common.scheduler.MainScheduler;
-import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.user.UserService;
-import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.support.EncodedResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
+import java.sql.SQLException;
 import java.util.*;
 
+@Slf4j
 @SpringBootApplication
 @EnableScheduling
 public class LPCCoreApplication {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LPCCoreApplication.class);
+	@Autowired
+	private DataSource datasource;
 
 	@Autowired
 	private Gson gson;
@@ -95,12 +103,39 @@ public class LPCCoreApplication {
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
 
+	private static ConfigurableApplicationContext context;
+
 	public static void main(String[] args) {
-		SpringApplication.run(LPCCoreApplication.class, args);
+		context = SpringApplication.run(LPCCoreApplication.class, args);
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
+
+		// Execute src/main/resources/create.sql file
+		ClassLoader classLoader = getClass().getClassLoader();
+		URL resource = classLoader.getResource("create.sql");
+		if (resource == null) {
+			String error = "File 'create.sql' not found";
+			log.error(error);
+			shutdown();
+		} else {
+			try {
+				ScriptUtils.executeSqlScript(
+						datasource.getConnection(),
+						new EncodedResource(new FileSystemResource(resource.getFile()), "UTF-8"),
+						false,
+						false,
+						ScriptUtils.DEFAULT_COMMENT_PREFIX,
+						";;",
+						ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+						ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER);
+			} catch (SQLException e) {
+				String error = "Error while executing 'create.sql' file";
+				log.error(error, e);
+				shutdown();
+			}
+		}
 
 		UserEntity admin = null;
 
@@ -148,7 +183,7 @@ public class LPCCoreApplication {
 
 			// If password was generated, we print it in the console
 			if (adminPassword == null) {
-				LOGGER.info("ONLY PRINTED ONCE - Default credentials are : admin / " + password);
+				log.info("ONLY PRINTED ONCE - Default credentials are : admin / " + password);
 			}
 
 		}
@@ -172,7 +207,7 @@ public class LPCCoreApplication {
 				apiToken.setExpiration(nextYear);
 				apiToken.setUser(admin);
 			} else {
-				LOGGER.error("Too many tokens registered for slack-events-catcher");
+				log.error("Too many tokens registered for slack-events-catcher");
 				return;
 			}
 			prepareDirectories("config");
@@ -184,7 +219,7 @@ public class LPCCoreApplication {
 				myWriter.write(token);
 				myWriter.close();
 			} catch (IOException e) {
-				LOGGER.debug("Cannot save slack-events-catcher token in {}", tokenFilePath);
+				log.debug("Cannot save slack-events-catcher token in {}", tokenFilePath);
 			}
 		}
 
@@ -196,28 +231,32 @@ public class LPCCoreApplication {
 	public void prepareDirectories(String directoryPath) {
 		File directory = new File(storageFolder);
 		if (!directory.exists()) {
-			LOGGER.info("Creating path {}", directory.getPath());
+			log.info("Creating path {}", directory.getPath());
 			if(!directory.mkdirs()) {
-				LOGGER.error("The path {} could not be created", directory.getPath());
+				log.error("The path {} could not be created", directory.getPath());
 			}
 		}
 		if (!directory.isDirectory()) {
-			LOGGER.error("The path {} is not a directory", directory.getPath());
+			log.error("The path {} is not a directory", directory.getPath());
 		}
 
 		if (directoryPath != null && !directoryPath.isEmpty()) {
 			directory = new File(storageFolder + File.separator + directoryPath.replaceAll("/", File.separator));
-			LOGGER.debug("Prepare directory {}", directory.getAbsolutePath());
+			log.debug("Prepare directory {}", directory.getAbsolutePath());
 			if (!directory.exists()) {
-				LOGGER.info("Creating path {}", directory.getPath());
+				log.info("Creating path {}", directory.getPath());
 				if(!directory.mkdirs()) {
-					LOGGER.error("Cannot create directory {}", directory.getAbsolutePath());
+					log.error("Cannot create directory {}", directory.getAbsolutePath());
 				}
 			}
 			if (!directory.isDirectory()) {
-				LOGGER.error("The path {} is not a directory", directory.getPath());
+				log.error("The path {} is not a directory", directory.getPath());
 			}
 		}
+	}
+
+	public void shutdown() {
+		context.close();
 	}
 }
 
