@@ -103,6 +103,9 @@ public class LPCCoreApplication {
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
 
+	@Value("${spring.datasource.driver-class-name}")
+	private String datasourceDriverClassName;
+
 	private static ConfigurableApplicationContext context;
 
 	public static void main(String[] args) {
@@ -113,27 +116,31 @@ public class LPCCoreApplication {
 	public void init() {
 
 		// Execute src/main/resources/create.sql file
-		ClassLoader classLoader = getClass().getClassLoader();
-		URL resource = classLoader.getResource("create.sql");
-		if (resource == null) {
-			String error = "File 'create.sql' not found";
-			log.error(error);
-			shutdown();
+		if (!datasourceDriverClassName.equals("org.postgresql.Driver")) {
+			log.warn("File 'create.sql' will not be executed as the datasource is not configured for postgresql");
 		} else {
-			try {
-				ScriptUtils.executeSqlScript(
-						datasource.getConnection(),
-						new EncodedResource(new FileSystemResource(resource.getFile()), "UTF-8"),
-						false,
-						false,
-						ScriptUtils.DEFAULT_COMMENT_PREFIX,
-						";;",
-						ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
-						ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER);
-			} catch (SQLException e) {
-				String error = "Error while executing 'create.sql' file";
-				log.error(error, e);
+			ClassLoader classLoader = getClass().getClassLoader();
+			URL resource = classLoader.getResource("create.sql");
+			if (resource == null) {
+				String error = "File 'create.sql' not found";
+				log.error(error);
 				shutdown();
+			} else {
+				try {
+					ScriptUtils.executeSqlScript(
+							datasource.getConnection(),
+							new EncodedResource(new FileSystemResource(resource.getFile()), "UTF-8"),
+							false,
+							false,
+							ScriptUtils.DEFAULT_COMMENT_PREFIX,
+							";;",
+							ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+							ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER);
+				} catch (SQLException e) {
+					String error = "Error while executing 'create.sql' file";
+					log.error(error, e);
+					shutdown();
+				}
 			}
 		}
 
