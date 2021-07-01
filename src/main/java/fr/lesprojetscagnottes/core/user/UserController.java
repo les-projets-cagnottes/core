@@ -467,8 +467,15 @@ public class UserController {
             throw new BadRequestException();
         }
 
-        UserEntity user = UserGenerator.newUser((UserEntity) userModel);
-        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        UserEntity user = new UserEntity();
+        UserGenerator.newUser(user);
+        user.setUsername(userModel.getUsername());
+        user.setEmail(userModel.getEmail());
+        user.setFirstname(userModel.getFirstname());
+        user.setLastname(userModel.getLastname());
+        user.setAvatarUrl(userModel.getAvatarUrl());
+        user.setEnabled(userModel.getEnabled());
+        user.setPassword(BCrypt.hashpw(userModel.getPassword(), BCrypt.gensalt()));
         userRepository.save(user);
     }
 
@@ -507,7 +514,7 @@ public class UserController {
         }
 
         // Update and save user
-        if(user.getPassword() != null && !userModel.getPassword().isEmpty()) {
+        if(userModel.getPassword() != null && !userModel.getPassword().isEmpty()) {
             user.setPassword(BCrypt.hashpw(userModel.getPassword(), BCrypt.gensalt()));
             user.setLastPasswordResetDate(new Date());
         }
