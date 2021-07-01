@@ -6,6 +6,7 @@ import fr.lesprojetscagnottes.core.common.strings.Constants;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -13,6 +14,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Slf4j
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
@@ -48,37 +50,37 @@ public class UserModel extends AuditEntity<String> {
     protected Date lastPasswordResetDate = new Date();
 
     @Transient
-    protected Set<Long> userAuthoritiesRef = new LinkedHashSet<>();
+    private Set<Long> userAuthoritiesRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> userOrganizationAuthoritiesRef = new LinkedHashSet<>();
+    private Set<Long> userOrganizationAuthoritiesRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> accountsRef = new LinkedHashSet<>();
+    private Set<Long> accountsRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> organizationsRef = new LinkedHashSet<>();
+    private Set<Long> organizationsRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> budgetsRef = new LinkedHashSet<>();
+    private Set<Long> budgetsRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> projectsRef = new LinkedHashSet<>();
+    private Set<Long> projectsRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> donationsRef = new LinkedHashSet<>();
+    private Set<Long> donationsRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> ideasRef = new LinkedHashSet<>();
+    private Set<Long> ideasRef = new LinkedHashSet<>();
 
     @Transient
-    protected Set<Long> followedIdeasRef = new LinkedHashSet<>();
+    private Set<Long> followedIdeasRef = new LinkedHashSet<>();
 
     @Transient
-    protected  Set<Long> slackUsersRef = new LinkedHashSet<>();
+    private  Set<Long> slackUsersRef = new LinkedHashSet<>();
 
     @Transient
-    protected  Set<Long> apiTokensRef = new LinkedHashSet<>();
+    private  Set<Long> apiTokensRef = new LinkedHashSet<>();
 
     public static UserModel fromEntity(UserEntity entity) {
         UserModel model = new UserModel();
@@ -96,15 +98,6 @@ public class UserModel extends AuditEntity<String> {
         model.setLastPasswordResetDate(entity.getLastPasswordResetDate());
         entity.getUserAuthorities().forEach(item -> model.getUserAuthoritiesRef().add(item.getId()));
         entity.getUserOrganizationAuthorities().forEach(item -> model.getUserOrganizationAuthoritiesRef().add(item.getId()));
-        entity.getAccounts().forEach(item -> model.getAccountsRef().add(item.getId()));
-        entity.getOrganizations().forEach(item -> model.getAccountsRef().add(item.getId()));
-        entity.getBudgets().forEach(item -> model.getBudgetsRef().add(item.getId()));
-        entity.getProjects().forEach(item -> model.getProjectsRef().add(item.getId()));
-        entity.getDonations().forEach(item -> model.getDonationsRef().add(item.getId()));
-        entity.getIdeas().forEach(item -> model.getIdeasRef().add(item.getId()));
-        entity.getFollowedIdeas().forEach(item -> model.getFollowedIdeasRef().add(item.getId()));
-        entity.getSlackUsers().forEach(item -> model.getSlackUsersRef().add(item.getId()));
-        entity.getApiTokens().forEach(item -> model.getApiTokensRef().add(item.getId()));
         return model;
     }
 
