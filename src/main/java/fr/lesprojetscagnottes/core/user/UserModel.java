@@ -48,7 +48,37 @@ public class UserModel extends AuditEntity<String> {
     protected Date lastPasswordResetDate = new Date();
 
     @Transient
+    protected Set<Long> userAuthoritiesRef = new LinkedHashSet<>();
+
+    @Transient
     protected Set<Long> userOrganizationAuthoritiesRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> accountsRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> organizationsRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> budgetsRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> projectsRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> donationsRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> ideasRef = new LinkedHashSet<>();
+
+    @Transient
+    protected Set<Long> followedIdeasRef = new LinkedHashSet<>();
+
+    @Transient
+    protected  Set<Long> slackUsersRef = new LinkedHashSet<>();
+
+    @Transient
+    protected  Set<Long> apiTokensRef = new LinkedHashSet<>();
 
     public static UserModel fromEntity(UserEntity entity) {
         UserModel model = new UserModel();
@@ -64,7 +94,17 @@ public class UserModel extends AuditEntity<String> {
         model.setAvatarUrl(entity.getAvatarUrl());
         model.setEnabled(entity.getEnabled());
         model.setLastPasswordResetDate(entity.getLastPasswordResetDate());
-        entity.getUserOrganizationAuthorities().forEach(organizationAuthority -> model.getUserOrganizationAuthoritiesRef().add(organizationAuthority.getId()));
+        entity.getUserAuthorities().forEach(item -> model.getUserAuthoritiesRef().add(item.getId()));
+        entity.getUserOrganizationAuthorities().forEach(item -> model.getUserOrganizationAuthoritiesRef().add(item.getId()));
+        entity.getAccounts().forEach(item -> model.getAccountsRef().add(item.getId()));
+        entity.getOrganizations().forEach(item -> model.getAccountsRef().add(item.getId()));
+        entity.getBudgets().forEach(item -> model.getBudgetsRef().add(item.getId()));
+        entity.getProjects().forEach(item -> model.getProjectsRef().add(item.getId()));
+        entity.getDonations().forEach(item -> model.getDonationsRef().add(item.getId()));
+        entity.getIdeas().forEach(item -> model.getIdeasRef().add(item.getId()));
+        entity.getFollowedIdeas().forEach(item -> model.getFollowedIdeasRef().add(item.getId()));
+        entity.getSlackUsers().forEach(item -> model.getSlackUsersRef().add(item.getId()));
+        entity.getApiTokens().forEach(item -> model.getApiTokensRef().add(item.getId()));
         return model;
     }
 
