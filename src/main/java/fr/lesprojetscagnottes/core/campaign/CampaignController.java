@@ -131,12 +131,12 @@ public class CampaignController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/campaign", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
-    public Set<CampaignModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
+    public List<CampaignModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
 
         Long userLoggedInId = userService.get(principal).getId();
         boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
         Set<OrganizationEntity> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        Set<CampaignModel> models = new LinkedHashSet<>();
+        List<CampaignModel> models = new ArrayList<>();
 
         for(Long id : ids) {
 
@@ -157,6 +157,9 @@ public class CampaignController {
             // Add the user to returned list
             models.add(CampaignModel.fromEntity(campaign));
         }
+
+        Comparator<CampaignModel> compareByFundingDeadline = Comparator.comparing(CampaignModel::getFundingDeadline);
+        models.sort(compareByFundingDeadline.reversed());
 
         return models;
     }
@@ -395,7 +398,7 @@ public class CampaignController {
     public CampaignModel update(Principal principal, @RequestBody CampaignModel campaignModel) {
 
         // Fails if any of references are null
-        if(campaignModel == null || campaignModel.getId() <= 0 || campaignModel.getLeader() == null || campaignModel.getLeader().getId() < 0) {
+        if(campaignModel == null || campaignModel.getProject() == null || campaignModel.getProject().getId() <= 0 || campaignModel.getBudgetsRef() == null || campaignModel.getBudgetsRef().isEmpty()) {
             if(campaignModel != null ) {
                 log.error("Impossible to update campaign {} : some references are missing", campaignModel.getId());
             } else {
@@ -405,31 +408,34 @@ public class CampaignController {
         }
 
         // Retrieve full referenced objects
-        UserEntity leader = userRepository.findById(campaignModel.getLeader().getId()).orElse(null);
+        ProjectEntity project = projectRepository.findById(campaignModel.getProject().getId()).orElse(null);
+        Set<BudgetEntity> budgets = budgetRepository.findAllByIdIn(campaignModel.getBudgetsRef());
         CampaignEntity campaign = campaignRepository.findById(campaignModel.getId()).orElse(null);
 
         // Fails if any of references are null
-        if(campaign == null || leader == null) {
-            log.error("Impossible to update campaign {} : one or more reference(s) doesn't exist", campaignModel.getId());
+        if(project == null || budgets.isEmpty() || campaign == null || campaign.getBudgetsRef() == null || budgets.size() != campaign.getBudgetsRef().size()) {
+            log.error("Impossible to update campaign \"{}\" : one or more reference(s) doesn't exist", campaignModel.getId());
             throw new NotFoundException();
         }
 
-        // Verify that principal has enough privileges
+        // Verify that principal is project leader
         Long userLoggedInId = userService.get(principal).getId();
-        if(!leader.getId().equals(userLoggedInId) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to update campaign {} : principal has not enough privileges", campaignModel.getId());
+        if(!userLoggedInId.equals(project.getLeader().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to update campaign \"{}\" : principal {} is not project leader", campaignModel.getId(), userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Verify that budgets are usable
+        Set<BudgetEntity> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), ProjectModel.fromEntity(project).getOrganizationsRef());
+        if(!budgetsUsable.containsAll(budgets)) {
+            log.error("Impossible to update campaign : budgets are not all usable");
+            throw new ForbiddenException();
         }
 
         // Save campaign
-        campaign.setTitle(campaign.getTitle());
-        campaign.setShortDescription(campaign.getShortDescription());
-        campaign.setLongDescription(campaign.getLongDescription());
-        campaign.setLeader(campaign.getLeader());
-        campaign.setPeopleRequired(campaign.getPeopleRequired());
         if (campaignModel.getDonationsRequired() > campaign.getDonationsRequired()) {
             campaign.setDonationsRequired(campaignModel.getDonationsRequired());
         }
-
         return CampaignModel.fromEntity(campaignRepository.save(campaign));
     }
 
