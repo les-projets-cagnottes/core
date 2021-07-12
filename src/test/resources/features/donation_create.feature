@@ -24,7 +24,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -60,7 +60,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -98,7 +98,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns have a deadline reached
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -134,7 +134,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | title            | leader | status    | peopleRequired | donationsRequired |
-      | Awesome Campaign | Mike   | C_AVORTED | 2              | 200               |
+      | Awesome Campaign | Mike   | FAILED | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -172,7 +172,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -208,7 +208,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -244,7 +244,7 @@ Feature: Donation - Create
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | A_IN_PROGRESS | 2              | 200               |
+      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |

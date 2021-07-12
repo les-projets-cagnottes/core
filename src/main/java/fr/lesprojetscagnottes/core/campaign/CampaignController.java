@@ -332,7 +332,7 @@ public class CampaignController {
 
         // Save campaign
         CampaignEntity campaignToSave = new CampaignEntity();
-        campaignToSave.setStatus(CampaignStatus.A_IN_PROGRESS);
+        campaignToSave.setStatus(CampaignStatus.IN_PROGRESS);
         campaignToSave.setDonationsRequired(campaign.getDonationsRequired());
         campaignToSave.setFundingDeadline(campaign.getFundingDeadline());
         campaignToSave.setTotalDonations(0f);

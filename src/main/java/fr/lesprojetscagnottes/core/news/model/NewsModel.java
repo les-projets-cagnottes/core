@@ -7,14 +7,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class NewsModel extends AuditEntity<String> {
+
+    @Column(length = 50)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    protected NewsType type;
 
     @Column
     protected String title;
@@ -38,6 +42,7 @@ public class NewsModel extends AuditEntity<String> {
         model.setUpdatedAt(entity.getUpdatedAt());
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
+        model.setType(entity.getType());
         model.setTitle(entity.getTitle());
         model.setContent(entity.getContent());
         model.setAuthor(new GenericModel(entity.getAuthor()));
