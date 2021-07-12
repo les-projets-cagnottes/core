@@ -168,6 +168,7 @@ public class NewsController {
 
         // Save news
         NewsEntity newsToSave = new NewsEntity();
+        newsToSave.setType(news.getType());
         newsToSave.setTitle(news.getTitle());
         newsToSave.setContent(news.getContent());
         newsToSave.setAuthor(userLoggedIn);
@@ -216,6 +217,7 @@ public class NewsController {
         }
 
         // Save news
+        newsEntity.setType(newsModel.getType());
         newsEntity.setTitle(newsModel.getTitle());
         newsEntity.setContent(newsModel.getContent());
         newsEntity.setOrganization(newsModel.getOrganization());
