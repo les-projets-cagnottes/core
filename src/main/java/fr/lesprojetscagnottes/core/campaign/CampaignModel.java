@@ -77,6 +77,7 @@ public class CampaignModel extends AuditEntity<String> {
         model.setFundingDeadline(entity.getFundingDeadline());
         model.setTotalDonations(entity.getTotalDonations());
         model.setLeader(new GenericModel(entity.getLeader()));
+        model.setProject(new GenericModel(entity.getProject()));
         entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
         entity.getBudgets().forEach(budget -> model.getBudgetsRef().add(budget.getId()));
         entity.getPeopleGivingTime().forEach(member -> model.getPeopleGivingTimeRef().add(member.getId()));

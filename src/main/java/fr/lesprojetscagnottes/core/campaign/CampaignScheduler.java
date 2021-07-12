@@ -2,12 +2,11 @@ package fr.lesprojetscagnottes.core.campaign;
 
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,11 +21,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
+@Slf4j
 public class CampaignScheduler {
 
     private static final String WEB_URL = System.getenv("LPC_WEB_URL");
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CampaignScheduler.class);
 
     @Autowired
     private SpringTemplateEngine templateEngine;
@@ -45,63 +43,63 @@ public class CampaignScheduler {
 
     @Scheduled(cron = "0 0 2 * * *")
     public void processTotalDonations() {
-        LOGGER.info("[processTotalDonations] Start total donations calculation");
+        log.info("[processTotalDonations] Start total donations calculation");
         campaignRepository.updateTotalDonations();
-        LOGGER.info("[processTotalDonations] End total donations calculation");
+        log.info("[processTotalDonations] End total donations calculation");
     }
 
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void processCampaignFundingDeadlines() {
-        LOGGER.info("[processCampaignFundingDeadlines] Start Campaign Funding Deadlines Processing");
-        Set<CampaignEntity> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.A_IN_PROGRESS, new Date());
-        LOGGER.info("[processCampaignFundingDeadlines] " + campaigns.size() + " campaign(s) found");
+        log.info("[processCampaignFundingDeadlines] Start Campaign Funding Deadlines Processing");
+        Set<CampaignEntity> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.IN_PROGRESS, new Date());
+        log.info("[processCampaignFundingDeadlines] " + campaigns.size() + " campaign(s) found");
         campaigns.forEach(campaign -> {
             Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
             float totalDonations = 0f;
             for (Donation donation : donations) {
                 totalDonations += donation.getAmount();
             }
-            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
-            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Teammates : " + campaign.getPeopleGivingTime().size() + " / " + campaign.getPeopleRequired());
-            LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations : " + totalDonations + " € / " + campaign.getDonationsRequired() + " €");
+            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
+            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Teammates : " + campaign.getProject().getPeopleGivingTime().size() + " / 3");
+            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations : " + totalDonations + " € / " + campaign.getDonationsRequired() + " €");
             if (totalDonations >= campaign.getDonationsRequired()
-                    && campaign.getPeopleGivingTime().size() >= campaign.getPeopleRequired()) {
-                campaign.setStatus(CampaignStatus.B_READY);
-                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => B_READY");
+                    && campaign.getPeopleGivingTime().size() >= 3) {
+                campaign.setStatus(CampaignStatus.SUCCESSFUL);
+                log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => SUCCESSFUL");
             } else {
-                campaign.setStatus(CampaignStatus.C_AVORTED);
-                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => C_AVORTED");
+                campaign.setStatus(CampaignStatus.FAILED);
+                log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => FAILED");
                 donationRepository.deleteByCampaignId(campaign.getId());
-                LOGGER.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations deleted");
+                log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations deleted");
             }
         });
-        LOGGER.info("[processCampaignFundingDeadlines] End Campaign Funding Deadlines Processing");
+        log.info("[processCampaignFundingDeadlines] End Campaign Funding Deadlines Processing");
     }
 
     @Scheduled(cron = "0 0 8 * * *")
     public void notifyCampaignsAlmostFinished() {
-        LOGGER.info("[notifyCampaignsAlmostFinished] Start Notify Campaign Almost Finished");
-        Set<CampaignEntity> campaigns = campaignRepository.findAllByStatus(CampaignStatus.A_IN_PROGRESS);
-        LOGGER.info("[notifyCampaignsAlmostFinished] " + campaigns.size() + " campaign(s) found");
+        log.info("[notifyCampaignsAlmostFinished] Start Notify Campaign Almost Finished");
+        Set<CampaignEntity> campaigns = campaignRepository.findAllByStatus(CampaignStatus.IN_PROGRESS);
+        log.info("[notifyCampaignsAlmostFinished] " + campaigns.size() + " campaign(s) found");
         campaigns.forEach(campaign -> {
             long diffInMillies = Math.abs(campaign.getFundingDeadline().getTime() - new Date().getTime());
             long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
 
-            LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
-            LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
+            log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
+            log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
 
             if(diff == 7 || diff == 1) {
                 notifyCampaignStatus(campaign, diff);
             }
         });
-        LOGGER.info("[notifyCampaignsAlmostFinished] End Notify Campaign Almost Finished");
+        log.info("[notifyCampaignsAlmostFinished] End Notify Campaign Almost Finished");
     }
 
     public void notifyCampaignStatus(CampaignEntity campaign, long daysUntilDeadline) {
 
         int teamMatesMissing = campaign.getPeopleRequired() - campaign.getPeopleGivingTime().size();
-        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
+        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
 
         Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
         float totalDonations = 0f;
@@ -109,11 +107,11 @@ public class CampaignScheduler {
             totalDonations += donation.getAmount();
         }
         float donationsMissing = campaign.getDonationsRequired() - totalDonations;
-        LOGGER.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
+        log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
 
         UserEntity leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
         if(leader == null) {
-            LOGGER.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
+            log.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
         } else {
             if(teamMatesMissing > 0 || donationsMissing > 0) {
 
@@ -146,10 +144,10 @@ public class CampaignScheduler {
                         context.setVariables(model);
                         String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
 
-                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+                        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
                         slackClientService.inviteBotInConversation(slackTeam);
                         slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                        LOGGER.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
+                        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
                     }
                 });
 

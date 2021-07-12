@@ -34,7 +34,7 @@ Feature: Campaign - Get Donations
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader  | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
+      | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |
@@ -91,7 +91,7 @@ Feature: Campaign - Get Donations
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
       | project         | title            | leader  | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Sabrina | A_IN_PROGRESS | 2              | 400               |
+      | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
       | Awesome Campaign | Unnamed Company |

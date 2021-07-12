@@ -194,7 +194,7 @@ public class DonationController {
         }
 
         // Verify that status of campaign is in progress
-        if(!campaign.getStatus().equals(CampaignStatus.A_IN_PROGRESS)) {
+        if(!campaign.getStatus().equals(CampaignStatus.IN_PROGRESS)) {
             LOGGER.error("Impossible to create donation : status of campaign is not in progress");
             throw new BadRequestException();
         }
@@ -268,7 +268,7 @@ public class DonationController {
         }
 
         // Verify that campaign associated is in progress
-        if(donation.getCampaign().getStatus() != CampaignStatus.A_IN_PROGRESS) {
+        if(donation.getCampaign().getStatus() != CampaignStatus.IN_PROGRESS) {
             LOGGER.error("Impossible to delete donation : campaign {} is in progress", donation.getCampaign());
             throw new ForbiddenException();
         }
