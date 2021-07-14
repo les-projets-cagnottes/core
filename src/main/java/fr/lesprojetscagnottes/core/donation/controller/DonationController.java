@@ -2,20 +2,20 @@ package fr.lesprojetscagnottes.core.donation.controller;
 
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
-import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.donation.model.DonationModel;
-import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
-import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
+import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
-import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
+import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
+import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
+import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
@@ -26,8 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,12 +39,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @RequestMapping("/api")
 @Tag(name = "Donations", description = "The Donations API")
 @RestController
 public class DonationController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DonationController.class);
 
     @Autowired
     private DonationProcessingTask donationProcessingTask;
@@ -82,71 +80,71 @@ public class DonationController {
     @ResponseBody
     @PreAuthorize("hasRole('ADMIN')")
     public void control(Principal principal) {
-        LOGGER.info("Donation amounts control started");
-        LOGGER.info("Control users");
+        log.info("Donation amounts control started");
+        log.info("Control users");
         List<UserEntity> users = userRepository.findAll();
         users.forEach(user -> {
-            LOGGER.info("User {} : {} {}", user.getId(), user.getFirstname(), user.getLastname());
+            log.info("User {} : {} {}", user.getId(), user.getFirstname(), user.getLastname());
             Set<BudgetEntity> budgets = budgetRepository.findAllByUser(user.getId());
             Set<AccountEntity> accounts = accountRepository.findAllByOwnerId(user.getId());
             if(budgets.size() != accounts.size()) {
-                LOGGER.warn("Number of accounts {} and budgets {} for user {} don't match", accounts.size(), budgets.size(), user.getId());
+                log.warn("Number of accounts {} and budgets {} for user {} don't match", accounts.size(), budgets.size(), user.getId());
             }
             budgets.forEach(budget -> {
-                LOGGER.info("|- Budget {} : {}", budget.getId(), budget.getAmountPerMember());
+                log.info("|- Budget {} : {}", budget.getId(), budget.getAmountPerMember());
                 Optional<AccountEntity> accountOptional = accounts.stream().filter(account -> account.getBudget().getId().equals(budget.getId())).findFirst();
                 if(accountOptional.isEmpty()) {
-                    LOGGER.error("Not account found for budget {} and user {}", budget.getId(), user.getId());
+                    log.error("Not account found for budget {} and user {}", budget.getId(), user.getId());
                 } else {
                     AccountEntity account = accountOptional.get();
-                    LOGGER.info("|- Account {} : {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
+                    log.info("|- Account {} : {} / {}", account.getId(), account.getAmount(), account.getInitialAmount());
                     if(account.getInitialAmount() != budget.getAmountPerMember()) {
-                        LOGGER.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
+                        log.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
                     }
                     Set<Donation> accountDonations = donationRepository.findAllByAccountId(account.getId());
                     final float[] totalDonationsAmount = {0f};
                     accountDonations.forEach(donation -> {
                         totalDonationsAmount[0] += donation.getAmount();
                     });
-                    LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+                    log.info("|- Total donations : {}", totalDonationsAmount[0]);
                     if(account.getAmount() != account.getInitialAmount() - totalDonationsAmount[0]) {
-                        LOGGER.error("Total donations computed doest match with account amount ({} - {} != {})", account.getInitialAmount(), totalDonationsAmount[0], account.getAmount());
+                        log.error("Total donations computed doest match with account amount ({} - {} != {})", account.getInitialAmount(), totalDonationsAmount[0], account.getAmount());
                     }
                 }
             });
         });
-        LOGGER.info("Control budgets");
+        log.info("Control budgets");
         List<BudgetEntity> budgets = budgetRepository.findAll();
         budgets.forEach(budget -> {
-            LOGGER.info("Budget {} : {}", budget.getId(), budget.getAmountPerMember());
+            log.info("Budget {} : {}", budget.getId(), budget.getAmountPerMember());
             Set<AccountEntity> accounts = accountRepository.findAllByBudgetId(budget.getId());
             final float[] totalDonationsAmount = {0f};
             accounts.forEach(account -> {
                 float accountTotalDonations = account.getInitialAmount() - account.getAmount();
-                LOGGER.info("|- Account {} : {} - {} = {}", account.getId(), account.getInitialAmount(), account.getAmount(), accountTotalDonations);
+                log.info("|- Account {} : {} - {} = {}", account.getId(), account.getInitialAmount(), account.getAmount(), accountTotalDonations);
                 totalDonationsAmount[0] += accountTotalDonations;
             });
-            LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+            log.info("|- Total donations : {}", totalDonationsAmount[0]);
             if(budget.getTotalDonations() != totalDonationsAmount[0]) {
-                LOGGER.error("Account amounts doest match with budget total donations registered ({} != {})", totalDonationsAmount[0], budget.getTotalDonations());
+                log.error("Account amounts doest match with budget total donations registered ({} != {})", totalDonationsAmount[0], budget.getTotalDonations());
             }
         });
-        LOGGER.info("Control campaigns");
+        log.info("Control campaigns");
         List<CampaignEntity> campaigns = campaignRepository.findAll();
         campaigns.forEach(campaign -> {
-            LOGGER.info("Campaign {} : {}", campaign.getId(), campaign.getTitle());
+            log.info("Campaign {} : {}", campaign.getId(), campaign.getTitle());
             Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
             final float[] totalDonationsAmount = {0f};
             donations.forEach(donation -> {
-                LOGGER.info("|- Donation {} : {}", donation.getId(), donation.getAmount());
+                log.info("|- Donation {} : {}", donation.getId(), donation.getAmount());
                 totalDonationsAmount[0] += donation.getAmount();
             });
-            LOGGER.info("|- Total donations : {}", totalDonationsAmount[0]);
+            log.info("|- Total donations : {}", totalDonationsAmount[0]);
             if(campaign.getTotalDonations() != totalDonationsAmount[0]) {
-                LOGGER.error("Total donations computed doest match with campaign total registered ({} != {})", totalDonationsAmount[0], campaign.getTotalDonations());
+                log.error("Total donations computed doest match with campaign total registered ({} != {})", totalDonationsAmount[0], campaign.getTotalDonations());
             }
         });
-        LOGGER.info("Donation amounts control finished");
+        log.info("Donation amounts control finished");
     }
 
     @Operation(summary = "Submit a donation", description = "Submit a new donation", tags = { "Donations" })
@@ -164,7 +162,7 @@ public class DonationController {
         // Verify that body is complete
         if(donation == null || donation.getAccount() == null || donation.getCampaign() == null || donation.getContributor() == null || donation.getBudget() == null
         || donation.getCampaign().getId() == null || donation.getContributor().getId() == null || donation.getBudget().getId() == null) {
-            LOGGER.error("Impossible to create donation : body is incomplete");
+            log.error("Impossible to create donation : body is incomplete");
             throw new BadRequestException();
         }
 
@@ -174,48 +172,54 @@ public class DonationController {
         BudgetEntity budget = budgetRepository.findById(donation.getBudget().getId()).orElse(null);
         UserEntity contributor = userRepository.findById(donation.getContributor().getId()).orElse(null);
 
+        log.debug("Submitting donation with following params :");
+        log.debug("account = {}", account);
+        log.debug("campaign = {}", campaign);
+        log.debug("budget = {}", budget);
+        log.debug("contributor = {}", contributor);
+
         // Verify that any of references are not null
         if(account == null || campaign == null || budget == null || contributor == null) {
-            LOGGER.error("Impossible to create donation : one or more reference(s) doesn't exist");
+            log.error("Impossible to create donation : one or more reference(s) doesn't exist");
             throw new NotFoundException();
         }
 
         // Verify that principal is the contributor
         long userLoggedInId = userService.get(principal).getId();
         if(userLoggedInId != contributor.getId()) {
-            LOGGER.error("Impossible to create donation : principal {} is not the contributor", userLoggedInId);
+            log.error("Impossible to create donation : principal {} is not the contributor", userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that principal is member of organization
         if(!userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
+            log.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
 
         // Verify that status of campaign is in progress
         if(!campaign.getStatus().equals(CampaignStatus.IN_PROGRESS)) {
-            LOGGER.error("Impossible to create donation : status of campaign is not in progress");
+            log.error("Impossible to create donation : status of campaign is not in progress");
             throw new BadRequestException();
         }
 
         // Verify that funding deadline of campaign has not been reached
         Date now = new Date();
         if(now.compareTo(campaign.getFundingDeadline()) > 0) {
-            LOGGER.error("Impossible to create donation : funding deadline of campaign has been reached");
+            log.error("Impossible to create donation : funding deadline of campaign has been reached");
             throw new BadRequestException();
         }
 
         // Verify that donation budgets is associated with the campaign
         Long budgetId = budget.getId();
         if(campaign.getBudgets().stream().noneMatch(projectBudget -> projectBudget.getId().equals(budgetId))) {
-            LOGGER.error("Impossible to create donation : budgets is not associated with the campaign");
+            log.error("Impossible to create donation : budgets is not associated with the campaign");
             throw new BadRequestException();
         }
 
         // Verify that amount is lower than account initial amount
         if(account.getInitialAmount() < donation.getAmount()) {
-            LOGGER.error("Impossible to create donation : donation amount is greater than account initial amount");
+            log.error("Impossible to create donation : donation amount is greater than account initial amount");
             throw new BadRequestException();
         }
 
@@ -246,7 +250,7 @@ public class DonationController {
 
         // Fails if campaign ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to delete donation : ID is incorrect");
+            log.error("Impossible to delete donation : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -255,7 +259,7 @@ public class DonationController {
 
         // Verify that any of references are not null
         if(donation == null) {
-            LOGGER.error("Impossible to delete donation : donation {} not found", id);
+            log.error("Impossible to delete donation : donation {} not found", id);
             throw new NotFoundException();
         }
 
@@ -263,13 +267,13 @@ public class DonationController {
         // Principal is the contributor OR Principal is admin
         long userLoggedInId = userService.get(principal).getId();
         if(userLoggedInId != donation.getContributor().getId() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to delete donation : principal {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to delete donation : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that campaign associated is in progress
         if(donation.getCampaign().getStatus() != CampaignStatus.IN_PROGRESS) {
-            LOGGER.error("Impossible to delete donation : campaign {} is in progress", donation.getCampaign());
+            log.error("Impossible to delete donation : campaign {} is in progress", donation.getCampaign());
             throw new ForbiddenException();
         }
 

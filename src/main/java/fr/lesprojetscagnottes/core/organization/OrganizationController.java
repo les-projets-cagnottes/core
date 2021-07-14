@@ -15,13 +15,15 @@ import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
-import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
-import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
+import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
+import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.idea.IdeaEntity;
 import fr.lesprojetscagnottes.core.idea.IdeaModel;
@@ -33,19 +35,13 @@ import fr.lesprojetscagnottes.core.project.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.ProjectModel;
 import fr.lesprojetscagnottes.core.project.ProjectRepository;
 import fr.lesprojetscagnottes.core.project.ProjectStatus;
-import fr.lesprojetscagnottes.core.user.*;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserGenerator;
-import fr.lesprojetscagnottes.core.common.pagination.DataPage;
-import fr.lesprojetscagnottes.core.common.service.HttpClientService;
+import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.controller.SlackController;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.user.UserModel;
-import fr.lesprojetscagnottes.core.user.UserController;
+import fr.lesprojetscagnottes.core.user.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -53,8 +49,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -75,6 +70,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.*;
 
+@Slf4j
 @RequestMapping("/api")
 @Tag(name = "Organizations", description = "The Organizations API")
 @RestController
@@ -82,8 +78,6 @@ public class OrganizationController {
 
     private static final String SLACK_CLIENT_ID = System.getenv("LPC_SLACK_CLIENT_ID");
     private static final String SLACK_CLIENT_SECRET = System.getenv("LPC_SLACK_CLIENT_SECRET");
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationController.class);
 
     @Autowired
     private SlackController slackController;
@@ -193,7 +187,7 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get organization by ID : ID is incorrect");
+            log.error("Impossible to get organization by ID : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -209,7 +203,7 @@ public class OrganizationController {
 
         // Verify that entity exists
         if(entity == null) {
-            LOGGER.error("Impossible to get organization by ID : organization not found");
+            log.error("Impossible to get organization by ID : organization not found");
             throw new NotFoundException();
         }
 
@@ -237,13 +231,13 @@ public class OrganizationController {
             // Retrieve full referenced objects
             OrganizationEntity entity = organizationRepository.findById(id).orElse(null);
             if(entity == null) {
-                LOGGER.error("Impossible to get organization {} : it doesn't exist", id);
+                log.error("Impossible to get organization {} : it doesn't exist", id);
                 continue;
             }
 
             // Verify that principal share an organization with the user
             if(!userLoggedInOrganizations.contains(entity) && userLoggedIn_isNotAdmin) {
-                LOGGER.error("Impossible to get organization {} : principal {} is not in it", id, userLoggedInId);
+                log.error("Impossible to get organization {} : principal {} is not in it", id, userLoggedInId);
                 continue;
             }
 
@@ -267,21 +261,21 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(organizationId <= 0) {
-            LOGGER.error("Impossible to get ideas of organization : ID is incorrect");
+            log.error("Impossible to get ideas of organization : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get ideas of organization {} : principal is not a member of organization", organizationId);
+            log.error("Impossible to get ideas of organization {} : principal is not a member of organization", organizationId);
             throw new ForbiddenException();
         }
 
         // Verify that organization and user exists
         OrganizationEntity organization = organizationRepository.findById(organizationId).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get ideas of organization {} : organization doesnt exist", organizationId);
+            log.error("Impossible to get ideas of organization {} : organization doesnt exist", organizationId);
             throw new NotFoundException();
         }
 
@@ -305,7 +299,7 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(organizationId <= 0) {
-            LOGGER.error("Impossible to get budgets of organization : ID is incorrect");
+            log.error("Impossible to get budgets of organization : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -313,7 +307,7 @@ public class OrganizationController {
         Long userLoggedInId = userService.get(principal).getId();
         OrganizationEntity organization = organizationRepository.findByIdAndMembers_Id(organizationId, userLoggedInId);
         if(organization == null && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get budgets of organization {} : principal is not a member of organization", organizationId);
+            log.error("Impossible to get budgets of organization {} : principal is not a member of organization", organizationId);
             throw new ForbiddenException();
         }
 
@@ -339,21 +333,21 @@ public class OrganizationController {
     public Set<BudgetModel> getUsableBudgets(Principal principal, @PathVariable("id") Long id) {
 
         if(id < 0) {
-            LOGGER.error("Impossible to get usable budgets of organization {} : ID is incorrect", id);
+            log.error("Impossible to get usable budgets of organization {} : ID is incorrect", id);
             throw new BadRequestException();
         }
 
         // Verify that any of references are not null
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to delete organization : donation {} not found", id);
+            log.error("Impossible to delete organization : donation {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get usable budgets of organization {} : principal {} has not enough privileges", id, userLoggedInId);
+            log.error("Impossible to get usable budgets of organization {} : principal {} has not enough privileges", id, userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -383,7 +377,7 @@ public class OrganizationController {
 
         // Verify that body is complete
         if(organizationModel == null || organizationModel.getName() == null) {
-            LOGGER.error("Impossible to create organization : body is incomplete");
+            log.error("Impossible to create organization : body is incomplete");
             throw new BadRequestException();
         }
 
@@ -419,14 +413,14 @@ public class OrganizationController {
 
         // Verify that body is complete
         if(organizationModel == null || organizationModel.getName() == null || organizationModel.getId() <= 0) {
-            LOGGER.error("Impossible to update organization : body is incomplete");
+            log.error("Impossible to update organization : body is incomplete");
             throw new BadRequestException();
         }
 
         // Get corresponding entity
         OrganizationEntity entity = organizationRepository.findById(organizationModel.getId()).orElse(null);
         if(entity == null) {
-            LOGGER.error("Impossible to update organization : organization {} not found", organizationModel.getId());
+            log.error("Impossible to update organization : organization {} not found", organizationModel.getId());
             throw new NotFoundException();
         }
 
@@ -434,7 +428,7 @@ public class OrganizationController {
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -457,7 +451,7 @@ public class OrganizationController {
 
         // Fails if campaign ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to delete organization : ID is incorrect");
+            log.error("Impossible to delete organization : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -466,7 +460,7 @@ public class OrganizationController {
 
         // Verify that any of references are not null
         if(organization == null) {
-            LOGGER.error("Impossible to delete organization : donation {} not found", id);
+            log.error("Impossible to delete organization : donation {} not found", id);
             throw new NotFoundException();
         }
 
@@ -474,7 +468,7 @@ public class OrganizationController {
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -495,21 +489,21 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get members of organizations : ID is incorrect");
+            log.error("Impossible to get members of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get members of organizations : organization {} not found", id);
+            log.error("Impossible to get members of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get members of organizations : principal is not a member of organization {}", id);
+            log.error("Impossible to get members of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -535,7 +529,7 @@ public class OrganizationController {
 
         // Verify that IDs are corrects
         if(id <= 0 || userId <= 0) {
-            LOGGER.error("Impossible to add member to an organization : parameters are incorrect");
+            log.error("Impossible to add member to an organization : parameters are incorrect");
             throw new BadRequestException();
         }
 
@@ -543,14 +537,14 @@ public class OrganizationController {
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         UserEntity user = userRepository.findById(userId).orElse(null);
         if(organization == null || user == null) {
-            LOGGER.error("Impossible to add member to an organization : organization {} or user {} doesnt exist", id, userId);
+            log.error("Impossible to add member to an organization : organization {} or user {} doesnt exist", id, userId);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to add member to an organization : principal is not a member of organization {}", id);
+            log.error("Impossible to add member to an organization : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -559,13 +553,13 @@ public class OrganizationController {
                 .findAny()
                 .ifPresentOrElse(
                         member -> {
-                            LOGGER.error("Impossible to add member to an organization : User {} is already a member of organization {}", member.getId(), organization.getId());
+                            log.error("Impossible to add member to an organization : User {} is already a member of organization {}", member.getId(), organization.getId());
                             throw new BadRequestException();
                         },
                         () -> {
                             organization.getMembers().add(user);
                             organizationRepository.save(organization);
-                            LOGGER.info("User {} is now a member of organization {}", user.getId(), organization.getId());
+                            log.info("User {} is now a member of organization {}", user.getId(), organization.getId());
                         }
                 );
     }
@@ -583,7 +577,7 @@ public class OrganizationController {
 
         // Verify that IDs are corrects
         if(id <= 0 || userId <= 0) {
-            LOGGER.error("Impossible to remove member from an organization : parameters are incorrect");
+            log.error("Impossible to remove member from an organization : parameters are incorrect");
             throw new BadRequestException();
         }
 
@@ -591,14 +585,14 @@ public class OrganizationController {
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         UserEntity user = userRepository.findById(userId).orElse(null);
         if(organization == null || user == null) {
-            LOGGER.error("Impossible to remove member from an organization : organization {} or user {} doesnt exist", id, userId);
+            log.error("Impossible to remove member from an organization : organization {} or user {} doesnt exist", id, userId);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to remove member from an organization : principal is not a manager of organization {}", id);
+            log.error("Impossible to remove member from an organization : principal is not a manager of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -607,12 +601,12 @@ public class OrganizationController {
         user.getUserOrganizationAuthorities().stream().filter(organizationAuthority -> organizationAuthority.getOrganization().getId() == id).forEach(organizationAuthorities::add);
         user.getUserOrganizationAuthorities().removeAll(organizationAuthorities);
         userRepository.save(user);
-        LOGGER.info("All Privileges for User {} on organization {} has been removed", user.getId(), organization.getId());
+        log.info("All Privileges for User {} on organization {} has been removed", user.getId(), organization.getId());
 
         // Remove member from organization
         organization.getMembers().remove(user);
         organizationRepository.save(organization);
-        LOGGER.info("User {} has been removed from organization {}", user.getId(), organization.getId());
+        log.info("User {} has been removed from organization {}", user.getId(), organization.getId());
     }
 
     @Operation(summary = "Get paginated organization campaigns", description = "Get paginated organization campaigns", tags = { "Organizations" })
@@ -627,14 +621,14 @@ public class OrganizationController {
 
         // Verify that params are correct
         if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
-            LOGGER.error("Impossible to get organization campaigns : params are incorrect");
+            log.error("Impossible to get organization campaigns : params are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get organization campaigns : organization not found");
+            log.error("Impossible to get organization campaigns : organization not found");
             throw new NotFoundException();
         }
 
@@ -676,14 +670,14 @@ public class OrganizationController {
 
         // Verify that params are correct
         if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
-            LOGGER.error("Impossible to get organization projects : params are incorrect");
+            log.error("Impossible to get organization projects : params are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get organization projects : organization not found");
+            log.error("Impossible to get organization projects : organization not found");
             throw new NotFoundException();
         }
 
@@ -710,7 +704,7 @@ public class OrganizationController {
 
         // Convert and return data
         DataPage<ProjectModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(ProjectEntity.fromEntity(entity)));
+        entities.getContent().forEach(entity -> models.getContent().add(ProjectModel.fromEntity(entity)));
         return models;
     }
 
@@ -727,21 +721,21 @@ public class OrganizationController {
 
         // Verify that IDs are corrects
         if(id <= 0) {
-            LOGGER.error("Impossible to get news : parameters are incorrect");
+            log.error("Impossible to get news : parameters are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get news : organization not found");
+            log.error("Impossible to get news : organization not found");
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get news : principal is not a member of organization {}", id);
+            log.error("Impossible to get news : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -765,21 +759,21 @@ public class OrganizationController {
 
         // Verify that IDs are corrects
         if(id <= 0) {
-            LOGGER.error("Impossible to get organization authorities : parameters are incorrect");
+            log.error("Impossible to get organization authorities : parameters are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get organization authorities : organization not found");
+            log.error("Impossible to get organization authorities : organization not found");
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get organization authorities : principal is not a member of organization {}", id);
+            log.error("Impossible to get organization authorities : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -803,21 +797,21 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get contents of organizations : ID is incorrect");
+            log.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get contents of organizations : organization {} not found", id);
+            log.error("Impossible to get contents of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
+            log.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -842,21 +836,21 @@ public class OrganizationController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get contents of organizations : ID is incorrect");
+            log.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get contents of organizations : organization {} not found", id);
+            log.error("Impossible to get contents of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
+            log.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -879,21 +873,21 @@ public class OrganizationController {
 
         // Verify that body is complete
         if(model == null || model.getName() == null) {
-            LOGGER.error("Impossible to create content in organization : body is incomplete");
+            log.error("Impossible to create content in organization : body is incomplete");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to get contents of organizations : organization {} not found", id);
+            log.error("Impossible to get contents of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to create content in organization : principal is not a member of organization {}", id);
+            log.error("Impossible to create content in organization : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -921,7 +915,7 @@ public class OrganizationController {
 
         // Verify that IDs are corrects
         if(id <= 0 || contentId <= 0) {
-            LOGGER.error("Impossible to remove content from an organization : parameters are incorrect");
+            log.error("Impossible to remove content from an organization : parameters are incorrect");
             throw new BadRequestException();
         }
 
@@ -929,14 +923,14 @@ public class OrganizationController {
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         ContentEntity content = contentRepository.findById(contentId).orElse(null);
         if(organization == null || content == null) {
-            LOGGER.error("Impossible to remove content from an organization : organization {} or content {} doesnt exist", id, contentId);
+            log.error("Impossible to remove content from an organization : organization {} or content {} doesnt exist", id, contentId);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to remove content from an organization : principal is not a member of organization {}", id);
+            log.error("Impossible to remove content from an organization : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -962,29 +956,29 @@ public class OrganizationController {
 
         // Verify that parameters are correct
         if(id <= 0 || code == null || code.isEmpty() || redirect_uri == null || redirect_uri.isEmpty()) {
-            LOGGER.error("Impossible to add Slack workspace to organization : parameters are incorrect");
+            log.error("Impossible to add Slack workspace to organization : parameters are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to add Slack workspace to organization : organization {} not found", id);
+            log.error("Impossible to add Slack workspace to organization : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to add Slack workspace to organization : principal is not owner of organization {}", id);
+            log.error("Impossible to add Slack workspace to organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }
 
         // Prepare Slack request
         String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
         String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
+        log.debug("POST " + url);
+        log.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
@@ -997,7 +991,7 @@ public class OrganizationController {
         // Send Slack request and process response
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body());
+            log.debug("response : " + response.body());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
@@ -1019,8 +1013,8 @@ public class OrganizationController {
             return response.body();
 
         } catch (IOException | InterruptedException e) {
-            LOGGER.error("Impossible to add Slack workspace to organization");
-            LOGGER.error(e.getMessage(), e);
+            log.error("Impossible to add Slack workspace to organization");
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -1038,21 +1032,21 @@ public class OrganizationController {
 
         // Verify that parameters are correct
         if(id <= 0) {
-            LOGGER.error("Impossible to sync Slack data with organization : ID is incorrect");
+            log.error("Impossible to sync Slack data with organization : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null) {
-            LOGGER.error("Impossible to sync Slack data with organization : organization {} not found", id);
+            log.error("Impossible to sync Slack data with organization : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
+            log.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }
 
@@ -1152,21 +1146,21 @@ public class OrganizationController {
 
         // Verify that parameters are correct
         if(id <= 0) {
-            LOGGER.error("Impossible disconnect Slack workspace from organization : ID is incorrect");
+            log.error("Impossible disconnect Slack workspace from organization : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization and Slack Team exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         if(organization == null ||organization.getSlackTeam() == null) {
-            LOGGER.error("Impossible disconnect Slack workspace from organization : organization or Slack Team {} not found", id);
+            log.error("Impossible disconnect Slack workspace from organization : organization or Slack Team {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
         if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible disconnect Slack workspace from organization : principal is not owner of organization {}", id);
+            log.error("Impossible disconnect Slack workspace from organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }
 

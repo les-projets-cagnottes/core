@@ -103,20 +103,20 @@ public class CampaignController {
             throw new BadRequestException();
         }
 
-        // Verify that principal is in campaign organizations
-        Long userLoggedInId = userService.get(principal).getId();
-        Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
-        Set<OrganizationEntity> principalOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        if(userService.isNotAdmin(userLoggedInId) && campaignOrganizations.stream().noneMatch(principalOrganizations::contains)) {
-            log.error("Impossible to get campaign by ID : principal has not enough privileges");
-            throw new ForbiddenException();
-        }
-
         // Verify that entity exists
         CampaignEntity entity = campaignRepository.findById(id).orElse(null);
         if(entity == null) {
             log.error("Impossible to get campaign by ID : campaign not found");
             throw new NotFoundException();
+        }
+
+        // Verify that principal is in campaign organizations
+        Long userLoggedInId = userService.get(principal).getId();
+        Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByProjects_Id(entity.getProject().getId());
+        Set<OrganizationEntity> principalOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
+        if(userService.isNotAdmin(userLoggedInId) && campaignOrganizations.stream().noneMatch(principalOrganizations::contains)) {
+            log.error("Impossible to get campaign by ID : principal has not enough privileges");
+            throw new ForbiddenException();
         }
 
         // Transform and return organization
@@ -148,9 +148,9 @@ public class CampaignController {
             }
 
             // Verify that principal share an organization with the user
-            Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByCampaigns_Id(id);
+            Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByProjects_Id(campaign.getProject().getId());
             if(userService.hasNoACommonOrganization(userLoggedInOrganizations, campaignOrganizations) && userLoggedIn_isNotAdmin) {
-                log.error("Impossible to get campaign {} : principal {} is not in its organizations", id, userLoggedInId);
+                log.error("Impossible to get campaign {} : principal {} is not in organizations of project's campaign", id, userLoggedInId);
                 continue;
             }
 
