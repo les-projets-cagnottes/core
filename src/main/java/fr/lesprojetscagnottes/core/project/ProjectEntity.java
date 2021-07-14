@@ -40,7 +40,7 @@ public class ProjectEntity extends ProjectModel {
     private Set<OrganizationEntity> organizations = new LinkedHashSet<>();
 
     @OneToMany(
-            mappedBy = "organization",
+            mappedBy = "project",
             orphanRemoval = true)
     @JsonIgnoreProperties({"author", "organization", "project"})
     private Set<NewsEntity> news = new LinkedHashSet<>();

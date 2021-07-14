@@ -72,13 +72,17 @@ public class ProjectModel extends AuditEntity<String> {
 
     @Override
     public String toString() {
-        return "CampaignModel{" + "title='" + title + '\'' +
+        return "ProjectModel{" + "id=" + id +
+                ", title='" + title + '\'' +
                 ", status=" + status +
                 ", shortDescription='" + shortDescription + '\'' +
                 ", longDescription='" + longDescription + '\'' +
                 ", peopleRequired=" + peopleRequired +
                 ", leader=" + leader +
-                ", id=" + id +
+                ", campaignsRef=" + campaignsRef +
+                ", organizationsRef=" + organizationsRef +
+                ", peopleGivingTimeRef=" + peopleGivingTimeRef +
+                ", newsRef=" + newsRef +
                 '}';
     }
 }
