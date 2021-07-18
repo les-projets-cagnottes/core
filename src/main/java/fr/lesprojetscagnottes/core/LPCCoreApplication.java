@@ -197,6 +197,7 @@ public class LPCCoreApplication {
 
 		// If Slack is enabled, we create a dedicated user account
 		if(slackEnabled) {
+			log.info("Slack module is enabled. Retrieving a token for slack-events-catcher");
 			if(admin == null) {
 				admin = userRepository.findByEmail("admin");
 			}
@@ -228,6 +229,8 @@ public class LPCCoreApplication {
 			} catch (IOException e) {
 				log.debug("Cannot save slack-events-catcher token in {}", tokenFilePath);
 			}
+		} else {
+			log.info("Slack module is disabled.");
 		}
 
 		prepareDirectories("img");
