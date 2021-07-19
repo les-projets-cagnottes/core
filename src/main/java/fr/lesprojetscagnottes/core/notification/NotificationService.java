@@ -7,6 +7,7 @@ import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
@@ -18,8 +19,6 @@ import java.util.Set;
 
 @Service(value = "notificationService")
 public class NotificationService {
-
-    private static final String WEB_URL = System.getenv("LPC_WEB_URL");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
 
@@ -35,6 +34,9 @@ public class NotificationService {
     @Autowired
     private SlackUserRepository slackUserRepository;
 
+    @Value("${fr.lesprojetscagnottes.web.url}")
+    private String webUrl;
+
     public void notifyAllSlackUsers(String templateName)  {
         slackTeamRepository.findAll().forEach(slackTeam -> {
             Set<SlackUserEntity> slackUsers = slackUserRepository.findAllBySlackTeamId(slackTeam.getId());
@@ -45,7 +47,7 @@ public class NotificationService {
                 try {
                     Map<String, Object> model = new HashMap<>();
                     model.put("organization", slackTeam.getOrganization());
-                    model.put("baseUrl", WEB_URL);
+                    model.put("baseUrl", webUrl);
 
                     Context context = new Context();
                     context.setVariables(model);

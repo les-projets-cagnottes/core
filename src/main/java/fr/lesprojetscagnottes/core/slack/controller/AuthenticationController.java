@@ -118,13 +118,18 @@ public class AuthenticationController {
             log.debug("Response from {} : {}", url, response.body());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            log.debug("Response converted into json : {}", json);
+            log.debug("authed_user : {}", json.get("authed_user"));
+            log.debug("team : {}", json.get("team"));
             if (json.get("authed_user") != null && json.get("team") != null) {
                 final SlackTeamEntity slackTeam = slackTeamRepository.findByTeamId(json.get("team").getAsJsonObject().get("id").getAsString());
+                log.debug("slackTeam found : {}", slackTeam);
                 if (slackTeam == null) {
                     throw new NotFoundException();
                 }
 
                 OrganizationEntity organization = slackTeam.getOrganization();
+                log.debug("organization found : {}", organization);
                 if (organization == null) {
                     throw new NotFoundException();
                 }
@@ -133,14 +138,17 @@ public class AuthenticationController {
 
                 // Import SlackUser from Slack API
                 SlackUserEntity slackUser = slackUserRepository.findBySlackId(jsonUser.get("id").getAsString());
+                log.debug("slackUser found : {}", slackUser);
                 if (slackUser == null) {
                     slackUser = slackClientService.getUser(jsonUser.get("access_token").getAsString());
                     slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
                 }
                 slackUser.setSlackTeam(slackTeam);
+                log.debug("slackUser : {}", slackUser);
 
                 // Build user from SlackUser
                 UserEntity user = userRepository.findByEmail(slackUser.getEmail());
+                log.debug("user found : {}", user);
                 if (user == null) {
                     user = new UserEntity();
                     user.setCreatedBy("Slack Login");
@@ -154,6 +162,7 @@ public class AuthenticationController {
                 user.setUsername(slackUser.getEmail());
                 user.setAvatarUrl(slackUser.getImage_192());
                 final UserEntity userInDb = userRepository.save(UserGenerator.newUser(user));
+                log.debug("user saved : {}", userInDb);
 
                 // Save SlackUser with link to user
                 slackUser.setUser(userInDb);

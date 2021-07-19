@@ -51,6 +51,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -75,9 +76,6 @@ import java.util.*;
 @Tag(name = "Organizations", description = "The Organizations API")
 @RestController
 public class OrganizationController {
-
-    private static final String SLACK_CLIENT_ID = System.getenv("LPC_SLACK_CLIENT_ID");
-    private static final String SLACK_CLIENT_SECRET = System.getenv("LPC_SLACK_CLIENT_SECRET");
 
     @Autowired
     private SlackController slackController;
@@ -130,6 +128,12 @@ public class OrganizationController {
     @Autowired
     private UserService userService;
 
+    @Value("${fr.lesprojetscagnottes.slack.client_id}")
+    private String slackClientId;
+
+    @Value("${fr.lesprojetscagnottes.slack.client_secret}")
+    private String slackClientSecret;
+    
     @Operation(summary = "Find all organizations paginated", description = "Find all organizations paginated", tags = { "Organizations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organizations paginated", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class)))
@@ -975,7 +979,7 @@ public class OrganizationController {
         }
 
         // Prepare Slack request
-        String url = "https://slack.com/api/oauth.access?client_id=" + SLACK_CLIENT_ID + "&client_secret=" + SLACK_CLIENT_SECRET + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        String url = "https://slack.com/api/oauth.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
         String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
         log.debug("POST " + url);
         log.debug("body : " + body);
@@ -1170,8 +1174,8 @@ public class OrganizationController {
         slackTeamRepository.deleteById(slackTeamId);
     }
 
-    private static String basicAuth() {
-        return "Basic " + Base64.getEncoder().encodeToString((OrganizationController.SLACK_CLIENT_ID + ":" + OrganizationController.SLACK_CLIENT_SECRET).getBytes());
+    private String basicAuth() {
+        return "Basic " + Base64.getEncoder().encodeToString((slackClientId + ":" + slackClientSecret).getBytes());
     }
 
 }
