@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -51,8 +52,6 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/api")
 @Tag(name = "Campaigns", description = "The Campaigns API")
 public class CampaignController {
-
-    private static final String WEB_URL = System.getenv("LPC_WEB_URL");
 
     @Autowired
     private Gson gson;
@@ -86,6 +85,9 @@ public class CampaignController {
 
     @Autowired
     private UserService userService;
+
+    @Value("${fr.lesprojetscagnottes.web.url}")
+    private String webUrl;
 
     @Operation(summary = "Find a campaign by its ID", description = "Find a campaign by its ID", tags = { "Campaigns" })
     @ApiResponses(value = {
@@ -348,7 +350,7 @@ public class CampaignController {
         budgetRepository.saveAll(budgets);
 
         Map<String, Object> model = new HashMap<>();
-        model.put("URL", WEB_URL);
+        model.put("URL", webUrl);
         model.put("campaign", campaignFinal);
 
         // Send a notification if project is in progress state

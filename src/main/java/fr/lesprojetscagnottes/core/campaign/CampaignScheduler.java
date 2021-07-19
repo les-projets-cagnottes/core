@@ -8,6 +8,7 @@ import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +25,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CampaignScheduler {
 
-    private static final String WEB_URL = System.getenv("LPC_WEB_URL");
-
     @Autowired
     private SpringTemplateEngine templateEngine;
 
@@ -40,6 +39,9 @@ public class CampaignScheduler {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Value("${fr.lesprojetscagnottes.web.url}")
+    private String webUrl;
 
     @Scheduled(cron = "0 0 2 * * *")
     public void processTotalDonations() {
@@ -116,7 +118,7 @@ public class CampaignScheduler {
             if(teamMatesMissing > 0 || donationsMissing > 0) {
 
                 Map<String, Object> model = new HashMap<>();
-                model.put("URL", WEB_URL);
+                model.put("URL", webUrl);
                 model.put("campaign", campaign);
                 model.put("daysUntilDeadline", daysUntilDeadline);
                 model.put("teamMatesMissing", teamMatesMissing);
