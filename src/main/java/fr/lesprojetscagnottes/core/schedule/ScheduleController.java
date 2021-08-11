@@ -37,16 +37,13 @@ public class ScheduleController {
     @Autowired
     private ScheduleRepository scheduleRepository;
 
-    @Autowired
-    private UserService userService;
-
     @Operation(summary = "Get statuses by a list of IDs", description = "Get statuses by a list of IDs", tags = { "Schedules" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return the statuses", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Map.class))))
     })
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/schedule/status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
-    public Map<Long, Boolean> status(Principal principal, @RequestParam("ids") Set<Long> ids) {
+    public Map<Long, Boolean> status(@RequestParam("ids") Set<Long> ids) {
         return mainScheduler.statuses(ids);
     }
 
@@ -56,7 +53,7 @@ public class ScheduleController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/schedule", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<ScheduleModel> getAll(Principal principal) {
+    public Set<ScheduleModel> getAll() {
         List<ScheduleEntity> schedules = scheduleRepository.findAll();
         Set<ScheduleModel> models = new LinkedHashSet<>();
         schedules.forEach(schedule -> models.add(ScheduleModel.fromEntity(schedule)));
@@ -85,7 +82,7 @@ public class ScheduleController {
         }
 
         // Retrieve full referenced objects
-        ScheduleEntity schedule = scheduleRepository.getOne(model.getId());
+        ScheduleEntity schedule = scheduleRepository.findById(model.getId()).orElse(null);
 
         // Fails if any of references are null
         if(schedule == null) {

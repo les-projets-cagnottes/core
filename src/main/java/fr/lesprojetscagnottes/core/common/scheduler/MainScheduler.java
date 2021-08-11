@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.common.scheduler;
 
 import fr.lesprojetscagnottes.core.schedule.ScheduleEntity;
+import fr.lesprojetscagnottes.core.schedule.ScheduleName;
 import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
 import fr.lesprojetscagnottes.core.notification.NotificationService;
 import fr.lesprojetscagnottes.core.notification.ReminderTask;
@@ -32,14 +33,10 @@ public class MainScheduler {
     }
 
     public void start(ScheduleEntity schedule) {
-        switch(schedule.getType()) {
-            case REMINDER:
-                ReminderTask task = new ReminderTask(schedule, notificationService);
-                ScheduledFuture<?> future = taskScheduler.schedule(task, new CronTrigger(schedule.getPlanning()));
-                this.scheduledTasks.put(schedule.getId(), future);
-                break;
-            default:
-                break;
+        if (schedule.getType() == ScheduleName.REMINDER) {
+            ReminderTask task = new ReminderTask(schedule, notificationService);
+            ScheduledFuture<?> future = taskScheduler.schedule(task, new CronTrigger(schedule.getPlanning()));
+            this.scheduledTasks.put(schedule.getId(), future);
         }
     }
 
