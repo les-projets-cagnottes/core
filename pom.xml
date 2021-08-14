@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.2</version>
+        <version>2.5.3</version>
         <relativePath/>
     </parent>
     <groupId>fr.les-projets-cagnottes</groupId>
     <artifactId>core</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
     <name>Les Projets Cagnottes - Core</name>
     <description>Core component of "Les Projets Cagnottes"</description>
 
@@ -54,17 +54,17 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-common</artifactId>
-            <version>1.5.9</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.5.9</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-security</artifactId>
-            <version>1.5.9</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.31</version>
+            <version>1.7.32</version>
         </dependency>
         <dependency>
             <groupId>org.hobsoft.spring</groupId>
@@ -149,25 +149,25 @@
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <version>6.10.4</version>
+            <version>6.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit</artifactId>
-            <version>6.10.4</version>
+            <version>6.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-spring</artifactId>
-            <version>6.10.4</version>
+            <version>6.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.masterthought</groupId>
             <artifactId>cucumber-reporting</artifactId>
-            <version>5.5.3</version>
+            <version>5.5.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -183,14 +183,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>build-info</id>
-                        <goals>
-                            <goal>build-info</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>com.trivago.rta</groupId>

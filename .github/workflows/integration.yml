@@ -59,7 +59,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: les-projets-cagnottes/les-projets-cagnottes.github.io
-        token: ${{ secrets.GITHUB_IO_PAT }}
+        token: ${{ secrets.PUSH_CUCUMBER_REPORTS_GITHUB_TOKEN }}
         path: les-projets-cagnottes.github.io
     - name: Clean previous version
       run: rm -rf les-projets-cagnottes.github.io/cucumber/${{ steps.get_version.outputs.VERSION }}

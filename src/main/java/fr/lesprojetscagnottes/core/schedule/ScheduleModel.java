@@ -5,20 +5,23 @@ import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.support.CronSequenceGenerator;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.scheduling.support.SimpleTriggerContext;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
+@Slf4j
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class ScheduleModel extends AuditEntity<String> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduleModel.class);
 
     @Column(name = "type")
     @NotNull
@@ -49,9 +52,14 @@ public class ScheduleModel extends AuditEntity<String> {
         model.setType(entity.getType());
         model.setPlanning(entity.getPlanning());
         model.setEnabled(entity.getEnabled());
-        CronSequenceGenerator cronTrigger = new CronSequenceGenerator(entity.getPlanning());
-        model.setNextExecution(cronTrigger.next(new Date()));
-        LOGGER.debug("Generated : " + model.toString());
+
+        // Compute next execution date
+        Date now = new Date();
+        CronTrigger tr = new CronTrigger(entity.getPlanning());
+        SimpleTriggerContext context = new SimpleTriggerContext();
+        context.update(now, now, now);
+        model.setNextExecution(tr.nextExecutionTime(context));
+        log.debug("Generated : " + model);
         return model;
     }
 

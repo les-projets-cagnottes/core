@@ -132,7 +132,7 @@ public class IdeaController {
         }
 
         // Retrieve full referenced objects
-        IdeaEntity idea = ideaRepository.getOne(model.getId());
+        IdeaEntity idea = ideaRepository.findById(model.getId()).orElse(null);
         OrganizationEntity organization = organizationRepository.findById(model.getOrganization().getId()).orElse(null);
         Set<TagEntity> tags = tagRepository.findAllByIdIn(model.getTagsRef());
 

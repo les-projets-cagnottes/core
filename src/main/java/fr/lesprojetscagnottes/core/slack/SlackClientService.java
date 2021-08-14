@@ -8,8 +8,7 @@ import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,32 +20,31 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class SlackClientService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SlackClientService.class);
 
     @Autowired
     private HttpClientService httpClientService;
 
     public void postMessage(SlackTeamEntity slackTeam, String channelId, String text) {
         String url = "https://slack.com/api/chat.postMessage";
-        String body = "{\"channel\":\"" + channelId + "\", \"text\":\"" + text + "\"}";
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
+        String body = "{\"channel\":\"" + channelId + "\", \"text\":\"" + text.replaceAll("(\\r\\n|\\n)", "\\\\n") + "\"}";
+        log.debug("POST " + url);
+        log.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse response;
+        HttpResponse<String> response;
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body().toString());
+            log.debug("response : " + response.body());
         } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
         }
     }
@@ -54,39 +52,39 @@ public class SlackClientService {
     public void inviteBotInConversation(SlackTeamEntity slackTeam) {
         String url = "https://slack.com/api/conversations.invite";
         String body = "{\"channel\":\"" + slackTeam.getPublicationChannelId() + "\", \"users\": \"" + slackTeam.getBotUserId() + "\"}";
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
+        log.debug("POST " + url);
+        log.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .header("Authorization", "Bearer " + slackTeam.getAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse response;
+        HttpResponse<String> response;
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body().toString());
+            log.debug("response : " + response.body());
         } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
         }
     }
 
     public SlackUserEntity getUser(String token) {
         String url = "https://slack.com/api/users.identity";
-        LOGGER.debug("GET " + url);
+        log.debug("GET " + url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .header("Authorization", "Bearer " + token)
                 .build();
         HttpResponse<String> response;
         SlackUserEntity slackUser = null;
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body());
+            log.debug("response : " + response.body());
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
@@ -98,7 +96,7 @@ public class SlackClientService {
                 slackUser.setImage_192(jsonUser.get("image_192").getAsString());
             }
         } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return slackUser;
     }
@@ -106,22 +104,22 @@ public class SlackClientService {
     public List<SlackUserEntity> listUsers(SlackTeamEntity slackTeam) {
         String url = "https://slack.com/api/users.list";
         String body = "{}";
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
+        log.debug("POST " + url);
+        log.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse response;
+        HttpResponse<String> response;
         List<SlackUserEntity> slackUsers = new ArrayList<>();
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body().toString());
+            log.debug("response : " + response.body());
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
 
                 JsonArray membersJsonArray = json.get("members").getAsJsonArray();
@@ -147,7 +145,7 @@ public class SlackClientService {
                 });
             }
         } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
         }
         return slackUsers;
@@ -156,26 +154,26 @@ public class SlackClientService {
     public String openDirectMessageChannel(SlackTeamEntity slackTeam, String slackUserId) {
         String url = "https://slack.com/api/conversations.open";
         String body = "{\"users\": \"" + slackUserId + "\"}";
-        LOGGER.debug("POST " + url);
-        LOGGER.debug("body : " + body);
+        log.debug("POST " + url);
+        log.debug("body : " + body);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse response;
+        HttpResponse<String> response;
         try {
             response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.debug("response : " + response.body().toString());
+            log.debug("response : " + response.body());
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body().toString(), JsonObject.class);
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
                 return json.get("channel").getAsJsonObject().get("id").getAsString();
             }
         } catch (IOException | InterruptedException e) {
-            LOGGER.error(e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
         }
         return StringsCommon.EMPTY_STRING;
