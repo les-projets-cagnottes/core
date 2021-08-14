@@ -45,14 +45,14 @@ public class DonationProcessingTask extends TimerTask {
         if(operation != null) {
             Donation donation = operation.getDonation();
             switch (operation.getType()) {
-                case CREATION:
+                case CREATION -> {
                     LOGGER.info("Create donation : {}", donation);
                     createDonation(donation);
-                    break;
-                case DELETION:
+                }
+                case DELETION -> {
                     LOGGER.info("Delete donation : {}", donation);
                     deleteDonation(donation);
-                    break;
+                }
             }
         }
     }

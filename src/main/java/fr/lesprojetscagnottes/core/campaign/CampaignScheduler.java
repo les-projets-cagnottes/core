@@ -1,7 +1,9 @@
 package fr.lesprojetscagnottes.core.campaign;
 
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
+import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
@@ -24,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 public class CampaignScheduler {
+
+    @Autowired
+    private DonationProcessingTask donationProcessingTask;
 
     @Autowired
     private SpringTemplateEngine templateEngine;
@@ -72,7 +77,9 @@ public class CampaignScheduler {
             } else {
                 campaign.setStatus(CampaignStatus.FAILED);
                 log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => FAILED");
-                donationRepository.deleteByCampaignId(campaign.getId());
+                for (Donation donation : donations) {
+                    donationProcessingTask.insert(donation, DonationOperationType.DELETION);
+                }
                 log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations deleted");
             }
         });
@@ -131,15 +138,13 @@ public class CampaignScheduler {
                         organization.getMembers().stream()
                                 .filter(member -> member.getId().equals(leader.getId()))
                                 .findAny()
-                                .ifPresentOrElse(member -> {
-                                            slackTeam.getSlackUsers().stream()
-                                            .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
-                                            .findAny()
-                                            .ifPresentOrElse(
-                                                slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
-                                                        () -> model.put("leader", leader.getFullname()));
-                                            },
-                                        () -> model.put("leader", leader.getFullname())
+                                .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
+                                    .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
+                                    .findAny()
+                                    .ifPresentOrElse(
+                                        slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
+                                        () -> model.put("leader", leader.getFullname())),
+                                    () -> model.put("leader", leader.getFullname())
                                 );
 
                         Context context = new Context();
