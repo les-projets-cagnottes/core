@@ -107,7 +107,7 @@ public class CampaignScheduler {
 
     public void notifyCampaignStatus(CampaignEntity campaign, long daysUntilDeadline) {
 
-        int teamMatesMissing = campaign.getPeopleRequired() - campaign.getPeopleGivingTime().size();
+        int teamMatesMissing = campaign.getProject().getPeopleRequired() - campaign.getProject().getPeopleGivingTime().size();
         log.info("[notifyCampaignStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
 
         Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
