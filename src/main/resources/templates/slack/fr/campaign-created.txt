@@ -1,2 +1,2 @@
-:rocket: [(${leader})] vient de créer le projet cagnotte *[(${campaign.title})]* et vous êtes tous invités à y participer !
-Découvrez le vite sur [(${URL})]/campaigns/[(${campaign.id})]
+:rocket: [(${leader})] vient de lancer une campagne de financement pour le projet *[(${project.title})]* et vous êtes tous invités à y participer !
+Découvrez vite le projet sur [(${URL})]/projects/[(${project.id})]

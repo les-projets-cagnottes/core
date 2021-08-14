@@ -351,7 +351,7 @@ public class CampaignController {
 
         Map<String, Object> model = new HashMap<>();
         model.put("URL", webUrl);
-        model.put("campaign", campaignFinal);
+        model.put("project", campaignFinal.getProject());
 
         // Send a notification if project is in progress state
         if(project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
@@ -376,11 +376,11 @@ public class CampaignController {
                     context.setVariables(model);
                     String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
 
-                    log.info("[create][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+                    log.info("[create][" + campaignFinal.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
 
                     slackClientService.inviteBotInConversation(slackTeam);
                     slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                    log.info("[create][" + campaign.getId() + "] Slack Message Sent");
+                    log.info("[create][" + campaignFinal.getId() + "] Slack Message Sent");
                 }
             });
         }
