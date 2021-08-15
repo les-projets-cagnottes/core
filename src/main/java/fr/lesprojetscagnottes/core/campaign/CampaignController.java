@@ -342,6 +342,12 @@ public class CampaignController {
         campaignToSave.setProject(project);
         final CampaignEntity campaignFinal = campaignRepository.save(campaignToSave);
 
+        // If project is in draft, we force its publication
+        if(project.getStatus().equals(ProjectStatus.DRAFT)) {
+            project.setStatus(ProjectStatus.IN_PROGRESS);
+            projectRepository.save(project);
+        }
+
         // Associate the campaign with budgets
         budgets.forEach(budget -> {
             budget.getCampaigns().add(campaignFinal);
