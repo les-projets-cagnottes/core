@@ -10,7 +10,6 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.common.scheduler.MainScheduler;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.strings.ScheduleParamsCommon;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
@@ -57,9 +56,6 @@ public class LPCCoreApplication {
 
 	@Autowired
 	private Gson gson;
-
-	@Autowired
-	private MainScheduler mainScheduler;
 
 	@Autowired
 	private DonationProcessingTask donationProcessingTask;
@@ -234,7 +230,6 @@ public class LPCCoreApplication {
 		}
 
 		prepareDirectories("img");
-		mainScheduler.schedule();
 		new Timer().schedule(donationProcessingTask, 0, 500);
 	}
 
