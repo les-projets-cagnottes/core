@@ -17,7 +17,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '16'
+        java-version: '17'
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
@@ -38,7 +38,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '16'
+        java-version: '17'
     - name: Build with Maven
       run: ./mvnw -B clean spring-boot:build-image --file pom.xml
       
@@ -51,7 +51,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '16'
+        java-version: '17'
     - name: Test with Maven
       id: tests_run
       run: echo ::set-output name=EXIT_CODE::$(./mvnw -B clean test --file pom.xml > test.log ; echo $?)
@@ -114,7 +114,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '16'
+        java-version: '17'
     - name: Build with Maven
       run: ./mvnw -B clean spring-boot:build-image --file pom.xml
     - name: Get the version
