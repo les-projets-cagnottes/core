@@ -323,6 +323,13 @@ public class BudgetController {
             throw new ForbiddenException();
         }
 
+        // Test that sponsor has correct rights
+        Long sponsorId = budget.getSponsor().getId();
+        if(!userService.isSponsorOfOrganization(sponsorId, organization.getId())) {
+            LOGGER.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
+            throw new ForbiddenException();
+        }
+
         // Save budget
         BudgetEntity budgetToSave = new BudgetEntity();
         budgetToSave.setName(budget.getName());
