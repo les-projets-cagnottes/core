@@ -1,23 +1,15 @@
 package fr.lesprojetscagnottes.core.user;
 
-import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -25,12 +17,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-@Service(value = "userService")
-public class UserService implements UserDetailsService {
+@Service
+public class UserService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -44,9 +36,6 @@ public class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private BCryptPasswordEncoder bcryptEncoder;
-
     public UserEntity get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
@@ -55,27 +44,6 @@ public class UserService implements UserDetailsService {
             user = userRepository.findByEmail(userPrincipal.getUsername());
         }
         return user;
-    }
-
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findByUsername(username);
-        if (user == null) {
-            user = userRepository.findByEmail(username);
-            if (user == null) {
-                throw new UsernameNotFoundException("User not found");
-            }
-        }
-
-        return new UserPrincipal(username, user.getPassword(), getAuthorities(user.getId()));
-    }
-
-    public List<GrantedAuthority> getAuthorities(long userId) {
-        Set<AuthorityEntity> userAuthorities = authorityRepository.findAllByUsers_Id(userId);
-        LOGGER.debug("Authorities for user {} :", userId);
-        return userAuthorities.stream().map(r -> {
-            LOGGER.debug("{}", r.getName().name());
-            return new SimpleGrantedAuthority(r.getAuthority());
-        }).collect(Collectors.toList());
     }
 
     public List<UserEntity> findAll() {
@@ -100,7 +68,7 @@ public class UserService implements UserDetailsService {
         UserEntity newUser = new UserEntity();
         newUser.setUsername(user.getUsername());
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            newUser.setPassword(bcryptEncoder.encode(user.getPassword()));
+            newUser.setPassword(passwordEncoder.encode(user.getPassword()));
             newUser.setLastPasswordResetDate(new Date());
         }
         newUser.setEmail(user.getEmail());

@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.authentication.controller;
 
 import fr.lesprojetscagnottes.core.authentication.ApiTokenRepository;
 import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
+import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
@@ -48,6 +49,9 @@ public class ApiTokenController {
     private ApiTokenRepository apiTokenRepository;
 
     @Autowired
+    private AuthService authService;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -83,7 +87,7 @@ public class ApiTokenController {
         cal.add(Calendar.YEAR, 1);
         Date nextYear = cal.getTime();
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));
         AuthenticationResponseEntity authenticationResponse = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
         authenticationResponse.setExpiration(nextYear);
         authenticationResponse.setUser(user);
