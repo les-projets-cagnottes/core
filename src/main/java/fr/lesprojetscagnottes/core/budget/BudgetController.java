@@ -387,7 +387,7 @@ public class BudgetController {
             }
 
             // Test that sponsor has correct rights
-            if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId()) && userLoggedIn_isNotAdmin) {
+            if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
                 LOGGER.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
                 continue;
             }
