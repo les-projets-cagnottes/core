@@ -275,6 +275,7 @@ public class ProjectController {
         projectToSave.setShortDescription(project.getShortDescription());
         projectToSave.setLongDescription(project.getLongDescription());
         projectToSave.setPeopleRequired(project.getPeopleRequired());
+        projectToSave.setWorkspace(project.getWorkspace());
         projectToSave.setLeader(leader);
         projectToSave.getPeopleGivingTime().add(leader);
         final ProjectEntity projectFinal = projectRepository.save(projectToSave);

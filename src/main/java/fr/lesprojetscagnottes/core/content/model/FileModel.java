@@ -15,19 +15,16 @@ import javax.validation.constraints.NotNull;
 public class FileModel extends AuditEntity<String> {
 
     @NotNull
-    protected String filename;
+    protected String name = "";
 
     @NotNull
     protected String directory = "";
 
     @NotNull
-    protected String originalName = "";
+    protected String format = "";
 
     @NotNull
-    protected String extension = "";
-
-    @NotNull
-    protected String path = "";
+    protected String url = "";
 
     public static FileModel fromEntity(FileEntity entity) {
         FileModel model = new FileModel();
@@ -36,12 +33,15 @@ public class FileModel extends AuditEntity<String> {
         model.setUpdatedAt(entity.getUpdatedAt());
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
-        model.setFilename(entity.getFilename());
+        model.setName(entity.getName());
         model.setDirectory(entity.getDirectory());
-        model.setOriginalName(entity.getOriginalName());
-        model.setExtension(entity.getExtension());
-        model.setPath(entity.getPath());
+        model.setFormat(entity.getFormat());
+        model.setUrl(entity.getUrl());
         return model;
+    }
+
+    public String getFullname() {
+        return name + "." + format;
     }
 
 }
