@@ -1,17 +1,17 @@
 package fr.lesprojetscagnottes.core.steps;
 
-import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
+import fr.lesprojetscagnottes.core.component.CucumberContext;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -21,6 +21,9 @@ import java.util.Map;
 import static org.junit.Assert.assertNotNull;
 
 public class UserStepDefinitions {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -45,7 +48,7 @@ public class UserStepDefinitions {
             user = new UserEntity();
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
-            user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
+            user.setPassword(passwordEncoder.encode(columns.get("password")));
             user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
             user.setFirstname(columns.get("firstname"));
             user.setEnabled(true);
@@ -71,7 +74,7 @@ public class UserStepDefinitions {
             user = new UserEntity();
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
-            user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
+            user.setPassword(passwordEncoder.encode(columns.get("password")));
             user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
             user.setFirstname(columns.get("firstname"));
             user.setEnabled(true);
@@ -105,7 +108,7 @@ public class UserStepDefinitions {
             user.setId(CucumberContext.generateId());
             user.setUsername(columns.get("email"));
             user.setEmail(columns.get("email"));
-            user.setPassword(BCrypt.hashpw(columns.get("password"), BCrypt.gensalt()));
+            user.setPassword(passwordEncoder.encode(columns.get("password")));
             user.setLastPasswordResetDate(Date.valueOf(LocalDate.now()));
             user.setFirstname(columns.get("firstname"));
             user.setEnabled(true);

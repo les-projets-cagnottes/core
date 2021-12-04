@@ -325,7 +325,7 @@ public class BudgetController {
 
         // Test that sponsor has correct rights
         Long sponsorId = budget.getSponsor().getId();
-        if(!userService.isSponsorOfOrganization(sponsorId, organization.getId()) && userService.isNotAdmin(sponsorId)) {
+        if(!userService.isSponsorOfOrganization(sponsorId, organization.getId())) {
             LOGGER.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
             throw new ForbiddenException();
         }
@@ -387,7 +387,7 @@ public class BudgetController {
             }
 
             // Test that sponsor has correct rights
-            if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId()) && userLoggedIn_isNotAdmin) {
+            if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
                 LOGGER.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
                 continue;
             }

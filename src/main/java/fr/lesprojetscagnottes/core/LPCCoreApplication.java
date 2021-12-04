@@ -3,6 +3,7 @@ package fr.lesprojetscagnottes.core;
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.authentication.ApiTokenRepository;
 import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
+import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
@@ -22,7 +23,6 @@ import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.UserRepository;
-import fr.lesprojetscagnottes.core.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +37,7 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -50,6 +51,9 @@ import java.util.*;
 @SpringBootApplication
 @EnableScheduling
 public class LPCCoreApplication {
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@Autowired
 	private DataSource datasource;
@@ -88,7 +92,7 @@ public class LPCCoreApplication {
 	private TokenProvider jwtTokenUtil;
 
 	@Autowired
-	private UserService userService;
+	private AuthService authService;
 
 	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
@@ -154,7 +158,7 @@ public class LPCCoreApplication {
 
 			String email = "admin";
 			String password = Objects.requireNonNullElseGet(adminPassword, StringGenerator::randomString);
-			admin = UserGenerator.newUser(email, password);
+			admin = UserGenerator.newUser(email, passwordEncoder.encode(password));
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
 			admin.setAvatarUrl("https://eu.ui-avatars.com/api/?name=Administrator");
@@ -205,7 +209,7 @@ public class LPCCoreApplication {
 				Calendar cal = Calendar.getInstance();
 				cal.add(Calendar.YEAR, 1);
 				Date nextYear = cal.getTime();
-				Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, userService.getAuthorities(admin.getId()));
+				Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, authService.getAuthorities(admin.getId()));
 				apiToken = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
 				apiToken.setDescription("slack-events-catcher");
 				apiToken.setExpiration(nextYear);

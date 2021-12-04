@@ -19,7 +19,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
 import java.io.Serial;
@@ -115,7 +114,7 @@ public class UserEntity extends UserModel implements UserDetails {
 
     public UserEntity(String email, String password) {
         this.email = email;
-        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+        this.password = password;
     }
 
     @JsonIgnore

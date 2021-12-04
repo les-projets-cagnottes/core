@@ -59,7 +59,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -76,6 +76,9 @@ import java.util.*;
 @Tag(name = "Organizations", description = "The Organizations API")
 @RestController
 public class OrganizationController {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private SlackController slackController;
@@ -1095,7 +1098,7 @@ public class OrganizationController {
                 user.setUsername(slackUserEditted.getEmail());
                 user.setEmail(slackUserEditted.getEmail());
                 user.setAvatarUrl(slackUserEditted.getImage_192());
-                user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
+                user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
             }
             user.setUpdatedBy("Slack Sync");
             user.setEnabled(!(slackUser.getDeleted() || slackUser.getIsRestricted()));

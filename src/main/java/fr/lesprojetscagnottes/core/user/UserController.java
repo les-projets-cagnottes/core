@@ -44,7 +44,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -59,6 +59,9 @@ import java.util.Set;
 public class UserController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -475,7 +478,7 @@ public class UserController {
         user.setLastname(userModel.getLastname());
         user.setAvatarUrl(userModel.getAvatarUrl());
         user.setEnabled(userModel.getEnabled());
-        user.setPassword(BCrypt.hashpw(userModel.getPassword(), BCrypt.gensalt()));
+        user.setPassword(passwordEncoder.encode(userModel.getPassword()));
         userRepository.save(user);
     }
 
@@ -515,7 +518,7 @@ public class UserController {
 
         // Update and save user
         if(userModel.getPassword() != null && !userModel.getPassword().isEmpty()) {
-            user.setPassword(BCrypt.hashpw(userModel.getPassword(), BCrypt.gensalt()));
+            user.setPassword(passwordEncoder.encode(userModel.getPassword()));
             user.setLastPasswordResetDate(new Date());
         }
         user.setUsername(userModel.getUsername());
