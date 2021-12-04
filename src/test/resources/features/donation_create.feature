@@ -37,7 +37,7 @@ Feature: Donation - Create
       | Awesome Campaign | Annual Company Pot | Mike        | 50     |
     Then Last HTTP code was "201"
 
-  Scenario: A member cannot contribute on a campaign with a nonexistent account, campaign, budget or contributor
+  Scenario: A member cannot contribute on a campaign with a nonexistent account, campaign or contributor
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -73,7 +73,7 @@ Feature: Donation - Create
       | Nonexistent Campaign | Annual Company Pot      | Mike        | 50     |
       | Awesome Campaign     | Nonexistent Company Pot | Mike        | 50     |
       | Awesome Campaign     | Annual Company Pot      | Ned         | 50     |
-    Then Last HTTP code was "400"
+    Then Last HTTP code was "404"
 
   Scenario: A member cannot contribute on a campaign in progress whose deadline has been reached
     Given Empty database
@@ -145,7 +145,7 @@ Feature: Donation - Create
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
       | Awesome Campaign | Annual Company Pot | Mike        | 50     |
-    Then "Mike" has "0" donation on the "Annual Company Pot" budget
+    Then "Mike" has "0" donation on the "Annual Company Pot" account
     Then Last HTTP code was "400"
 
   Scenario: A member cannot contribute on a campaign not associated with the budget referenced
@@ -219,7 +219,7 @@ Feature: Donation - Create
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
       | Awesome Campaign | Annual Company Pot | Sabrina     | 50     |
-    Then Last HTTP code was "403"
+    Then Last HTTP code was "404"
 
   Scenario: A member cannot contribute on a campaign if he has not enough budget
     Given Empty database

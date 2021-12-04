@@ -11,19 +11,17 @@ import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
-import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
-import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.donation.model.DonationModel;
-import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
+import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
+import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
+import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserController;
+import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +43,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -228,58 +229,6 @@ public class BudgetController {
         DataPage<CampaignModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(CampaignModel.fromEntity(entity)));
         return models;
-    }
-
-    @Operation(summary = "Get donations imputed on a budget", description = "Get donations imputed on a budget", tags = { "Budgets" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/budget/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<DonationModel> getDonations(Principal principal, @PathVariable("id") long budgetId) {
-
-        // Fails if budget ID is missing
-        if(budgetId <= 0) {
-            LOGGER.error("Impossible to get donations by budget ID : Budget ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        BudgetEntity budget = budgetRepository.findById(budgetId).orElse(null);
-
-        // Verify that any of references are not null
-        if(budget == null) {
-            LOGGER.error("Impossible to get donations by budget ID : budget not found");
-            throw new NotFoundException();
-        }
-
-        // Verify that principal is member of organization
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get donations by budget ID : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
-            throw new ForbiddenException();
-        }
-
-        Set<Donation> entities = donationRepository.findAllByBudgetId(budgetId);
-        Set<DonationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
-        return models;
-    }
-
-    @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Budgets" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/api/budget/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"contributorId"})
-    public Set<DonationModel> getDonationsByContributorId(Principal principal, @PathVariable("id") long budgetId, @RequestParam("contributorId") long contributorId) {
-        return userController.getDonationsByBudgetId(principal, contributorId, budgetId);
     }
 
     @Operation(summary = "Create a budget", description = "Create a budget", tags = { "Budgets" })

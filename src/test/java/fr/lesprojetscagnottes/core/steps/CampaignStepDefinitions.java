@@ -1,12 +1,12 @@
 package fr.lesprojetscagnottes.core.steps;
 
-import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
+import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
+import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
+import fr.lesprojetscagnottes.core.component.CucumberContext;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;

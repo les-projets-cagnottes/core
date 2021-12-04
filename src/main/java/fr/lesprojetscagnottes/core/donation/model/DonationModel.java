@@ -34,9 +34,6 @@ public class DonationModel extends AuditEntity<String> {
     @Transient
     protected GenericModel campaign;
 
-    @Transient
-    protected GenericModel budget;
-
     public static DonationModel fromEntity(Donation entity) {
         DonationModel model = new DonationModel();
         model.setCreatedAt(entity.getCreatedAt());
@@ -48,7 +45,6 @@ public class DonationModel extends AuditEntity<String> {
         model.setAccount(new GenericModel(entity.getAccount()));
         model.setContributor(new GenericModel(entity.getContributor()));
         model.setCampaign(new GenericModel(entity.getCampaign()));
-        model.setBudget(new GenericModel(entity.getBudget()));
         LOGGER.debug("Generated : " + model.toString());
         return model;
     }
@@ -60,7 +56,6 @@ public class DonationModel extends AuditEntity<String> {
                 ", account=" + account +
                 ", contributor=" + contributor +
                 ", campaign=" + campaign +
-                ", budget=" + budget +
                 ", id=" + id +
                 '}';
     }
