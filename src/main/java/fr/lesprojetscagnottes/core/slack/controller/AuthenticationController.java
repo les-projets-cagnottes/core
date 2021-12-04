@@ -2,28 +2,28 @@ package fr.lesprojetscagnottes.core.slack.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
+import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.InternalServerException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
-import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
-import fr.lesprojetscagnottes.core.user.UserGenerator;
-import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserRepository;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
+import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,7 +38,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,6 +63,9 @@ public class AuthenticationController {
 
     @Value("${fr.lesprojetscagnottes.slack.client_secret}")
     private String slackClientSecret;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private HttpClientService httpClientService;
@@ -95,7 +98,7 @@ public class AuthenticationController {
     private SlackClientService slackClientService;
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Operation(summary = "Sign in with Slack", description = "Exchanging a verification code for an access token with Slack", tags = {"Authentication"})
     @ApiResponses(value = {
@@ -152,11 +155,11 @@ public class AuthenticationController {
                 if (user == null) {
                     user = new UserEntity();
                     user.setCreatedBy("Slack Login");
-                    user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
+                    user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
                     user.setFirstname(slackUser.getName());
                     user.setEmail(slackUser.getEmail());
                 } else if (user.getPassword().isEmpty()) {
-                    user.setPassword(BCrypt.hashpw(StringGenerator.randomString(), BCrypt.gensalt()));
+                    user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
                 }
                 user.setUpdatedBy("Slack Login");
                 user.setUsername(slackUser.getEmail());
@@ -209,7 +212,7 @@ public class AuthenticationController {
                     accountRepository.save(account);
                 });
 
-                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, userService.getAuthorities(user.getId()));
+                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 final String token = jwtTokenUtil.generateToken(authentication);
                 return new AuthenticationResponseModel(token);
