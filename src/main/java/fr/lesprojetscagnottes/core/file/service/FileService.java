@@ -1,10 +1,10 @@
-package fr.lesprojetscagnottes.core.content.service;
+package fr.lesprojetscagnottes.core.file.service;
 
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.strings.MimeTypes;
-import fr.lesprojetscagnottes.core.content.entity.FileEntity;
-import fr.lesprojetscagnottes.core.content.repository.FileRepository;
+import fr.lesprojetscagnottes.core.file.entity.FileEntity;
+import fr.lesprojetscagnottes.core.file.repository.FileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,4 +152,5 @@ public class FileService {
     public String getPath(FileEntity entity) {
         return storageFolder + java.io.File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
     }
+
 }

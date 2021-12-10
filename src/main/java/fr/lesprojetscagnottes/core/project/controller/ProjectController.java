@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.project;
+package fr.lesprojetscagnottes.core.project.controller;
 
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
@@ -11,6 +11,10 @@ import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.model.ProjectModel;
+import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
+import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
@@ -280,15 +284,16 @@ public class ProjectController {
         projectToSave.getPeopleGivingTime().add(leader);
         final ProjectEntity projectFinal = projectRepository.save(projectToSave);
 
-        // Associate the project with organizations
         organizations.forEach(organization -> {
+
+            // Associate the project with organizations
             organization.getProjects().add(projectFinal);
             projectFinal.getOrganizations().add(organization);
+
         });
         organizationRepository.saveAll(organizations);
 
-        project.setId(projectFinal.getId());
-        return project;
+        return ProjectModel.fromEntity(projectFinal);
     }
 
     @Operation(summary = "Update a project", description = "Update a project", tags = { "Projects" })
@@ -420,8 +425,8 @@ public class ProjectController {
         }
 
         // Add or remove member
-        if(project.status.equals(ProjectStatus.DRAFT)) {
-            project.status = ProjectStatus.IN_PROGRESS;
+        if(project.getStatus().equals(ProjectStatus.DRAFT)) {
+            project.setStatus(ProjectStatus.IN_PROGRESS);
             projectRepository.save(project);
         }
     }

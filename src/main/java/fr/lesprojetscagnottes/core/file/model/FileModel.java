@@ -1,7 +1,7 @@
-package fr.lesprojetscagnottes.core.content.model;
+package fr.lesprojetscagnottes.core.file.model;
 
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
-import fr.lesprojetscagnottes.core.content.entity.FileEntity;
+import fr.lesprojetscagnottes.core.file.entity.FileEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

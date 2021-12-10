@@ -1,6 +1,6 @@
-package fr.lesprojetscagnottes.core.content.entity;
+package fr.lesprojetscagnottes.core.file.entity;
 
-import fr.lesprojetscagnottes.core.content.model.FileModel;
+import fr.lesprojetscagnottes.core.file.model.FileModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

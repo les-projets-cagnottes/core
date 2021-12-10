@@ -1,9 +1,10 @@
-package fr.lesprojetscagnottes.core.content.controller;
+package fr.lesprojetscagnottes.core.file.controller;
 
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
-import fr.lesprojetscagnottes.core.content.entity.FileEntity;
-import fr.lesprojetscagnottes.core.content.service.FileService;
+import fr.lesprojetscagnottes.core.file.entity.FileEntity;
+import fr.lesprojetscagnottes.core.file.model.ImageUploadResponse;
+import fr.lesprojetscagnottes.core.file.service.FileService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,8 @@ public class FileController {
         return fileService.readOnFilesystem(request);
     }
 
-    @RequestMapping(value = "/api/files/image", method = RequestMethod.POST, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public String uploadImage(
+    @RequestMapping(value = "/api/files/image", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ImageUploadResponse uploadImage(
             @RequestParam("directory") String directory,
             @RequestParam(name = "name", required = false) String name,
             @RequestParam("image") MultipartFile multipartFile) {
@@ -50,7 +51,10 @@ public class FileController {
             log.error("Cannot save file {}", multipartFile.getName(), e);
         }
 
-        return entity.getUrl();
+        ImageUploadResponse response = new ImageUploadResponse();
+        response.setPath(entity.getUrl());
+
+        return response;
     }
 
     @RequestMapping(value = "/api/files/{id}", method = RequestMethod.DELETE)
