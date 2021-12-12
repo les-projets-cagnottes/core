@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.budget;
+package fr.lesprojetscagnottes.core.budget.controller;
 
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;

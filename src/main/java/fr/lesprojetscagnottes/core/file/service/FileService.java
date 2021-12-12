@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.file.service;
 
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
+import fr.lesprojetscagnottes.core.common.exception.InternalServerException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.strings.MimeTypes;
 import fr.lesprojetscagnottes.core.file.entity.FileEntity;
@@ -38,7 +39,9 @@ public class FileService {
         pathFile = pathFile.replaceAll("/", Matcher.quoteReplacement(File.separator));
         InputStream in = new FileInputStream(storageFolder + File.separator + pathFile);
         log.debug("Getting image {}", storageFolder + File.separator + pathFile);
-        return IOUtils.toByteArray(in);
+        byte[] fileContent = IOUtils.toByteArray(in);
+        in.close();
+        return fileContent;
     }
 
     public FileEntity saveOnFilesystem(MultipartFile multipartFile, String directory, String name) throws IOException {
@@ -46,6 +49,7 @@ public class FileService {
         String fullPath;
         String finalFileName;
 
+        // Extract data from MultipartFile
         InputStream inputStream = multipartFile.getInputStream();
         log.debug("inputStream: " + inputStream);
         String originalName = multipartFile.getOriginalFilename();
@@ -59,14 +63,15 @@ public class FileService {
         finalFileName = name + "." + format;
         log.debug("saved filename: " + finalFileName);
 
+        // Write file on filesystem
         prepareDirectories(directory);
-
         fullPath = storageFolder + java.io.File.separator + directory + java.io.File.separator + finalFileName;
         java.io.File file = new java.io.File(fullPath);
-        try (OutputStream os = new FileOutputStream(file)) {
-            os.write(multipartFile.getBytes());
-        }
+        FileOutputStream os = new FileOutputStream(file);
+        os.write(multipartFile.getBytes());
+        os.close();
 
+        // Create entity to return
         FileEntity entity = new FileEntity();
         entity.setDirectory(directory);
         entity.setName(name);
@@ -91,18 +96,18 @@ public class FileService {
         return fileRepository.save(entity);
     }
 
-    public Boolean delete(Long fileId) {
+    public Boolean deleteByUrl(String url) {
 
-        // Check if ID is correct
-        if(fileId <= 0) {
+        // Check if URL is provided
+        if(url.isEmpty()) {
             log.error("Impossible to delete file : ID is missing");
             throw new BadRequestException();
         }
 
         // Check if file is registered in DB
-        FileEntity entity = fileRepository.findById(fileId).orElse(null);
+        FileEntity entity = fileRepository.findByUrl(url).orElse(null);
         if(entity == null) {
-            log.error("Impossible to delete file : file {} does not exist in DB", fileId);
+            log.error("Impossible to delete file : file {} does not exist in DB", url);
             throw new NotFoundException();
         }
 
@@ -111,9 +116,10 @@ public class FileService {
         if(file.exists()) {
             if(!file.delete()) {
                 log.error("Impossible to delete file : unknown error");
+                throw new InternalServerException();
             }
         } else {
-            log.error("Impossible to delete file : file {} does not exist in filesystem", fileId);
+            log.error("Impossible to delete file : file {} does not exist in filesystem", url);
         }
 
         // Delete file in DB

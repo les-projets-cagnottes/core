@@ -1,7 +1,8 @@
-package fr.lesprojetscagnottes.core.idea;
+package fr.lesprojetscagnottes.core.idea.model;
 
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.GenericModel;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
+import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,8 +14,6 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -56,14 +55,14 @@ public class IdeaModel extends GenericModel {
     @NotNull
     protected Boolean hasLeaderCreator = false;
 
+    @Column
+    protected String workspace = StringsCommon.EMPTY_STRING;
+
     @Transient
     protected GenericModel submitter;
 
     @Transient
     protected GenericModel organization;
-
-    @Transient
-    private Set<Long> tagsRef = new LinkedHashSet<>();
 
     public static IdeaModel fromEntity(IdeaEntity entity) {
         IdeaModel model = new IdeaModel();
@@ -81,24 +80,21 @@ public class IdeaModel extends GenericModel {
         model.setLongDescription(entity.getLongDescription());
         model.setHasAnonymousCreator(entity.getHasAnonymousCreator());
         model.setHasLeaderCreator(entity.getHasLeaderCreator());
+        model.setWorkspace(entity.getWorkspace());
         model.setSubmitter(new GenericModel(entity.getSubmitter()));
         model.setOrganization(new GenericModel(entity.getOrganization()));
-        entity.getTags().forEach(tag -> model.getTagsRef().add(tag.getId()));
-        LOGGER.debug("Generated : " + model.toString());
+        LOGGER.debug("Generated : " + model);
         return model;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("IdeaModel{");
-        sb.append("shortDescription='").append(shortDescription).append('\'');
-        sb.append(", longDescription='").append(longDescription).append('\'');
-        sb.append(", hasAnonymousCreator=").append(hasAnonymousCreator);
-        sb.append(", hasLeaderCreator=").append(hasLeaderCreator);
-        sb.append(", organization=").append(organization);
-        sb.append(", tagsRef=").append(tagsRef);
-        sb.append(", id=").append(id);
-        sb.append('}');
-        return sb.toString();
+        return "IdeaModel{" + "shortDescription='" + shortDescription + '\'' +
+                ", longDescription='" + longDescription + '\'' +
+                ", hasAnonymousCreator=" + hasAnonymousCreator +
+                ", hasLeaderCreator=" + hasLeaderCreator +
+                ", organization=" + organization +
+                ", id=" + id +
+                '}';
     }
 }

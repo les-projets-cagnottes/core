@@ -57,10 +57,9 @@ public class FileController {
         return response;
     }
 
-    @RequestMapping(value = "/api/files/{id}", method = RequestMethod.DELETE)
-    public Boolean delete(@PathVariable("id") Long id) {
-        return fileService.delete(id);
+    @RequestMapping(value = "/api/files", method = RequestMethod.DELETE)
+    public Boolean deleteByUrl(@RequestParam("url") String url) {
+        return fileService.deleteByUrl(url);
     }
-
 
 }

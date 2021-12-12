@@ -26,6 +26,9 @@ public class NewsModel extends AuditEntity<String> {
     @Column(columnDefinition = "TEXT")
     protected String content;
 
+    @Column
+    protected String workspace;
+
     @Transient
     protected GenericModel author;
 
@@ -45,6 +48,7 @@ public class NewsModel extends AuditEntity<String> {
         model.setType(entity.getType());
         model.setTitle(entity.getTitle());
         model.setContent(entity.getContent());
+        model.setWorkspace(entity.getWorkspace());
         model.setAuthor(new GenericModel(entity.getAuthor()));
         model.setOrganization(new GenericModel(entity.getOrganization()));
         model.setProject(new GenericModel(entity.getProject()));

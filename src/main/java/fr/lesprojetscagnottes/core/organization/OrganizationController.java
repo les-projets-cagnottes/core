@@ -25,9 +25,9 @@ import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
-import fr.lesprojetscagnottes.core.idea.IdeaEntity;
-import fr.lesprojetscagnottes.core.idea.IdeaModel;
-import fr.lesprojetscagnottes.core.idea.IdeaRepository;
+import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
+import fr.lesprojetscagnottes.core.idea.model.IdeaModel;
+import fr.lesprojetscagnottes.core.idea.repository.IdeaRepository;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
@@ -747,7 +747,7 @@ public class OrganizationController {
         }
 
         // Get and transform donations
-        Page<NewsEntity> entities = newsRepository.findAllByOrganization_IdOrOrganizationIdIsNull(id, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
+        Page<NewsEntity> entities = newsRepository.findAllByOrganizationIdOrOrganizationIdIsNull(id, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
         DataPage<NewsModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
         return models;
@@ -824,7 +824,7 @@ public class OrganizationController {
 
         // Get and transform contents
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("name").ascending());
-        Page<ContentEntity> entities = contentRepository.findAllByOrganizations_Id(pageable, id);
+        Page<ContentEntity> entities = contentRepository.findAllByOrganizationId(pageable, id);
         DataPage<ContentModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(ContentModel.fromEntity(entity)));
         return models;
@@ -862,91 +862,10 @@ public class OrganizationController {
         }
 
         // Get and transform contents
-        Set<ContentEntity> entities = contentRepository.findAllByOrganizations_Id(id);
+        Set<ContentEntity> entities = contentRepository.findAllByOrganizationId(id);
         Set<ContentModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(ContentModel.fromEntity(entity)));
         return models;
-    }
-
-    @Operation(summary = "Create a content for organization", description = "Create a content for organization", tags = { "Contents" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Content is created", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/contents", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public void addContent(Principal principal, @PathVariable("id") long id, @RequestBody ContentModel model) {
-
-        // Verify that body is complete
-        if(model == null || model.getName() == null) {
-            log.error("Impossible to create content in organization : body is incomplete");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
-            log.error("Impossible to get contents of organizations : organization {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to create content in organization : principal is not a member of organization {}", id);
-            throw new ForbiddenException();
-        }
-
-        // Save content
-        ContentEntity content = new ContentEntity();
-        content.setName(model.getName());
-        content.setValue(model.getValue());
-        content = contentRepository.save(content);
-
-        // Add content to organization
-        organization.getContents().add(content);
-        organizationRepository.save(organization);
-    }
-
-    @Operation(summary = "Remove a content from an organization", description = "Remove a content from an organization", tags = { "Organizations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Content removed", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Organization or Content not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/contents", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void removeContent(Principal principal, @PathVariable long id, @RequestBody long contentId) {
-
-        // Verify that IDs are corrects
-        if(id <= 0 || contentId <= 0) {
-            log.error("Impossible to remove content from an organization : parameters are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization and user exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        ContentEntity content = contentRepository.findById(contentId).orElse(null);
-        if(organization == null || content == null) {
-            log.error("Impossible to remove content from an organization : organization {} or content {} doesnt exist", id, contentId);
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to remove content from an organization : principal is not a member of organization {}", id);
-            throw new ForbiddenException();
-        }
-
-        // Remove content from organization
-        organization.getContents().remove(content);
-        organizationRepository.save(organization);
-        if(content.getOrganizations().size() == 1) {
-            contentRepository.deleteById(contentId);
-        }
     }
 
     @Operation(summary = "Add Slack workspace to organization", description = "Add Slack workspace to organization", tags = { "Organizations" })

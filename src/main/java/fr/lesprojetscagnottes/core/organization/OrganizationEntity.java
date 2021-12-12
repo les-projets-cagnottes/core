@@ -5,7 +5,7 @@ import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEnt
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
-import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
@@ -71,12 +71,10 @@ public class OrganizationEntity extends OrganizationModel {
             orphanRemoval = true)
     @JsonIgnoreProperties({"author", "organization", "project"})
     private Set<NewsEntity> news = new LinkedHashSet<>();
-    
-    @ManyToMany
-    @JoinTable(
-            name = "organizations_contents",
-            joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "content_id", referencedColumnName = "id")})
+
+    @OneToMany(
+            mappedBy = "organization",
+            orphanRemoval = true)
     @JsonIgnoreProperties(value = {"organization"})
     private Set<ContentEntity> contents = new LinkedHashSet<>();
 

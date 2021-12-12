@@ -10,7 +10,7 @@ import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
-import fr.lesprojetscagnottes.core.idea.IdeaRepository;
+import fr.lesprojetscagnottes.core.idea.repository.IdeaRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
