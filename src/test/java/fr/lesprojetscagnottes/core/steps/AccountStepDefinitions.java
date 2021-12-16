@@ -32,10 +32,10 @@ public class AccountStepDefinitions {
             account.setBudget(context.getBudgets().get(columns.get("budget")));
             account.setAmount(Float.parseFloat(columns.get("amount")));
             account.setInitialAmount(Float.parseFloat(columns.get("initialAmount")));
-            accountRepository.save(account);
+            account = accountRepository.save(account);
 
             // Save in Test Map
-            context.getAccounts().put(account.getBudget().getName(), account);
+            context.getAccounts().put(account.getBudget().getName() + "-" + account.getOwner().getFirstname(), account);
         }
     }
 

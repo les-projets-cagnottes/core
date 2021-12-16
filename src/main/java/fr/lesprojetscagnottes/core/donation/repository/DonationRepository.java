@@ -12,20 +12,13 @@ import java.util.Set;
 public interface DonationRepository extends JpaRepository<Donation, Long> {
     Page<Donation> findAll(Pageable pageable);
 
-    // TODO : Retrieve it by jointures with accounts
-    Set<Donation> findAllByBudgetId(long budgetId);
-
     Set<Donation> findAllByCampaignId(long campaignId);
 
     Set<Donation> findAllByAccountId(Long id);
 
-    Set<Donation> findAllByContributorIdOrderByBudgetIdAsc(long contributorId);
-
-    Set<Donation> findAllByContributorIdAndBudgetId(long contributorId, long budgetId);
-
+    Set<Donation> findAllByContributorIdOrderByCreatedAtAsc(long contributorId);
+    
     Page<Donation> findByCampaign_idOrderByIdAsc(long id, Pageable pageable);
-
-    void deleteByCampaignId(Long id);
 
     @Query(value = "SELECT create_donation(:_account_id, :_campaign_id, :_budget_id, :_amount);", nativeQuery = true)
     boolean createDonation(@Param("_account_id") long accountId, @Param("_campaign_id") long campaignId, @Param("_budget_id") long budgetId, @Param("_amount") float amount);

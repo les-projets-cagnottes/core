@@ -23,7 +23,7 @@ public interface NewsRepository extends JpaRepository<NewsEntity, Long> {
                     "where u.id = ?1 c.status IN (?2)")
     Page<NewsEntity> findAllByUser(Long userId, Pageable pageable);
 
-    Page<NewsEntity> findAllByOrganization_IdOrOrganizationIdIsNull(Long organizationId, Pageable pageable);
+    Page<NewsEntity> findAllByOrganizationIdOrOrganizationIdIsNull(Long organizationId, Pageable pageable);
 
     Page<NewsEntity> findAllByProjectId(Long id, Pageable pageable);
 }

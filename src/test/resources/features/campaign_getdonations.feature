@@ -26,14 +26,18 @@ Feature: Campaign - Get Donations
       | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
       | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
     And The following accounts are created
-      | owner | budget              | amount | initialAmount |
-      | Mike  | Unnamed Company Pot | 150    | 150           |
-      | Mike  | Another Company Pot | 200    | 200           |
+      | owner    | budget              | amount | initialAmount |
+      | Mike     | Unnamed Company Pot | 150    | 150           |
+      | Mike     | Another Company Pot | 200    | 200           |
+      | Sabrina  | Unnamed Company Pot | 150    | 150           |
+      | Sabrina  | Another Company Pot | 200    | 200           |
+      | Sinclair | Unnamed Company Pot | 150    | 150           |
+      | Sinclair | Another Company Pot | 200    | 200           |
     And The following projects are created
       | title           | leader  | status        | peopleRequired |
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader  | status        | peopleRequired | donationsRequired |
+      | project         | title            | leader  | status      | peopleRequired | donationsRequired |
       | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |
@@ -90,7 +94,7 @@ Feature: Campaign - Get Donations
       | title           | leader  | status        | peopleRequired |
       | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader  | status        | peopleRequired | donationsRequired |
+      | project         | title            | leader  | status      | peopleRequired | donationsRequired |
       | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
     And The following campaigns are associated to organizations
       | campaign         | organization    |

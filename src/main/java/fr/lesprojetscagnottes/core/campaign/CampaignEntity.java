@@ -3,7 +3,7 @@ package fr.lesprojetscagnottes.core.campaign;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import lombok.AccessLevel;

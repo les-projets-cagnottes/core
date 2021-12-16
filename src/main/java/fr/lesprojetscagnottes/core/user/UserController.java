@@ -7,7 +7,6 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
-import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.AccountModel;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
@@ -23,9 +22,9 @@ import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.project.ProjectEntity;
-import fr.lesprojetscagnottes.core.project.ProjectModel;
-import fr.lesprojetscagnottes.core.project.ProjectRepository;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.model.ProjectModel;
+import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -404,50 +403,7 @@ public class UserController {
         }
 
         // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByContributorIdOrderByBudgetIdAsc(contributorId);
-        Set<DonationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
-
-        return models;
-    }
-
-    @Operation(summary = "Get donations made by a user imputed on a budget", description = "Get donations made by a user imputed on a budget", tags = { "Users" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Campaign ID is incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Campaign not found", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId"})
-    public Set<DonationModel> getDonationsByBudgetId(Principal principal, @PathVariable("id") long contributorId, @RequestParam("budgetId") long budgetId) {
-
-        // Fails if campaign ID is missing
-        if(contributorId <= 0 || budgetId <= 0) {
-            LOGGER.error("Impossible to get donations by contributor ID and budget ID : Contributor ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that principal has correct privileges :
-        // Principal is the contributor OR Principal is admin
-        long userLoggedInId = userService.get(principal).getId();
-        if(userLoggedInId != contributorId && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get donations by contributor ID and budget ID : user {} has not enough privileges", userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Retrieve full referenced objects
-        BudgetEntity budget = budgetRepository.findById(budgetId).orElse(null);
-        UserEntity user = userRepository.findById(contributorId).orElse(null);
-
-        // Verify that any of references are not null
-        if(user == null || budget == null) {
-            LOGGER.error("Impossible to get donations by contributor ID and budget ID : user {} or budget {} not found", contributorId, budget);
-            throw new NotFoundException();
-        }
-
-        // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByContributorIdAndBudgetId(contributorId, budgetId);
+        Set<Donation> entities = donationRepository.findAllByContributorIdOrderByCreatedAtAsc(contributorId);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 

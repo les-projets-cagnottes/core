@@ -9,8 +9,8 @@ import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.project.ProjectEntity;
-import fr.lesprojetscagnottes.core.project.ProjectRepository;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
@@ -171,6 +171,7 @@ public class NewsController {
         newsToSave.setType(news.getType());
         newsToSave.setTitle(news.getTitle());
         newsToSave.setContent(news.getContent());
+        newsToSave.setWorkspace(news.getWorkspace());
         newsToSave.setAuthor(userLoggedIn);
         newsToSave.setOrganization(organization);
         newsToSave.setProject(project);
@@ -220,6 +221,7 @@ public class NewsController {
         newsEntity.setType(newsModel.getType());
         newsEntity.setTitle(newsModel.getTitle());
         newsEntity.setContent(newsModel.getContent());
+        newsEntity.setWorkspace(newsModel.getWorkspace());
         newsEntity.setOrganization(newsModel.getOrganization());
         newsEntity.setProject(project);
         return NewsModel.fromEntity(newsRepository.save(newsEntity));

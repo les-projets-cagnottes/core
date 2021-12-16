@@ -29,7 +29,7 @@ public class ContentStepDefinitions {
             content = new ContentEntity();
             content.setName(columns.get("name"));
             content.setValue(columns.get("value"));
-            content.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
+            content.setOrganization(context.getOrganizations().get(columns.get("organization")));
             content = contentRepository.save(content);
 
             // Save in Test Map

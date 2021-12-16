@@ -16,7 +16,7 @@ public class GenericModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    protected Long id;
+    protected Long id = 0L;
 
     public GenericModel() {}
 
@@ -24,7 +24,7 @@ public class GenericModel {
         if(model != null) {
             this.id = model.getId();
         } else {
-            this.id = null;
+            this.id = 0L;
         }
     }
 

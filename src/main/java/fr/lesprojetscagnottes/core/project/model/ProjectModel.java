@@ -1,8 +1,9 @@
-package fr.lesprojetscagnottes.core.project;
+package fr.lesprojetscagnottes.core.project.model;
 
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.GenericModel;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,9 @@ public class ProjectModel extends AuditEntity<String> {
     @Column(name = "people_required")
     protected Integer peopleRequired;
 
+    @Column
+    private String workspace;
+
     @Transient
     protected GenericModel leader;
 
@@ -62,6 +66,7 @@ public class ProjectModel extends AuditEntity<String> {
         model.setShortDescription(entity.getShortDescription());
         model.setLongDescription(entity.getLongDescription());
         model.setPeopleRequired(entity.getPeopleRequired());
+        model.setWorkspace(entity.getWorkspace());
         model.setLeader(new GenericModel(entity.getLeader()));
         entity.getCampaigns().forEach(campaign -> model.getCampaignsRef().add(campaign.getId()));
         entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
