@@ -9,17 +9,16 @@ import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
-import fr.lesprojetscagnottes.core.idea.IdeaEntity;
+import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.project.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import javax.persistence.*;
 import java.io.Serial;
@@ -115,7 +114,7 @@ public class UserEntity extends UserModel implements UserDetails {
 
     public UserEntity(String email, String password) {
         this.email = email;
-        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+        this.password = password;
     }
 
     @JsonIgnore

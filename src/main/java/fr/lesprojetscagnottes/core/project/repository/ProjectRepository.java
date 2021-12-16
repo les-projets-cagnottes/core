@@ -1,5 +1,7 @@
-package fr.lesprojetscagnottes.core.project;
+package fr.lesprojetscagnottes.core.project.repository;
 
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

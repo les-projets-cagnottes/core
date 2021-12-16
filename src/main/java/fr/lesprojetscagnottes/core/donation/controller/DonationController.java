@@ -16,6 +16,7 @@ import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserRepository;
@@ -103,9 +104,7 @@ public class DonationController {
                     }
                     Set<Donation> accountDonations = donationRepository.findAllByAccountId(account.getId());
                     final float[] totalDonationsAmount = {0f};
-                    accountDonations.forEach(donation -> {
-                        totalDonationsAmount[0] += donation.getAmount();
-                    });
+                    accountDonations.forEach(donation -> totalDonationsAmount[0] += donation.getAmount());
                     log.info("|- Total donations : {}", totalDonationsAmount[0]);
                     if(account.getAmount() != account.getInitialAmount() - totalDonationsAmount[0]) {
                         log.error("Total donations computed doest match with account amount ({} - {} != {})", account.getInitialAmount(), totalDonationsAmount[0], account.getAmount());
@@ -160,8 +159,8 @@ public class DonationController {
     public void create(Principal principal, @RequestBody DonationModel donation) {
 
         // Verify that body is complete
-        if(donation == null || donation.getAccount() == null || donation.getCampaign() == null || donation.getContributor() == null || donation.getBudget() == null
-        || donation.getCampaign().getId() == null || donation.getContributor().getId() == null || donation.getBudget().getId() == null) {
+        if(donation == null || donation.getAccount() == null || donation.getCampaign() == null || donation.getContributor() == null
+        || donation.getCampaign().getId() == null || donation.getContributor().getId() == null || donation.getAccount().getId() == null) {
             log.error("Impossible to create donation : body is incomplete");
             throw new BadRequestException();
         }
@@ -169,17 +168,15 @@ public class DonationController {
         // Retrieve full referenced objects
         AccountEntity account = accountRepository.findById(donation.getAccount().getId()).orElse(null);
         CampaignEntity campaign = campaignRepository.findById(donation.getCampaign().getId()).orElse(null);
-        BudgetEntity budget = budgetRepository.findById(donation.getBudget().getId()).orElse(null);
         UserEntity contributor = userRepository.findById(donation.getContributor().getId()).orElse(null);
 
         log.debug("Submitting donation with following params :");
         log.debug("account = {}", account);
         log.debug("campaign = {}", campaign);
-        log.debug("budget = {}", budget);
         log.debug("contributor = {}", contributor);
 
         // Verify that any of references are not null
-        if(account == null || campaign == null || budget == null || contributor == null) {
+        if(account == null || campaign == null || contributor == null) {
             log.error("Impossible to create donation : one or more reference(s) doesn't exist");
             throw new NotFoundException();
         }
@@ -192,8 +189,9 @@ public class DonationController {
         }
 
         // Verify that principal is member of organization
-        if(!userService.isMemberOfOrganization(userLoggedInId, budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, budget.getOrganization().getId());
+        OrganizationEntity campaignOrganization = (OrganizationEntity) campaign.getOrganizations().toArray()[0];
+        if(!userService.isMemberOfOrganization(userLoggedInId, campaignOrganization.getId()) && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, campaignOrganization.getId());
             throw new ForbiddenException();
         }
 
@@ -211,7 +209,7 @@ public class DonationController {
         }
 
         // Verify that donation budgets is associated with the campaign
-        Long budgetId = budget.getId();
+        Long budgetId = account.getBudget().getId();
         if(campaign.getBudgets().stream().noneMatch(projectBudget -> projectBudget.getId().equals(budgetId))) {
             log.error("Impossible to create donation : budgets is not associated with the campaign");
             throw new BadRequestException();
@@ -228,7 +226,6 @@ public class DonationController {
         Donation donationToSave = new Donation();
         donationToSave.setAccount(account);
         donationToSave.setCampaign(campaign);
-        donationToSave.setBudget(budget);
         donationToSave.setContributor(contributor);
         donationToSave.setAmount(amount);
 

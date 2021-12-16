@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -23,7 +24,7 @@ import java.util.Iterator;
 import static fr.lesprojetscagnottes.core.common.strings.Constants.HEADER_STRING;
 import static fr.lesprojetscagnottes.core.common.strings.Constants.TOKEN_PREFIX;
 
-
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);

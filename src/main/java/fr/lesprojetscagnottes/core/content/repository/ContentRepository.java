@@ -9,6 +9,6 @@ import java.util.Set;
 
 public interface ContentRepository extends JpaRepository<ContentEntity, Long> {
     Page<ContentEntity> findAll(Pageable pageable);
-    Page<ContentEntity> findAllByOrganizations_Id(Pageable pageable, Long organizationId);
-    Set<ContentEntity> findAllByOrganizations_Id(Long organizationId);
+    Page<ContentEntity> findAllByOrganizationId(Pageable pageable, Long organizationId);
+    Set<ContentEntity> findAllByOrganizationId(Long organizationId);
 }

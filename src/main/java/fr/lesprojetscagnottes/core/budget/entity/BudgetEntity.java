@@ -2,7 +2,6 @@ package fr.lesprojetscagnottes.core.budget.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
@@ -36,10 +35,6 @@ public class BudgetEntity extends BudgetModel {
     @ManyToOne
     @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private OrganizationEntity organization = new OrganizationEntity();
-
-    @OneToMany(mappedBy = "budget")
-    @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
-    private Set<Donation> donations = new LinkedHashSet<>();
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
