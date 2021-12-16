@@ -2,9 +2,7 @@ package fr.lesprojetscagnottes.core.common.security;
 
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.impl.DefaultClock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,18 +12,17 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fr.lesprojetscagnottes.core.common.strings.Constants.*;
 
+@Slf4j
 @Component
 public class TokenProvider implements Serializable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenProvider.class);
-
-    private Clock clock = DefaultClock.INSTANCE;
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -89,12 +86,12 @@ public class TokenProvider implements Serializable {
     }
 
     public String refreshToken(String token) {
-        final Date createdDate = clock.now();
+        final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + ACCESS_TOKEN_VALIDITY_SECONDS * 1000);
 
         SimpleDateFormat dt1 = new SimpleDateFormat("yyyyy-MM-dd");
-        LOGGER.debug("createdDate = " + dt1.format(createdDate));
-        LOGGER.debug("expirationDate = " + dt1.format(expirationDate));
+        log.debug("createdDate = " + dt1.format(createdDate));
+        log.debug("expirationDate = " + dt1.format(expirationDate));
 
         final Claims claims = getAllClaimsFromToken(token);
         claims.setIssuedAt(createdDate);

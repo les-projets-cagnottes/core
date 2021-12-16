@@ -1,16 +1,11 @@
 package fr.lesprojetscagnottes.core.common.strings;
 
-import io.jsonwebtoken.Clock;
-import io.jsonwebtoken.impl.DefaultClock;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class StringGenerator {
 
     private static final String ALPHA_NUMERIC_STRING = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-    private static final Clock clock = DefaultClock.INSTANCE;
 
     public static String randomString() {
         int count = 12;
@@ -23,9 +18,9 @@ public class StringGenerator {
     }
 
     public static String imageName() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        final Date createdDate = clock.now();
-        return "IMG_" + df.format(createdDate);
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+        return "IMG_" + formatter.format(now);
     }
 
 }
