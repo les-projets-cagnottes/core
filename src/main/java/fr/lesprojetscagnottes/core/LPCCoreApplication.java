@@ -97,8 +97,14 @@ public class LPCCoreApplication {
 	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
 
-	@Value("${fr.lesprojetscagnottes.core.storage}")
-	private String storageFolder;
+	@Value("${fr.lesprojetscagnottes.core.storage.root}")
+	private String rootStorageFolder;
+
+	@Value("${fr.lesprojetscagnottes.core.storage.data}")
+	private String dataStorageFolder;
+
+	@Value("${fr.lesprojetscagnottes.core.storage.slackeventscatcher}")
+	private String slackEventsCatcherStorage;
 
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
@@ -218,9 +224,9 @@ public class LPCCoreApplication {
 				log.error("Too many tokens registered for slack-events-catcher");
 				return;
 			}
-			prepareDirectories("config");
+			prepareRootDirectories(slackEventsCatcherStorage);
 			String token = apiTokenRepository.save(apiToken).getToken();
-			String tokenFilePath = storageFolder + File.separator + "config" + File.separator + "slack-events-catcher-token";
+			String tokenFilePath = rootStorageFolder + File.separator + dataStorageFolder + File.separator + slackEventsCatcherStorage + File.separator + "token";
 			FileWriter myWriter;
 			try {
 				myWriter = new FileWriter(tokenFilePath);
@@ -233,12 +239,12 @@ public class LPCCoreApplication {
 			log.info("Slack module is disabled.");
 		}
 
-		prepareDirectories("img");
+		prepareRootDirectories(dataStorageFolder);
 		new Timer().schedule(donationProcessingTask, 0, 500);
 	}
 
-	public void prepareDirectories(String directoryPath) {
-		File directory = new File(storageFolder);
+	public void prepareRootDirectories(String directoryPath) {
+		File directory = new File(rootStorageFolder);
 		if (!directory.exists()) {
 			log.info("Creating path {}", directory.getPath());
 			if(!directory.mkdirs()) {
@@ -250,7 +256,7 @@ public class LPCCoreApplication {
 		}
 
 		if (directoryPath != null && !directoryPath.isEmpty()) {
-			directory = new File(storageFolder + File.separator + directoryPath.replaceAll("/", File.separator));
+			directory = new File(rootStorageFolder + File.separator + directoryPath.replaceAll("/", File.separator));
 			log.debug("Prepare directory {}", directory.getAbsolutePath());
 			if (!directory.exists()) {
 				log.info("Creating path {}", directory.getPath());
