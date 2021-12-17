@@ -23,8 +23,11 @@ import java.util.regex.Matcher;
 @Service
 public class FileService {
 
-    @Value("${fr.lesprojetscagnottes.core.storage}")
-    private String storageFolder;
+    @Value("${fr.lesprojetscagnottes.core.storage.root}")
+    private String rootStorageFolder;
+
+    @Value("${fr.lesprojetscagnottes.core.storage.data}")
+    private String dataStorageFolder;
 
     @Value("${fr.lesprojetscagnottes.core.url}")
     private String coreUrl;
@@ -37,8 +40,8 @@ public class FileService {
         String matchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String pathFile = new AntPathMatcher().extractPathWithinPattern(matchPattern, path);
         pathFile = pathFile.replaceAll("/", Matcher.quoteReplacement(File.separator));
-        InputStream in = new FileInputStream(storageFolder + File.separator + pathFile);
-        log.debug("Getting image {}", storageFolder + File.separator + pathFile);
+        InputStream in = new FileInputStream(rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);
+        log.debug("Getting image {}", rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);
         byte[] fileContent = IOUtils.toByteArray(in);
         in.close();
         return fileContent;
@@ -65,7 +68,7 @@ public class FileService {
 
         // Write file on filesystem
         prepareDirectories(directory);
-        fullPath = storageFolder + java.io.File.separator + directory + java.io.File.separator + finalFileName;
+        fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
         java.io.File file = new java.io.File(fullPath);
         FileOutputStream os = new FileOutputStream(file);
         os.write(multipartFile.getBytes());
@@ -129,7 +132,7 @@ public class FileService {
     }
 
     private void prepareDirectories(String directoryPath) {
-        File directory = new File(storageFolder);
+        File directory = new File(rootStorageFolder);
         if (!directory.exists()) {
             log.info("Creating path {}", directory.getPath());
             if (!directory.isDirectory()) {
@@ -141,7 +144,7 @@ public class FileService {
         }
 
         if (directoryPath != null && !directoryPath.isEmpty()) {
-            directory = new File(storageFolder + File.separator + directoryPath.replaceAll("//", File.separator));
+            directory = new File(rootStorageFolder + File.separator + dataStorageFolder + File.separator + directoryPath.replaceAll("//", File.separator));
             log.debug("Prepare directory {}", directory.getAbsolutePath());
             if (!directory.exists()) {
                 log.info("Creating path {}", directory.getPath());
@@ -156,7 +159,7 @@ public class FileService {
     }
 
     public String getPath(FileEntity entity) {
-        return storageFolder + java.io.File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
+        return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
     }
 
 }
