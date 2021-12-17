@@ -226,7 +226,7 @@ public class LPCCoreApplication {
 			}
 			prepareRootDirectories(slackEventsCatcherStorage);
 			String token = apiTokenRepository.save(apiToken).getToken();
-			String tokenFilePath = rootStorageFolder + File.separator + dataStorageFolder + File.separator + slackEventsCatcherStorage + File.separator + "token";
+			String tokenFilePath = rootStorageFolder + File.separator + slackEventsCatcherStorage + File.separator + "token";
 			FileWriter myWriter;
 			try {
 				myWriter = new FileWriter(tokenFilePath);
