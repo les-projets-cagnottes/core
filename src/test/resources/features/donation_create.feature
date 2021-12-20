@@ -20,17 +20,11 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -56,17 +50,14 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | status      | donationsRequired |
+      | Awesome Project | IN_PROGRESS | 200               |
+    And The following campaigns are running
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign             | budget                  | contributor | amount |
@@ -94,17 +85,11 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns have a deadline reached
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -130,17 +115,11 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | title            | leader | status    | peopleRequired | donationsRequired |
-      | Awesome Campaign | Mike   | FAILED | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | FAILED | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -168,17 +147,11 @@ Feature: Donation - Create
       | owner | budget                           | amount | initialAmount |
       | Mike  | Annual Company Pot Previous Year | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget                           | contributor | amount |
@@ -204,17 +177,11 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |
@@ -240,17 +207,11 @@ Feature: Donation - Create
       | owner | budget             | amount | initialAmount |
       | Mike  | Annual Company Pot | 150    | 150           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader | status        | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Mike   | IN_PROGRESS | 2              | 200               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-    And The following campaigns uses budgets
-      | campaign         | budget             |
-      | Awesome Campaign | Annual Company Pot |
+      | project         | title            | budget             | status      | donationsRequired |
+      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
       | campaign         | budget             | contributor | amount |

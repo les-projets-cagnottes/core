@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.component;
 
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
-import fr.lesprojetscagnottes.core.user.UserModel;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

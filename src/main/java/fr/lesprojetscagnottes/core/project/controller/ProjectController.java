@@ -16,9 +16,9 @@ import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserRepository;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -211,14 +211,7 @@ public class ProjectController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        boolean hasNoPrivilege = userService.isNotAdmin(userLoggedInId);
-        Set<OrganizationEntity> organizations = project.getOrganizations();
-        if(hasNoPrivilege) {
-            for(OrganizationEntity org : organizations) {
-                hasNoPrivilege &= !userService.isMemberOfOrganization(userLoggedInId, org.getId());
-            }
-        }
-        if(hasNoPrivilege) {
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
             log.error("Impossible to get news : principal is not a member of any of the project organizations");
             throw new ForbiddenException();
         }
@@ -243,8 +236,8 @@ public class ProjectController {
     public ProjectModel create(Principal principal, @RequestBody ProjectModel project) {
 
         // Fails if any of references are null
-        if(project == null || project.getLeader() == null || project.getLeader().getId() < 0 ||
-            project.getOrganizationsRef() == null || project.getOrganizationsRef().isEmpty()) {
+        if(project == null || project.getLeader() == null || project.getLeader().getId() <= 0 ||
+            project.getOrganization() == null || project.getOrganization().getId() <= 0) {
             if(project != null ) {
                 log.error("Impossible to create project \"{}\" : some references are missing", project.getTitle());
             } else {
@@ -255,20 +248,18 @@ public class ProjectController {
 
         // Retrieve full referenced objects
         UserEntity leader = userRepository.findById(project.getLeader().getId()).orElse(null);
-        Set<OrganizationEntity> organizations = organizationRepository.findAllByIdIn(project.getOrganizationsRef());
+        OrganizationEntity organization = organizationRepository.findById(project.getOrganization().getId()).orElse(null);
 
         // Fails if any of references are null
-        if(leader == null || organizations.isEmpty() ||
-            organizations.size() != project.getOrganizationsRef().size()) {
+        if(leader == null || organization == null) {
             log.error("Impossible to create project \"{}\" : one or more reference(s) doesn't exist", project.getTitle());
             throw new NotFoundException();
         }
 
         // Verify that principal is member of organizations
-        UserEntity userLoggedIn = userService.get(principal);
-        Set<OrganizationEntity> organizationsMatch = organizationRepository.findAllByIdInAndMembers_Id(project.getOrganizationsRef(), userLoggedIn.getId());
-        if(organizationsMatch.isEmpty()) {
-            log.error("Impossible to create project \"{}\" : principal {} is not member of all organizations", project.getTitle(), userLoggedIn.getId());
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, organization.getId())) {
+            log.error("Impossible to create project \"{}\" : principal {} is not member of organization", project.getTitle(), userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -281,19 +272,10 @@ public class ProjectController {
         projectToSave.setPeopleRequired(project.getPeopleRequired());
         projectToSave.setWorkspace(project.getWorkspace());
         projectToSave.setLeader(leader);
+        projectToSave.setOrganization(organization);
         projectToSave.getPeopleGivingTime().add(leader);
-        final ProjectEntity projectFinal = projectRepository.save(projectToSave);
 
-        organizations.forEach(organization -> {
-
-            // Associate the project with organizations
-            organization.getProjects().add(projectFinal);
-            projectFinal.getOrganizations().add(organization);
-
-        });
-        organizationRepository.saveAll(organizations);
-
-        return ProjectModel.fromEntity(projectFinal);
+        return ProjectModel.fromEntity(projectRepository.save(projectToSave));
     }
 
     @Operation(summary = "Update a project", description = "Update a project", tags = { "Projects" })
@@ -319,10 +301,11 @@ public class ProjectController {
 
         // Retrieve full referenced objects
         UserEntity leader = userRepository.findById(projectModel.getLeader().getId()).orElse(null);
+        OrganizationEntity organization = organizationRepository.findById(projectModel.getOrganization().getId()).orElse(null);
         ProjectEntity project = projectRepository.findById(projectModel.getId()).orElse(null);
 
         // Fails if any of references are null
-        if(project == null || leader == null) {
+        if(project == null || leader == null || organization == null) {
             log.error("Impossible to update project {} : one or more reference(s) doesn't exist", projectModel.getId());
             throw new NotFoundException();
         }
@@ -337,8 +320,10 @@ public class ProjectController {
         project.setTitle(projectModel.getTitle());
         project.setShortDescription(projectModel.getShortDescription());
         project.setLongDescription(projectModel.getLongDescription());
-        project.setLeader(projectModel.getLeader());
         project.setPeopleRequired(projectModel.getPeopleRequired());
+        project.setWorkspace(projectModel.getWorkspace());
+        project.setLeader(projectModel.getLeader());
+        project.setOrganization(projectModel.getOrganization());
 
         return ProjectModel.fromEntity(projectRepository.save(project));
     }
@@ -372,11 +357,8 @@ public class ProjectController {
         // Verify that principal is member of organizations
         UserEntity userLoggedIn = userService.get(principal);
         Long userLoggedInId = userLoggedIn.getId();
-        project.setOrganizations(organizationRepository.findAllByProjects_Id(id));
-        Set<Long> organizationsRef = new LinkedHashSet<>();
-        project.getOrganizations().forEach(organization -> organizationsRef.add(organization.getId()));
-        if(organizationRepository.findAllByIdInAndMembers_Id(organizationsRef, userLoggedInId).isEmpty()) {
-            log.error("Impossible to join project {} : principal {} is not member of all organizations", id, userLoggedInId);
+        if(!userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
+            log.error("Impossible to join project {} : principal {} is not member of organization", id, userLoggedInId);
             throw new ForbiddenException();
         }
 

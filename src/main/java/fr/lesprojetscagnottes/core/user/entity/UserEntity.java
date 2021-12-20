@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.user;
+package fr.lesprojetscagnottes.core.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -7,13 +7,13 @@ import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -74,10 +74,6 @@ public class UserEntity extends UserModel implements UserDetails {
     @ManyToMany(mappedBy = "peopleGivingTime")
     @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
-
-    @ManyToMany(mappedBy = "peopleGivingTime")
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
-    private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")
     @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
