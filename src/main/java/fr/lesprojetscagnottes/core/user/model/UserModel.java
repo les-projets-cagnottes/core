@@ -1,8 +1,9 @@
-package fr.lesprojetscagnottes.core.user;
+package fr.lesprojetscagnottes.core.user.model;
 
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.strings.Constants;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

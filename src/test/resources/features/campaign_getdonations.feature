@@ -6,52 +6,36 @@ Feature: Campaign - Get Donations
     And The following organizations are registered
       | name            |
       | Unnamed Company |
-      | Another Company |
     And The following users are registered
       | firstname | email                       | password |
       | Mike      | mike@unnamedcompany.com     | mike     |
       | Sabrina   | sabrina@unnamedcompany.com  | sabrina  |
       | Sinclair  | sinclair@anothercompany.com | sinclair |
     And The following users are members of organizations
-      | user     | organization    |
-      | Mike     | Unnamed Company |
-      | Sabrina  | Unnamed Company |
-      | Sinclair | Another Company |
+      | user    | organization    |
+      | Mike    | Unnamed Company |
+      | Sabrina | Unnamed Company |
     And The following contents are saved
       | organization    | name                 | value     |
       | Unnamed Company | Unnamed Terms of Use | Blablabla |
-      | Another Company | Another Terms of Use | Blablabla |
     And The following budgets are available
-      | organization    | name                | amountPerMember | isDistributed | sponsor  | rules                |
-      | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina  | Unnamed Terms of Use |
-      | Another Company | Another Company Pot | 200             | true          | Sinclair | Another Terms of Use |
+      | organization    | name                | amountPerMember | isDistributed | sponsor | rules                |
+      | Unnamed Company | Unnamed Company Pot | 150             | true          | Sabrina | Unnamed Terms of Use |
     And The following accounts are created
       | owner    | budget              | amount | initialAmount |
       | Mike     | Unnamed Company Pot | 150    | 150           |
-      | Mike     | Another Company Pot | 200    | 200           |
       | Sabrina  | Unnamed Company Pot | 150    | 150           |
-      | Sabrina  | Another Company Pot | 200    | 200           |
       | Sinclair | Unnamed Company Pot | 150    | 150           |
-      | Sinclair | Another Company Pot | 200    | 200           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader  | status      | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-      | Awesome Campaign | Another Company |
-    And The following campaigns uses budgets
-      | campaign         | budget              |
-      | Awesome Campaign | Unnamed Company Pot |
-      | Awesome Campaign | Another Company Pot |
+      | project         | budget              | title            | status      | donationsRequired |
+      | Awesome Project | Unnamed Company Pot | Awesome Campaign | IN_PROGRESS | 400               |
     And The following donations are made
       | budget              | campaign         | contributor | amount |
       | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
-      | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
     And "Mike" is logged in
     When "Mike" gets donations of the "Awesome Campaign" campaign
     Then Last HTTP code was "200"
@@ -59,9 +43,8 @@ Feature: Campaign - Get Donations
       | budget              | campaign         | contributor | amount |
       | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |
       | Unnamed Company Pot | Awesome Campaign | Sabrina     | 75     |
-      | Another Company Pot | Awesome Campaign | Sinclair    | 100    |
 
-  Scenario: A non-member of any campaign's organizations cannot get campaign's donations
+  Scenario: A non-member of campaign's organization cannot get campaign's donations
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -89,21 +72,12 @@ Feature: Campaign - Get Donations
     And The following accounts are created
       | owner | budget              | amount | initialAmount |
       | Mike  | Unnamed Company Pot | 150    | 150           |
-      | Mike  | Another Company Pot | 200    | 200           |
     And The following projects are created
-      | title           | leader  | status        | peopleRequired |
-      | Awesome Project | Sabrina | B_IN_PROGRESS | 2              |
+      | organization    | title           | leader  | status      | peopleRequired |
+      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
     And The following campaigns are running
-      | project         | title            | leader  | status      | peopleRequired | donationsRequired |
-      | Awesome Project | Awesome Campaign | Sabrina | IN_PROGRESS | 2              | 400               |
-    And The following campaigns are associated to organizations
-      | campaign         | organization    |
-      | Awesome Campaign | Unnamed Company |
-      | Awesome Campaign | Another Company |
-    And The following campaigns uses budgets
-      | campaign         | budget              |
-      | Awesome Campaign | Unnamed Company Pot |
-      | Awesome Campaign | Another Company Pot |
+      | project         | budget              | title            | status      | donationsRequired |
+      | Awesome Project | Unnamed Company Pot | Awesome Campaign | IN_PROGRESS | 400               |
     And The following donations are made
       | budget              | campaign         | contributor | amount |
       | Unnamed Company Pot | Awesome Campaign | Mike        | 100    |

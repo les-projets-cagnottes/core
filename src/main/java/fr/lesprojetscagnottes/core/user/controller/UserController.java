@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.user;
+package fr.lesprojetscagnottes.core.user.controller;
 
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
@@ -10,8 +10,8 @@ import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.model.AccountModel;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignModel;
-import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
+import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
@@ -27,6 +27,11 @@ import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;

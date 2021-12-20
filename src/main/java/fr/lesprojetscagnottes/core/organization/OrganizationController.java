@@ -11,10 +11,7 @@ import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignModel;
-import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
@@ -33,15 +30,20 @@ import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
-import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
+import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.controller.SlackController;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.user.*;
+import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.controller.UserController;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -358,12 +360,8 @@ public class OrganizationController {
             throw new ForbiddenException();
         }
 
-        // Put all organization IDs in a single list
-        Set<Long> organizationIds = new LinkedHashSet<>();
-        organizationIds.add(id);
-
         // Retrieve all corresponding entities
-        Set<BudgetEntity> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
+        Set<BudgetEntity> entities = budgetRepository.findAllUsableBudgetsInOrganization(new Date(), id);
 
         // Convert all entities to models
         Set<BudgetModel> models = new LinkedHashSet<>();
@@ -616,55 +614,6 @@ public class OrganizationController {
         log.info("User {} has been removed from organization {}", user.getId(), organization.getId());
     }
 
-    @Operation(summary = "Get paginated organization campaigns", description = "Get paginated organization campaigns", tags = { "Organizations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Return paginated campaigns", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
-            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/campaigns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit", "filters"})
-    public DataPage<CampaignModel> list(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filters") List<String> filters) {
-
-        // Verify that params are correct
-        if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
-            log.error("Impossible to get organization campaigns : params are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
-            log.error("Impossible to get organization campaigns : organization not found");
-            throw new NotFoundException();
-        }
-
-        // Prepare filter
-        Set<CampaignStatus> status = new LinkedHashSet<>();
-        for(String filter : filters) {
-            status.add(CampaignStatus.valueOf(filter));
-        }
-        if(status.isEmpty()) {
-            status.addAll(List.of(CampaignStatus.values()));
-        }
-
-        // Get corresponding entities according to principal
-        Long userLoggedInId = userService.get(principal).getId();
-        Pageable pageable = PageRequest.of(offset, limit, Sort.by("status").ascending().and(Sort.by("fundingDeadline").ascending()));
-        Page<CampaignEntity> entities;
-        if(userService.isNotAdmin(userLoggedInId)) {
-            entities = campaignRepository.findAllByOrganizations_IdAndStatusIn(id, status, pageable);
-            //entities = campaignRepository.findAllByUserAndStatus(userLoggedInId, status, pageable);
-        } else {
-            entities = campaignRepository.findAllByStatusIn(status, pageable);
-        }
-
-        // Convert and return data
-        DataPage<CampaignModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(CampaignEntity.fromEntity(entity)));
-        return models;
-    }
-
     @Operation(summary = "Get paginated organization projects", description = "Get paginated organization projects", tags = { "Organizations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return paginated projects", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
@@ -703,8 +652,7 @@ public class OrganizationController {
         Page<ProjectEntity> entities;
         boolean isNotAdmin = userService.isNotAdmin(userLoggedInId);
         if(isNotAdmin) {
-            entities = projectRepository.findAllByOrganizations_IdAndStatusIn(id, status, pageable);
-            //entities = campaignRepository.findAllByUserAndStatus(userLoggedInId, status, pageable);
+            entities = projectRepository.findAllByOrganizationIdAndStatusIn(id, status, pageable);
         } else {
             entities = projectRepository.findAllByStatusIn(status, pageable);
         }

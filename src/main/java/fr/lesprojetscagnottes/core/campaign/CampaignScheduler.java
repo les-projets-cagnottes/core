@@ -1,13 +1,17 @@
 package fr.lesprojetscagnottes.core.campaign;
 
+import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
+import fr.lesprojetscagnottes.core.campaign.model.CampaignStatus;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
+import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserRepository;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,11 +71,9 @@ public class CampaignScheduler {
             for (Donation donation : donations) {
                 totalDonations += donation.getAmount();
             }
-            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
-            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Teammates : " + campaign.getProject().getPeopleGivingTime().size() + " / 3");
+            log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getId());
             log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations : " + totalDonations + " € / " + campaign.getDonationsRequired() + " €");
-            if (totalDonations >= campaign.getDonationsRequired()
-                    && campaign.getPeopleGivingTime().size() >= 3) {
+            if (totalDonations >= campaign.getDonationsRequired()) {
                 campaign.setStatus(CampaignStatus.SUCCESSFUL);
                 log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => SUCCESSFUL");
             } else {
@@ -95,7 +97,7 @@ public class CampaignScheduler {
             long diffInMillies = Math.abs(campaign.getFundingDeadline().getTime() - new Date().getTime());
             long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS) + 1;
 
-            log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getTitle());
+            log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getId());
             log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
 
             if(diff == 7 || diff == 1) {
@@ -118,7 +120,7 @@ public class CampaignScheduler {
         float donationsMissing = campaign.getDonationsRequired() - totalDonations;
         log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
 
-        UserEntity leader = userRepository.findById(campaign.getLeader().getId()).orElse(null);
+        UserEntity leader = userRepository.findById(campaign.getProject().getLeader().getId()).orElse(null);
         if(leader == null) {
             log.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
         } else {
@@ -132,32 +134,30 @@ public class CampaignScheduler {
                 model.put("donationsMissing", donationsMissing);
                 model.put("donationsMissingFormatted", String.format("%.2f", donationsMissing));
 
-                campaign.getOrganizations().forEach(organization -> {
-                    if(organization.getSlackTeam() != null) {
-                        SlackTeamEntity slackTeam = organization.getSlackTeam();
-                        organization.getMembers().stream()
-                                .filter(member -> member.getId().equals(leader.getId()))
+                OrganizationEntity organization = campaign.getProject().getOrganization();
+                if(organization.getSlackTeam() != null) {
+                    SlackTeamEntity slackTeam = organization.getSlackTeam();
+                    organization.getMembers().stream()
+                            .filter(member -> member.getId().equals(leader.getId()))
+                            .findAny()
+                            .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
+                                .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
                                 .findAny()
-                                .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
-                                    .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
-                                    .findAny()
-                                    .ifPresentOrElse(
-                                        slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
-                                        () -> model.put("leader", leader.getFullname())),
-                                    () -> model.put("leader", leader.getFullname())
-                                );
+                                .ifPresentOrElse(
+                                    slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
+                                    () -> model.put("leader", leader.getFullname())),
+                                () -> model.put("leader", leader.getFullname())
+                            );
 
-                        Context context = new Context();
-                        context.setVariables(model);
-                        String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
+                    Context context = new Context();
+                    context.setVariables(model);
+                    String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
 
-                        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
-                        slackClientService.inviteBotInConversation(slackTeam);
-                        slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
-                    }
-                });
-
+                    log.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
+                    slackClientService.inviteBotInConversation(slackTeam);
+                    slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
+                    log.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
+                }
             }
         }
 

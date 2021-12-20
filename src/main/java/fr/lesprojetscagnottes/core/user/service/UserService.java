@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.user;
+package fr.lesprojetscagnottes.core.user.service;
 
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
@@ -7,6 +7,8 @@ import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorit
 import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;

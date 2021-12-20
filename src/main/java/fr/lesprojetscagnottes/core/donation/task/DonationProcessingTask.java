@@ -6,7 +6,7 @@ import fr.lesprojetscagnottes.core.donation.queue.DonationOperation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
