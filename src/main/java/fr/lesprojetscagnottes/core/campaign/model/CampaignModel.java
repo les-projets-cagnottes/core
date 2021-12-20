@@ -1,22 +1,23 @@
-package fr.lesprojetscagnottes.core.campaign;
+package fr.lesprojetscagnottes.core.campaign.model;
 
+import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
+import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.common.GenericModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.*;
+import java.util.Date;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class CampaignModel extends AuditEntity<String> {
 
-    @Column(name = "title")
+    @Column
     @NotNull
     protected String title = StringsCommon.EMPTY_STRING;
 
@@ -25,17 +26,8 @@ public class CampaignModel extends AuditEntity<String> {
     @Enumerated(EnumType.STRING)
     protected CampaignStatus status;
 
-    @Column(name = "short_description")
-    protected String shortDescription;
-
-    @Column(name = "long_description", columnDefinition = "TEXT")
-    protected String longDescription;
-
     @Column(name = "donations_required")
     protected Float donationsRequired;
-
-    @Column(name = "people_required")
-    protected Integer peopleRequired;
 
     @Column(name = "funding_deadline")
     @Temporal(TemporalType.TIMESTAMP)
@@ -47,19 +39,10 @@ public class CampaignModel extends AuditEntity<String> {
     protected Float totalDonations = 0f;
 
     @Transient
-    protected GenericModel project;
+    private GenericModel project;
 
     @Transient
-    protected GenericModel leader;
-
-    @Transient
-    private Set<Long> organizationsRef = new LinkedHashSet<>();
-
-    @Transient
-    private Set<Long> budgetsRef = new LinkedHashSet<>();
-
-    @Transient
-    private Set<Long> peopleGivingTimeRef = new LinkedHashSet<>();
+    private GenericModel budget;
 
     public static CampaignModel fromEntity(CampaignEntity entity) {
         CampaignModel model = new CampaignModel();
@@ -70,17 +53,11 @@ public class CampaignModel extends AuditEntity<String> {
         model.setId(entity.getId());
         model.setTitle(entity.getTitle());
         model.setStatus(entity.getStatus());
-        model.setShortDescription(entity.getShortDescription());
-        model.setLongDescription(entity.getLongDescription());
         model.setDonationsRequired(entity.getDonationsRequired());
-        model.setPeopleRequired(entity.getPeopleRequired());
         model.setFundingDeadline(entity.getFundingDeadline());
         model.setTotalDonations(entity.getTotalDonations());
-        model.setLeader(new GenericModel(entity.getLeader()));
         model.setProject(new GenericModel(entity.getProject()));
-        entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
-        entity.getBudgets().forEach(budget -> model.getBudgetsRef().add(budget.getId()));
-        entity.getPeopleGivingTime().forEach(member -> model.getPeopleGivingTimeRef().add(member.getId()));
+        model.setBudget(new GenericModel(entity.getBudget()));
         return model;
     }
 
@@ -88,13 +65,11 @@ public class CampaignModel extends AuditEntity<String> {
     public String toString() {
         return "CampaignModel{" + "title='" + title + '\'' +
                 ", status=" + status +
-                ", shortDescription='" + shortDescription + '\'' +
-                ", longDescription='" + longDescription + '\'' +
                 ", donationsRequired=" + donationsRequired +
-                ", peopleRequired=" + peopleRequired +
                 ", fundingDeadline=" + fundingDeadline +
                 ", totalDonations=" + totalDonations +
-                ", leader=" + leader +
+                ", project=" + project +
+                ", budget=" + budget +
                 ", id=" + id +
                 '}';
     }

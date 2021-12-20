@@ -94,19 +94,6 @@ public class BudgetStepDefinitions {
         }
     }
 
-    @When("{string} get usable budgets")
-    public void getUsableBudgets(String userFirstname) {
-
-        // Refresh Token
-        authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
-        AuthenticationResponseModel response = authenticationHttpClient.refresh();
-        context.getAuths().put(userFirstname, response);
-
-        // Get budgets
-        budgetHttpClient.setBearerAuth(response.getToken());
-        budgetHttpClient.getUsableBudgets();
-    }
-
     @When("{string} get budgets for {string} organization")
     public void getBudgetsForOrganization(String userFirstname, String organizationName) {
 

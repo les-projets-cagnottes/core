@@ -8,9 +8,9 @@ import fr.lesprojetscagnottes.core.budget.model.AccountModel;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignModel;
-import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
+import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
+import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
@@ -20,10 +20,10 @@ import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserController;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserRepository;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.user.controller.UserController;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,7 +43,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,32 +124,6 @@ public class BudgetController {
         return models;
     }
 
-    @Operation(summary = "Find all usable budgets for the current user", description = "A usable budget has an unreached end date and is distributed", tags = { "Budgets" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Return all usable budgets for the current user", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class))))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/budget/usable", method = RequestMethod.GET)
-    public Set<BudgetModel> getUsableBudgets(Principal principal) {
-
-        // Get user organizations
-        UserEntity user = userService.get(principal);
-        Set<OrganizationEntity> organizations = organizationRepository.findAllByMembers_Id(user.getId());
-
-        // Put all organization IDs in a single list
-        Set<Long> organizationIds = new LinkedHashSet<>();
-        organizations.forEach(organization -> organizationIds.add(organization.getId()));
-
-        // Retrieve all corresponding entities
-        Set<BudgetEntity> entities = budgetRepository.findAllUsableBudgetsInOrganizations(new Date(), organizationIds);
-
-        // Convert all entities to models
-        Set<BudgetModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(BudgetModel.fromEntity(entity)));
-
-        return models;
-    }
-
     @Operation(summary = "Get accounts using a budget", description = "Get accounts using a budget", tags = { "Budgets" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding accounts", content = @Content(schema = @Schema(implementation = DataPage.class))),
@@ -225,7 +198,7 @@ public class BudgetController {
         }
 
         // Get and transform donations
-        Page<CampaignEntity> entities = campaignRepository.findByBudgets_id(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
+        Page<CampaignEntity> entities = campaignRepository.findByBudgetId(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
         DataPage<CampaignModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(CampaignModel.fromEntity(entity)));
         return models;

@@ -10,7 +10,7 @@ import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -5,9 +5,9 @@ import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
-import fr.lesprojetscagnottes.core.campaign.CampaignRepository;
-import fr.lesprojetscagnottes.core.campaign.CampaignStatus;
+import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
+import fr.lesprojetscagnottes.core.campaign.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
@@ -18,9 +18,11 @@ import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserEntity;
-import fr.lesprojetscagnottes.core.user.UserRepository;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -66,6 +68,9 @@ public class DonationController {
 
     @Autowired
     private CampaignRepository campaignRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -131,7 +136,7 @@ public class DonationController {
         log.info("Control campaigns");
         List<CampaignEntity> campaigns = campaignRepository.findAll();
         campaigns.forEach(campaign -> {
-            log.info("Campaign {} : {}", campaign.getId(), campaign.getTitle());
+            log.info("Campaign {} : {}", campaign.getId(), campaign.getId());
             Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
             final float[] totalDonationsAmount = {0f};
             donations.forEach(donation -> {
@@ -176,8 +181,15 @@ public class DonationController {
         log.debug("contributor = {}", contributor);
 
         // Verify that any of references are not null
-        if(account == null || campaign == null || contributor == null) {
-            log.error("Impossible to create donation : one or more reference(s) doesn't exist");
+        if(account == null || campaign == null || contributor == null || campaign.getProject() == null) {
+            log.error("Impossible to create donation : one or more reference(s) does not exist");
+            throw new NotFoundException();
+        }
+
+        // Get Project of campaign
+        ProjectEntity project = projectRepository.findById(campaign.getProject().getId()).orElse(null);
+        if(project == null) {
+            log.error("Impossible to create donation : project does not exist");
             throw new NotFoundException();
         }
 
@@ -189,7 +201,7 @@ public class DonationController {
         }
 
         // Verify that principal is member of organization
-        OrganizationEntity campaignOrganization = (OrganizationEntity) campaign.getOrganizations().toArray()[0];
+        OrganizationEntity campaignOrganization = project.getOrganization();
         if(!userService.isMemberOfOrganization(userLoggedInId, campaignOrganization.getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to create donation : principal {} is not member of organization {}", userLoggedInId, campaignOrganization.getId());
             throw new ForbiddenException();
@@ -208,9 +220,9 @@ public class DonationController {
             throw new BadRequestException();
         }
 
-        // Verify that donation budgets is associated with the campaign
+        // Verify that donation budget is associated with the campaign
         Long budgetId = account.getBudget().getId();
-        if(campaign.getBudgets().stream().noneMatch(projectBudget -> projectBudget.getId().equals(budgetId))) {
+        if(!campaign.getBudget().getId().equals(account.getBudget().getId())) {
             log.error("Impossible to create donation : budgets is not associated with the campaign");
             throw new BadRequestException();
         }

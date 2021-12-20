@@ -12,10 +12,6 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 @Scope(SCOPE_CUCUMBER_GLUE)
 public class BudgetHttpClient extends GenericHttpClient {
 
-    public void getUsableBudgets() {
-        get("/api/budget/usable");
-    }
-
     public void getOrganizationBudgets(Long organizationId) {
         get("/api/organization/" + organizationId + "/budgets");
     }

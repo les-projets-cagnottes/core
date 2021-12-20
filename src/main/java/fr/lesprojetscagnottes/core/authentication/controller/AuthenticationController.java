@@ -1,20 +1,20 @@
 package fr.lesprojetscagnottes.core.authentication.controller;
 
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationRequestModel;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.user.UserModel;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.UserRepository;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
-import fr.lesprojetscagnottes.core.user.UserService;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;

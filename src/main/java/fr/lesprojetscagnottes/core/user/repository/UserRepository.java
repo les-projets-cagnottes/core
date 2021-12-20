@@ -1,5 +1,6 @@
-package fr.lesprojetscagnottes.core.user;
+package fr.lesprojetscagnottes.core.user.repository;
 
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,8 +25,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     UserEntity findBySlackUsers_Id(Long slackUserId);
 
     Set<UserEntity> findAllByProjects_Id(Long id);
-
-    Set<UserEntity> findAllByCampaigns_Id(Long id);
 
     Set<UserEntity> findAllByOrganizations_id(Long id);
 

@@ -2,10 +2,10 @@ package fr.lesprojetscagnottes.core.budget.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
-import fr.lesprojetscagnottes.core.campaign.CampaignEntity;
+import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,14 +20,6 @@ import java.util.Set;
 @Table(name = "budgets")
 public class BudgetEntity extends BudgetModel {
 
-    @ManyToMany
-    @JoinTable(
-            name = "campaigns_budgets",
-            joinColumns = {@JoinColumn(name = "budget_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "campaign_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
-    private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
-
     @ManyToOne
     @JsonIgnoreProperties({"organizations"})
     private ContentEntity rules = new ContentEntity();
@@ -35,6 +27,10 @@ public class BudgetEntity extends BudgetModel {
     @ManyToOne
     @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
     private OrganizationEntity organization = new OrganizationEntity();
+
+    @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE)
+    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
+    private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})

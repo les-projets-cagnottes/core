@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.slack.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.user.UserEntity;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.slack.model.SlackUserModel;
 import lombok.AccessLevel;
 import lombok.Getter;

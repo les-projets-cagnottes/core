@@ -43,10 +43,10 @@ public class ProjectModel extends AuditEntity<String> {
     protected GenericModel leader;
 
     @Transient
-    private Set<Long> campaignsRef = new LinkedHashSet<>();
+    protected GenericModel organization;
 
     @Transient
-    private Set<Long> organizationsRef = new LinkedHashSet<>();
+    private Set<Long> campaignsRef = new LinkedHashSet<>();
 
     @Transient
     private Set<Long> peopleGivingTimeRef = new LinkedHashSet<>();
@@ -68,26 +68,11 @@ public class ProjectModel extends AuditEntity<String> {
         model.setPeopleRequired(entity.getPeopleRequired());
         model.setWorkspace(entity.getWorkspace());
         model.setLeader(new GenericModel(entity.getLeader()));
+        model.setOrganization(new GenericModel(entity.getOrganization()));
         entity.getCampaigns().forEach(campaign -> model.getCampaignsRef().add(campaign.getId()));
-        entity.getOrganizations().forEach(organization -> model.getOrganizationsRef().add(organization.getId()));
         entity.getPeopleGivingTime().forEach(member -> model.getPeopleGivingTimeRef().add(member.getId()));
         entity.getNews().forEach(news -> model.getNewsRef().add(news.getId()));
         return model;
     }
 
-    @Override
-    public String toString() {
-        return "ProjectModel{" + "id=" + id +
-                ", title='" + title + '\'' +
-                ", status=" + status +
-                ", shortDescription='" + shortDescription + '\'' +
-                ", longDescription='" + longDescription + '\'' +
-                ", peopleRequired=" + peopleRequired +
-                ", leader=" + leader +
-                ", campaignsRef=" + campaignsRef +
-                ", organizationsRef=" + organizationsRef +
-                ", peopleGivingTimeRef=" + peopleGivingTimeRef +
-                ", newsRef=" + newsRef +
-                '}';
-    }
 }

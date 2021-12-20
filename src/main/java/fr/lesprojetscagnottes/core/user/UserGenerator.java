@@ -3,6 +3,7 @@ package fr.lesprojetscagnottes.core.user;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -40,6 +40,7 @@ public class ProjectStepDefinitions {
 
             // Create project
             project = new ProjectEntity();
+            project.setOrganization(context.getOrganizations().get(columns.get("organization")));
             project.setLeader(context.getUsers().get(columns.get("leader")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
@@ -61,12 +62,12 @@ public class ProjectStepDefinitions {
 
             // Create project
             project = new ProjectEntity();
-            project.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
             project.setLongDescription(columns.get("longDescription"));
             project.setPeopleRequired(Integer.parseInt(columns.get("peopleRequired")));
             project.setLeader(context.getUsers().get(userFirstname));
+            project.setOrganization(context.getOrganizations().get(columns.get("organization")));
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
@@ -91,7 +92,7 @@ public class ProjectStepDefinitions {
 
             // Create project from feature
             project = new ProjectEntity();
-            project.getOrganizations().add(context.getOrganizations().get(columns.get("organization")));
+            project.setOrganization(context.getOrganizations().get(columns.get("organization")));
             project.setTitle(columns.get("title"));
             project.setShortDescription(columns.get("shortDescription"));
             project.setLongDescription(columns.get("longDescription"));
