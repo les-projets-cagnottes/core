@@ -5,7 +5,7 @@ import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;

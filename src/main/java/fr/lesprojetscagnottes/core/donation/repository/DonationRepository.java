@@ -17,7 +17,9 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
     Set<Donation> findAllByAccountId(Long id);
 
     Set<Donation> findAllByContributorIdOrderByCreatedAtAsc(long contributorId);
-    
+
+    Set<Donation> findAllByContributorIdAndAccountIdInOrderByCreatedAtAsc(long contributorId, Set<Long> accountIds);
+
     Page<Donation> findByCampaign_idOrderByIdAsc(long id, Pageable pageable);
 
     @Query(value = "SELECT create_donation(:_account_id, :_campaign_id, :_budget_id, :_amount);", nativeQuery = true)

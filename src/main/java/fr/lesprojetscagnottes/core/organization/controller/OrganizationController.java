@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.organization;
+package fr.lesprojetscagnottes.core.organization.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -6,10 +6,10 @@ import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEnt
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
-import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
@@ -28,6 +28,9 @@ import fr.lesprojetscagnottes.core.idea.repository.IdeaRepository;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;

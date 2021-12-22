@@ -7,7 +7,7 @@ import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;

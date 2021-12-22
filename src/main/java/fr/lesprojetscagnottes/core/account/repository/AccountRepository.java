@@ -1,6 +1,6 @@
-package fr.lesprojetscagnottes.core.budget.repository;
+package fr.lesprojetscagnottes.core.account.repository;
 
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +16,6 @@ public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     Page<AccountEntity> findByBudgetId(Long id, Pageable pageable);
 
     Set<AccountEntity> findAllByBudgetId(Long id);
+
+    Set<AccountEntity> findAllByOwnerIdAndBudgetIdIn(Long id, Set<Long> budgetIds);
 }

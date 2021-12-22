@@ -1,10 +1,11 @@
 package fr.lesprojetscagnottes.core.budget.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;

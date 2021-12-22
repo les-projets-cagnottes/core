@@ -2,7 +2,7 @@ package fr.lesprojetscagnottes.core.steps;
 
 import com.google.gson.reflect.TypeToken;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CampaignHttpClient;
