@@ -1,9 +1,9 @@
 package fr.lesprojetscagnottes.core.donation.controller;
 
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
@@ -16,8 +16,8 @@ import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;

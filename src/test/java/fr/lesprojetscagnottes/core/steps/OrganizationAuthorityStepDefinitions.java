@@ -6,7 +6,7 @@ import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.OrganizationAuthorityHttpClient;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;

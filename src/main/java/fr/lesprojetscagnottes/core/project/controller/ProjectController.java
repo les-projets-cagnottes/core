@@ -8,9 +8,9 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationModel;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
@@ -87,20 +87,18 @@ public class ProjectController {
             throw new BadRequestException();
         }
 
-        // Verify that principal is in project organizations
-        Long userLoggedInId = userService.get(principal).getId();
-        Set<OrganizationEntity> projectOrganizations = organizationRepository.findAllByProjects_Id(id);
-        Set<OrganizationEntity> principalOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        if(userService.isNotAdmin(userLoggedInId) && projectOrganizations.stream().noneMatch(principalOrganizations::contains)) {
-            log.error("Impossible to get project by ID : principal has not enough privileges");
-            throw new ForbiddenException();
-        }
-
         // Verify that entity exists
         ProjectEntity entity = projectRepository.findById(id).orElse(null);
         if(entity == null) {
             log.error("Impossible to get project by ID : project not found");
             throw new NotFoundException();
+        }
+
+        // Verify that principal is in project organizations
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId())) {
+            log.error("Impossible to get project by ID : principal has not enough privileges");
+            throw new ForbiddenException();
         }
 
         // Transform and return organization
