@@ -1,14 +1,14 @@
 package fr.lesprojetscagnottes.core.user.controller;
 
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.model.AccountModel;
+import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
-import fr.lesprojetscagnottes.core.budget.model.AccountModel;
-import fr.lesprojetscagnottes.core.budget.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
@@ -19,19 +19,19 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationModel;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,8 +39,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -57,12 +56,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @RequestMapping("/api")
 @Tag(name = "Users", description = "The Users API")
 @RestController
 public class UserController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -115,7 +113,7 @@ public class UserController {
 
         // Verify that params are correct
         if(offset < 0 || limit <= 0) {
-            LOGGER.error("Impossible to get contents of organizations : ID is incorrect");
+            log.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -140,7 +138,7 @@ public class UserController {
 
         // Verify that ID is correct
         if(id <= 0) {
-            LOGGER.error("Impossible to get user by ID : ID is incorrect");
+            log.error("Impossible to get user by ID : ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -149,14 +147,14 @@ public class UserController {
         Set<OrganizationEntity> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
         Set<OrganizationEntity> userOrganizations = organizationRepository.findAllByMembers_Id(id);
         if(userService.hasNoACommonOrganization(userLoggedInOrganizations, userOrganizations) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
+            log.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that entity exists
         UserEntity entity = userRepository.findById(id).orElse(null);
         if(entity == null) {
-            LOGGER.error("Impossible to get user by ID : user not found");
+            log.error("Impossible to get user by ID : user not found");
             throw new NotFoundException();
         }
 
@@ -186,14 +184,14 @@ public class UserController {
             // Retrieve full referenced objects
             UserEntity user = userRepository.findById(id).orElse(null);
             if(user == null) {
-                LOGGER.error("Impossible to get user {} : it doesn't exist", id);
+                log.error("Impossible to get user {} : it doesn't exist", id);
                 continue;
             }
 
             // Verify that principal share an organization with the user
             Set<OrganizationEntity> userOrganizations = organizationRepository.findAllByMembers_Id(id);
             if(userService.hasNoACommonOrganization(userLoggedInOrganizations, userOrganizations) && userLoggedIn_isNotAdmin) {
-                LOGGER.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
+                log.error("Impossible to get user {} : principal {} and him does not share an organization", id, userLoggedInId);
                 continue;
             }
 
@@ -217,21 +215,21 @@ public class UserController {
 
         // Verify that ID is correct
         if(email == null || email.isEmpty()) {
-            LOGGER.error("Impossible to get user by email : email is incorrect");
+            log.error("Impossible to get user by email : email is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that current user is the same as requested
         UserEntity userLoggedIn = userService.get(principal);
         if(!userLoggedIn.getEmail().equals(email) && userService.isNotAdmin(userLoggedIn.getId())) {
-            LOGGER.error("Impossible to get user by email : principal is not the requested user");
+            log.error("Impossible to get user by email : principal is not the requested user");
             throw new ForbiddenException();
         }
 
         // Verify that entity exists
         UserEntity entity = userRepository.findByEmail(email);
         if(entity == null) {
-            LOGGER.error("Impossible to get user by email : user not found");
+            log.error("Impossible to get user by email : user not found");
             throw new NotFoundException();
         }
 
@@ -254,7 +252,7 @@ public class UserController {
 
         // Fails if user ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get accounts by user ID : User ID is incorrect");
+            log.error("Impossible to get accounts by user ID : User ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -262,7 +260,7 @@ public class UserController {
         // Principal is the user OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
         if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get accounts by user ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get accounts by user ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -271,13 +269,55 @@ public class UserController {
 
         // Verify that any of references are not null
         if(user == null) {
-            LOGGER.error("Impossible to get accounts by user ID : user {} not found", id);
+            log.error("Impossible to get accounts by user ID : user {} not found", id);
             throw new NotFoundException();
         }
 
         // Get and transform entities
         Set<AccountModel> models = new LinkedHashSet<>();
         Set<AccountEntity> entities = accountRepository.findAllByOwnerId(id);
+        entities.forEach(entity -> models.add(AccountModel.fromEntity(entity)));
+
+        return models;
+    }
+
+    @Operation(summary = "Get user accounts matching budget IDs", description = "Get user accounts matching budget IDs", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding accounts", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountModel.class)))),
+            @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/accounts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetIds"})
+    public Set<AccountModel> getAccountsByBudgetIds(Principal principal, @PathVariable("id") Long id, @RequestParam("budgetIds") Set<Long> budgetIds) {
+
+        // Fails if user ID is missing
+        if(id <= 0 || budgetIds.size() <= 0) {
+            log.error("Impossible to get accounts by user ID & budget IDs : params are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges :
+        // Principal is the user OR Principal is admin
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to get accounts by user ID & budget IDs : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        UserEntity user = userRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null) {
+            log.error("Impossible to get accounts by user ID & budget IDs : user {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform entities
+        Set<AccountModel> models = new LinkedHashSet<>();
+        Set<AccountEntity> entities = accountRepository.findAllByOwnerIdAndBudgetIdIn(id, budgetIds);
         entities.forEach(entity -> models.add(AccountModel.fromEntity(entity)));
 
         return models;
@@ -296,7 +336,7 @@ public class UserController {
 
         // Fails if user ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get projects by user ID : User ID is incorrect");
+            log.error("Impossible to get projects by user ID : User ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -304,7 +344,7 @@ public class UserController {
         // Principal is the user OR Principal is admin
         long userLoggedInId = userService.get(principal).getId();
         if(userLoggedInId != id && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get projects by user ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get projects by user ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -313,7 +353,7 @@ public class UserController {
 
         // Verify that any of references are not null
         if(user == null) {
-            LOGGER.error("Impossible to get projects by user ID : user {} not found", id);
+            log.error("Impossible to get projects by user ID : user {} not found", id);
             throw new NotFoundException();
         }
 
@@ -339,7 +379,7 @@ public class UserController {
 
         // Fails if user ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get organizations by user ID : User ID is incorrect");
+            log.error("Impossible to get organizations by user ID : User ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -348,7 +388,7 @@ public class UserController {
         Long userLoggedInId = userService.get(principal).getId();
         boolean isNotAdmin = userService.isNotAdmin(userLoggedInId);
         if(userLoggedInId != id && isNotAdmin) {
-            LOGGER.error("Impossible to get organizations by user ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get organizations by user ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -357,7 +397,7 @@ public class UserController {
 
         // Verify that any of references are not null
         if(user == null) {
-            LOGGER.error("Impossible to get organizations by user ID : user {} not found", id);
+            log.error("Impossible to get organizations by user ID : user {} not found", id);
             throw new NotFoundException();
         }
 
@@ -386,7 +426,7 @@ public class UserController {
 
         // Fails if campaign ID is missing
         if(contributorId <= 0) {
-            LOGGER.error("Impossible to get donations by contributor ID : Contributor ID is incorrect");
+            log.error("Impossible to get donations by contributor ID : Contributor ID is incorrect");
             throw new BadRequestException();
         }
 
@@ -394,7 +434,7 @@ public class UserController {
         // Principal is the contributor OR Principal is admin
         long userLoggedInId = userService.get(principal).getId();
         if(userLoggedInId != contributorId && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get donations by contributor ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get donations by contributor ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -403,12 +443,53 @@ public class UserController {
 
         // Verify that any of references are not null
         if(user == null) {
-            LOGGER.error("Impossible to get donations by contributor ID : user {} not found", contributorId);
+            log.error("Impossible to get donations by contributor ID : user {} not found", contributorId);
             throw new NotFoundException();
         }
 
         // Get and transform donations
         Set<Donation> entities = donationRepository.findAllByContributorIdOrderByCreatedAtAsc(contributorId);
+        Set<DonationModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
+
+        return models;
+    }
+
+    @Operation(summary = "Get donations made by a user matching account IDs", description = "Get donations made by a user matching account IDs", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding donations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DonationModel.class)))),
+            @ApiResponse(responseCode = "400", description = "User ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "User has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/donations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"accountIds"})
+    public Set<DonationModel> getDonationsByAccountIds(Principal principal, @PathVariable("id") long contributorId, @RequestParam("accountIds") Set<Long> accountIds) {
+
+        // Fails if campaign ID is missing
+        if(contributorId <= 0 || accountIds.size() <= 0) {
+            log.error("Impossible to get donations by contributor ID : params are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal has correct privileges
+        long userLoggedInId = userService.get(principal).getId();
+        if(userLoggedInId != contributorId && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to get donations by contributor ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        UserEntity user = userRepository.findById(contributorId).orElse(null);
+
+        // Verify that any of references are not null
+        if(user == null) {
+            log.error("Impossible to get donations by contributor ID : user {} not found", contributorId);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Set<Donation> entities = donationRepository.findAllByContributorIdAndAccountIdInOrderByCreatedAtAsc(contributorId, accountIds);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 
@@ -427,7 +508,7 @@ public class UserController {
         if(userModel == null ||
                 userModel.getEmail() == null || userModel.getEmail().isEmpty() ||
                 userModel.getPassword() == null || userModel.getPassword().isEmpty()) {
-            LOGGER.error("Impossible to update user : body is incomplete");
+            log.error("Impossible to update user : body is incomplete");
             throw new BadRequestException();
         }
 
@@ -458,7 +539,7 @@ public class UserController {
         if(userModel == null ||
                 userModel.getId() <= 0 ||
                 userModel.getEmail() == null || userModel.getEmail().isEmpty()) {
-            LOGGER.error("Impossible to update user : body is incomplete");
+            log.error("Impossible to update user : body is incomplete");
             throw new BadRequestException();
         }
 
@@ -466,14 +547,14 @@ public class UserController {
         // Principal is the contributor OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
         if(!userLoggedInId.equals(userModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to update user : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to update user : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Verify that user exists
         UserEntity user = userRepository.findById(userModel.getId()).orElse(null);
         if(user == null) {
-            LOGGER.error("Impossible to update user : user {} not found", userModel.getId());
+            log.error("Impossible to update user : user {} not found", userModel.getId());
             throw new NotFoundException();
         }
 
@@ -503,14 +584,14 @@ public class UserController {
 
         // Fails if ID is incorrect
         if(id <= 0) {
-            LOGGER.error("Impossible to get organization authorities for user {} : ID is incorrect", id);
+            log.error("Impossible to get organization authorities for user {} : ID is incorrect", id);
             throw new BadRequestException();
         }
 
         // Verify that current user is the same as requested
         Long userLoggedInId = userService.get(principal).getId();
         if(!userLoggedInId.equals(id) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get organization authorities for user {} : principal is not the requested user", id);
+            log.error("Impossible to get organization authorities for user {} : principal is not the requested user", id);
             throw new ForbiddenException();
         }
 
@@ -537,7 +618,7 @@ public class UserController {
 
         // All prerequisites are presents
         if(id <= 0 || organizationAuthority == null || organizationAuthority.getId() <= 0) {
-            LOGGER.error("Impossible to grant user {} with organization authority {} : some parameters are missing", id, organizationAuthority);
+            log.error("Impossible to grant user {} with organization authority {} : some parameters are missing", id, organizationAuthority);
             throw new BadRequestException();
         }
 
@@ -545,7 +626,7 @@ public class UserController {
         final UserEntity userInDb = userRepository.findById(id).orElse(null);
         OrganizationAuthorityEntity organizationAuthorityInDb = organizationAuthorityRepository.findById(organizationAuthority.getId()).orElse(null);
         if(userInDb == null || organizationAuthorityInDb == null) {
-            LOGGER.error("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
+            log.error("Impossible to grant user {} with organization authority {} : cannot find user or authority in DB", id, organizationAuthority.getId());
             throw new NotFoundException();
         }
 
@@ -553,15 +634,15 @@ public class UserController {
         UserEntity userLoggedIn = userService.get(principal);
         if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationAuthorityInDb.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_OWNER) == null &&
                 authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
-            LOGGER.error("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
+            log.error("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
             throw new ForbiddenException();
         }
 
         // Verify that user we want to grant is member of target organization
         OrganizationEntity organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId());
-        LOGGER.debug(String.valueOf(organization));
+        log.debug(String.valueOf(organization));
         if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()) == null) {
-            LOGGER.error("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
+            log.error("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
             throw new BadRequestException();
         }
 
@@ -570,11 +651,11 @@ public class UserController {
                 .findAny()
                 .ifPresentOrElse(
                         authority -> {
-                            LOGGER.debug("Remove organization authority {} from user {}", authority.getId(), userInDb.getId());
+                            log.debug("Remove organization authority {} from user {}", authority.getId(), userInDb.getId());
                             userInDb.getUserOrganizationAuthorities().remove(authority);
                         },
                         () -> {
-                            LOGGER.debug("Add organization authority {} to user {}", organizationAuthorityInDb.getId(), userInDb.getId());
+                            log.debug("Add organization authority {} to user {}", organizationAuthorityInDb.getId(), userInDb.getId());
                             userInDb.getUserOrganizationAuthorities().add(organizationAuthorityInDb);
                         }
                 );

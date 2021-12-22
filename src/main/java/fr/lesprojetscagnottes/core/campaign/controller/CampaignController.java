@@ -15,8 +15,8 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
-import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
@@ -114,11 +114,9 @@ public class CampaignController {
             throw new NotFoundException();
         }
 
-        // Verify that principal is in campaign organizations
+        // Verify that principal is in campaign's project organization
         Long userLoggedInId = userService.get(principal).getId();
-        Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByProjects_Id(entity.getProject().getId());
-        Set<OrganizationEntity> principalOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        if(userService.isNotAdmin(userLoggedInId) && campaignOrganizations.stream().noneMatch(principalOrganizations::contains)) {
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, entity.getProject().getOrganization().getId())) {
             log.error("Impossible to get campaign by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
@@ -145,21 +143,20 @@ public class CampaignController {
         for(Long id : ids) {
 
             // Retrieve full referenced objects
-            CampaignEntity campaign = campaignRepository.findById(id).orElse(null);
-            if(campaign == null) {
+            CampaignEntity entity = campaignRepository.findById(id).orElse(null);
+            if(entity == null) {
                 log.error("Impossible to get campaign {} : it doesn't exist", id);
                 continue;
             }
 
-            // Verify that principal share an organization with the user
-            Set<OrganizationEntity> campaignOrganizations = organizationRepository.findAllByProjects_Id(campaign.getProject().getId());
-            if(userService.hasNoACommonOrganization(userLoggedInOrganizations, campaignOrganizations) && userLoggedIn_isNotAdmin) {
+            // Verify that principal is in campaign's project organization
+            if(userLoggedIn_isNotAdmin && !userService.isMemberOfOrganization(userLoggedInId, entity.getProject().getOrganization().getId())) {
                 log.error("Impossible to get campaign {} : principal {} is not in organizations of project's campaign", id, userLoggedInId);
                 continue;
             }
 
             // Add the user to returned list
-            models.add(CampaignModel.fromEntity(campaign));
+            models.add(CampaignModel.fromEntity(entity));
         }
 
         Comparator<CampaignModel> compareByFundingDeadline = Comparator.comparing(CampaignModel::getFundingDeadline);

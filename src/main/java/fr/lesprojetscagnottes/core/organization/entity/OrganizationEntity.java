@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.organization;
+package fr.lesprojetscagnottes.core.organization.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
@@ -7,6 +7,7 @@ import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
+import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;

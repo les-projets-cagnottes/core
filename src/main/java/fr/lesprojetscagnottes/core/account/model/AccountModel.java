@@ -1,6 +1,6 @@
-package fr.lesprojetscagnottes.core.budget.model;
+package fr.lesprojetscagnottes.core.account.model;
 
-import fr.lesprojetscagnottes.core.budget.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import lombok.AccessLevel;
