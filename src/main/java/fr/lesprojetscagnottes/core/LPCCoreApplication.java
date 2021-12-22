@@ -12,16 +12,12 @@ import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
-import fr.lesprojetscagnottes.core.common.strings.ScheduleParamsCommon;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.OrganizationRepository;
-import fr.lesprojetscagnottes.core.schedule.ScheduleEntity;
-import fr.lesprojetscagnottes.core.schedule.ScheduleName;
-import fr.lesprojetscagnottes.core.schedule.ScheduleRepository;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,9 +77,6 @@ public class LPCCoreApplication {
 
 	@Autowired
 	private OrganizationAuthorityRepository organizationAuthorityRepository;
-
-	@Autowired
-	private ScheduleRepository scheduleRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -184,15 +177,6 @@ public class LPCCoreApplication {
 			for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
 				organizationAuthorityRepository.save(new OrganizationAuthorityEntity(organization, authorityName));
 			}
-
-			// Creation of default reminders
-			Map<String, String> params = new HashMap<>();
-			params.put(ScheduleParamsCommon.SLACK_TEMPLATE, "slack/fr/idea-reminder");
-			ScheduleEntity schedule = new ScheduleEntity();
-			schedule.setType(ScheduleName.REMINDER);
-			schedule.setPlanning("0 0 10 1 * *");
-			schedule.setParams(gson.toJson(params));
-			scheduleRepository.save(schedule);
 
 			// If password was generated, we print it in the console
 			if (adminPassword == null) {
