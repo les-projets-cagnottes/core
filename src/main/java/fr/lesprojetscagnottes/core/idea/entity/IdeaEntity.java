@@ -23,7 +23,7 @@ public class IdeaEntity extends IdeaModel {
     protected UserEntity submitter;
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @ManyToMany

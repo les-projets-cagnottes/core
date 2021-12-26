@@ -1,10 +1,11 @@
-CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_id bigint, _budget_id bigint, _amount real)
+CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_id bigint, _amount real)
  RETURNS boolean
  AS $BODY$
 	DECLARE
 		_account_amount FLOAT4;
 		_user_id INT8;
 		_donation_id INT8;
+		_budget_id INT8;
 	BEGIN
 
 		-- Verify that contributor has enough amount
@@ -16,9 +17,11 @@ CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_
 		END IF;
 
 		select nextval('hibernate_sequence') into _donation_id;
-		select a.owner_id into _user_id from accounts a where a.id = _account_id;
-		insert into donations (id, amount, budget_id, contributor_id, campaign_id, account_id)
-			values(_donation_id, _amount, _budget_id, _user_id, _campaign_id, _account_id);
+		select budget_id, owner_id
+			into _budget_id, _user_id
+			from accounts where id = _account_id;
+		insert into donations (id, amount, contributor_id, campaign_id, account_id)
+			values(_donation_id, _amount, _user_id, _campaign_id, _account_id);
 		update accounts set amount = (amount - _amount) where id = _account_id;
 		update campaigns set total_donations = total_donations  + _amount where id = _campaign_id;
 		update budgets set total_donations = total_donations + _amount where id = _budget_id;
@@ -37,9 +40,12 @@ CREATE OR REPLACE FUNCTION public.delete_donation(_donation_id bigint)
 		_budget_id INT8;
 		_amount FLOAT4;
 	BEGIN
-		select account_id, campaign_id, budget_id, amount
-			into _account_id, _campaign_id, _budget_id, _amount
+		select account_id, campaign_id, amount
+			into _account_id, _campaign_id, _amount
 			from donations where id = _donation_id;
+		select budget_id
+			into _budget_id
+			from accounts where id = _account_id;
 		update budgets set total_donations = total_donations - _amount where id = _budget_id;
 		update campaigns set total_donations = total_donations  - _amount where id = _campaign_id;
 		update accounts set amount = (amount + _amount) where id = _account_id;

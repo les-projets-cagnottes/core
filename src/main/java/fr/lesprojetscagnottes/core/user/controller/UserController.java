@@ -631,17 +631,14 @@ public class UserController {
         }
 
         // Test that user logged in has correct rights
-        UserEntity userLoggedIn = userService.get(principal);
-        if(organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationAuthorityInDb.getOrganization().getId(), userLoggedIn.getId(), OrganizationAuthorityName.ROLE_OWNER) == null &&
-                authorityRepository.findByNameAndUsers_Id(AuthorityName.ROLE_ADMIN, userLoggedIn.getId()) == null) {
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isOwnerOfOrganization(userLoggedInId, organizationAuthorityInDb.getOrganization().getId())) {
             log.error("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
             throw new ForbiddenException();
         }
 
         // Verify that user we want to grant is member of target organization
-        OrganizationEntity organization = organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId());
-        log.debug(String.valueOf(organization));
-        if(organizationRepository.findByIdAndMembers_Id(organizationAuthorityInDb.getOrganization().getId(), userInDb.getId()) == null) {
+        if(!userService.isMemberOfOrganization(userInDb.getId(), organizationAuthorityInDb.getOrganization().getId())) {
             log.error("Impossible to grant user {} with organization authority {} : user is not member of target organization", id, organizationAuthority.getId());
             throw new BadRequestException();
         }

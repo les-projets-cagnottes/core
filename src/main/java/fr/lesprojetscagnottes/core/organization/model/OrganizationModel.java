@@ -51,11 +51,12 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setName(entity.getName());
+        model.setSocialName(entity.getSocialName());
         model.setLogoUrl(entity.getLogoUrl());
         model.setSlackTeam(new GenericModel(entity.getSlackTeam()));
         entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
         entity.getContents().forEach(content -> model.getContentsRef().add(content.getId()));
-        LOGGER.debug("Generated : " + model.toString());
+        LOGGER.debug("Generated : " + model);
         return model;
     }
 

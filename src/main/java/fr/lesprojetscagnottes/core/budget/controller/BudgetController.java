@@ -1,12 +1,10 @@
 package fr.lesprojetscagnottes.core.budget.controller;
 
-import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
-import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
-import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.account.model.AccountModel;
-import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
@@ -17,11 +15,10 @@ import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
-import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.controller.UserController;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,8 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,25 +39,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Budgets", description = "The Budgets API")
 public class BudgetController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BudgetController.class);
-
-    @Autowired
-    private UserController userController;
-
     @Autowired
     private AccountRepository accountRepository;
-
-    @Autowired
-    private AuthorityRepository authorityRepository;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -70,13 +57,7 @@ public class BudgetController {
     private ContentRepository contentRepository;
 
     @Autowired
-    private DonationRepository donationRepository;
-
-    @Autowired
     private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private OrganizationAuthorityRepository organizationAuthorityRepository;
 
     @Autowired
     private CampaignRepository campaignRepository;
@@ -107,13 +88,13 @@ public class BudgetController {
             // Retrieve full referenced objects
             BudgetEntity budget = budgetRepository.findById(id).orElse(null);
             if(budget == null) {
-                LOGGER.error("Impossible to get budget {} : it doesn't exist", id);
+                log.error("Impossible to get budget {} : it doesn't exist", id);
                 continue;
             }
 
             // Verify that principal share an organization with the user
             if(!userLoggedInOrganizations.contains(budget.getOrganization()) && userLoggedIn_isNotAdmin) {
-                LOGGER.error("Impossible to get budget {} : principal {} is not in its organization", id, userLoggedInId);
+                log.error("Impossible to get budget {} : principal {} is not in its organization", id, userLoggedInId);
                 continue;
             }
 
@@ -137,14 +118,14 @@ public class BudgetController {
 
         // Fails if budget ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get accounts by budget ID : budget ID is incorrect");
+            log.error("Impossible to get accounts by budget ID : budget ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         Long userLoggedInId = userService.get(principal).getId();
         if(budgetRepository.findAllByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get accounts by budget ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get accounts by budget ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -153,7 +134,7 @@ public class BudgetController {
 
         // Verify that any of references are not null
         if(budget == null) {
-            LOGGER.error("Impossible to get accounts by budget ID : budget {} not found", id);
+            log.error("Impossible to get accounts by budget ID : budget {} not found", id);
             throw new NotFoundException();
         }
 
@@ -161,6 +142,46 @@ public class BudgetController {
         Page<AccountEntity> entities = accountRepository.findByBudgetId(id, PageRequest.of(offset, limit, Sort.by("id").ascending()));
         DataPage<AccountModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(AccountModel.fromEntity(entity)));
+        return models;
+    }
+
+    @Operation(summary = "Get users of accounts using a budget", description = "Get users of accounts using a budget", tags = { "Budgets" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding users", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/budget/{id}/users", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<UserModel> getUsers(Principal principal, @PathVariable("id") Long id) {
+
+        // Fails if budget ID is missing
+        if(id <= 0) {
+            log.error("Impossible to get users of accounts by budget ID : budget ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that principal is in one organization of the campaign
+        Long userLoggedInId = userService.get(principal).getId();
+        if(budgetRepository.findAllByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to get users of accounts by budget ID : user {} has not enough privileges", userLoggedInId);
+            throw new ForbiddenException();
+        }
+
+        // Retrieve full referenced objects
+        BudgetEntity budget = budgetRepository.findById(id).orElse(null);
+
+        // Verify that any of references are not null
+        if(budget == null) {
+            log.error("Impossible to get users of accounts by budget ID : budget {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Get and transform donations
+        Set<UserEntity> entities = userRepository.findAllByBudgetId(id);
+        Set<UserModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(UserModel.fromEntity(entity)));
         return models;
     }
 
@@ -177,14 +198,14 @@ public class BudgetController {
 
         // Fails if budget ID is missing
         if(id <= 0) {
-            LOGGER.error("Impossible to get campaigns by budget ID : budget ID is incorrect");
+            log.error("Impossible to get campaigns by budget ID : budget ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is in one organization of the campaign
         Long userLoggedInId = userService.get(principal).getId();
         if(budgetRepository.findAllByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get campaigns by budget ID : user {} has not enough privileges", userLoggedInId);
+            log.error("Impossible to get campaigns by budget ID : user {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -193,7 +214,7 @@ public class BudgetController {
 
         // Verify that any of references are not null
         if(budget == null) {
-            LOGGER.error("Impossible to get campaigns by budget ID : budget {} not found", id);
+            log.error("Impossible to get campaigns by budget ID : budget {} not found", id);
             throw new NotFoundException();
         }
 
@@ -220,9 +241,9 @@ public class BudgetController {
         if(budget == null || budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
                 || budget.getOrganization().getId() == null || budget.getSponsor().getId() == null || budget.getRules().getId() == null) {
             if(budget != null ) {
-                LOGGER.error("Impossible to create budget {} : some references are missing", budget.getName());
+                log.error("Impossible to create budget {} : some references are missing", budget.getName());
             } else {
-                LOGGER.error("Impossible to create a null budget");
+                log.error("Impossible to create a null budget");
             }
             throw new BadRequestException();
         }
@@ -234,21 +255,21 @@ public class BudgetController {
 
         // Fails if any of references are null
         if(organization == null || sponsor == null || rules == null) {
-            LOGGER.error("Impossible to create budget {} : one or more reference(s) doesn't exist", budget.getName());
+            log.error("Impossible to create budget {} : one or more reference(s) doesn't exist", budget.getName());
             throw new NotFoundException();
         }
 
         // Test that user logged in has correct rights
         UserEntity userLoggedIn = userService.get(principal);
         if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
-            LOGGER.error("Impossible to create budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+            log.error("Impossible to create budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
             throw new ForbiddenException();
         }
 
         // Test that sponsor has correct rights
         Long sponsorId = budget.getSponsor().getId();
         if(!userService.isSponsorOfOrganization(sponsorId, organization.getId())) {
-            LOGGER.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
+            log.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
             throw new ForbiddenException();
         }
 
@@ -276,7 +297,7 @@ public class BudgetController {
 
         // Fails if body is null
         if(budgets == null) {
-            LOGGER.error("Impossible to update null budgets");
+            log.error("Impossible to update null budgets");
             throw new BadRequestException();
         }
 
@@ -288,7 +309,7 @@ public class BudgetController {
             // Fails if any of references are null
             if(budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
                     || budget.getOrganization().getId() == null || budget.getSponsor().getId() == null || budget.getRules().getId() == null) {
-                LOGGER.error("Impossible to update budget {} : some references are missing", budget.getId());
+                log.error("Impossible to update budget {} : some references are missing", budget.getId());
                 continue;
             }
 
@@ -298,19 +319,19 @@ public class BudgetController {
             UserEntity sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
             ContentEntity rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
             if(budgetInDb == null || organization == null || sponsor == null || rules == null) {
-                LOGGER.error("Impossible to update budget {} : one or more reference(s) doesn't exist", budget.getId());
+                log.error("Impossible to update budget {} : one or more reference(s) doesn't exist", budget.getId());
                 continue;
             }
 
             // Test that user logged in has correct rights
             if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userLoggedIn_isNotAdmin) {
-                LOGGER.error("Impossible to update budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+                log.error("Impossible to update budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
                 continue;
             }
 
             // Test that sponsor has correct rights
             if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
-                LOGGER.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
+                log.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
                 continue;
             }
 
@@ -342,14 +363,14 @@ public class BudgetController {
 
         // Fails if any of references are null
         if(id <= 0) {
-            LOGGER.error("Impossible to distribute budget : ID is missing");
+            log.error("Impossible to distribute budget : ID is missing");
             throw new BadRequestException();
         }
 
         // Retrieve full referenced objects
         BudgetEntity budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
-            LOGGER.error("Impossible to distribute budget {} : budget not found", id);
+            log.error("Impossible to distribute budget {} : budget not found", id);
             throw new NotFoundException();
         }
 
@@ -357,7 +378,7 @@ public class BudgetController {
         Long userLoggedInId = userService.get(principal).getId();
         Long organizationId = budget.getOrganization().getId();
         if(!userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to distribute budget {} : principal {} is not sponsor of organization {}", budget.getName(), userLoggedInId, budget.getOrganization().getId());
+            log.error("Impossible to distribute budget {} : principal {} is not sponsor of organization {}", budget.getName(), userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
 
@@ -394,14 +415,14 @@ public class BudgetController {
 
         // Fails if any of references are null
         if(id <= 0) {
-            LOGGER.error("Impossible to delete budget : ID is missing");
+            log.error("Impossible to delete budget : ID is missing");
             throw new BadRequestException();
         }
 
         // Retrieve full referenced objects
         BudgetEntity budget = budgetRepository.findById(id).orElse(null);
         if(budget == null) {
-            LOGGER.error("Impossible to delete budget {} : budget not found", id);
+            log.error("Impossible to delete budget {} : budget not found", id);
             throw new NotFoundException();
         }
 
@@ -409,13 +430,13 @@ public class BudgetController {
         UserEntity userLoggedIn = userService.get(principal);
         OrganizationEntity principalOrganization = organizationRepository.findByIdAndMembers_Id(budget.getOrganization().getId(), userLoggedIn.getId());
         if(principalOrganization == null) {
-            LOGGER.error("Impossible to delete budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
+            log.error("Impossible to delete budget {} : principal {} is not member of organization {}", budget.getName(), userLoggedIn.getId(), budget.getOrganization().getId());
             throw new ForbiddenException();
         }
 
         // Test that user logged in has correct rights
         if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
-            LOGGER.error("Impossible to delete budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
+            log.error("Impossible to delete budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
             throw new ForbiddenException();
         }
 
