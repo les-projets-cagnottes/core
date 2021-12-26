@@ -10,10 +10,6 @@ import java.util.Set;
 
 public interface BudgetRepository extends JpaRepository<BudgetEntity, Long> {
 
-    Set<BudgetEntity> findAllByIdIn(Set<Long> id);
-
-    Set<BudgetEntity> findAllByCampaigns_Id(Long id);
-
     Set<BudgetEntity> findAllByOrganizationId(Long id);
 
     Set<BudgetEntity> findAllByRulesId(Long id);

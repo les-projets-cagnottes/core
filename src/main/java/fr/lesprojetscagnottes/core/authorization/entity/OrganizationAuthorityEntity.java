@@ -25,7 +25,7 @@ public class OrganizationAuthorityEntity extends OrganizationAuthorityModel {
     private static final long serialVersionUID = -5098047340982969186L;
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @ManyToMany(mappedBy = "userOrganizationAuthorities")

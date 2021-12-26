@@ -72,7 +72,6 @@ public class CommonStepDefinitions {
 
         organizationRepository.findAll().forEach(organization -> {
             organization.setMembers(new LinkedHashSet<>());
-            organization.setCampaigns(new LinkedHashSet<>());
             organization.setProjects(new LinkedHashSet<>());
             organizationRepository.save(organization);
         });

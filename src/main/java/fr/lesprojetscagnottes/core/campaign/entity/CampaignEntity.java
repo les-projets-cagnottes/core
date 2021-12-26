@@ -20,7 +20,7 @@ import java.util.Set;
 public class CampaignEntity extends CampaignModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organization", "news"})
     private ProjectEntity project = new ProjectEntity();
 
     @ManyToOne
