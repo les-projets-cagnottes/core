@@ -19,7 +19,7 @@ public class SlackTeamEntity extends SlackTeamModel {
 
     @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @OneToMany(mappedBy = "slackTeam", cascade = CascadeType.REMOVE, orphanRemoval = true)

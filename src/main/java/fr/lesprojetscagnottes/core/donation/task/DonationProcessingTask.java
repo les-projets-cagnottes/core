@@ -59,7 +59,7 @@ public class DonationProcessingTask extends TimerTask {
 
     private void createDonation(Donation donation) {
         try {
-            donationRepository.createDonation(donation.getAccount().getId(), donation.getCampaign().getId(), donation.getAccount().getBudget().getId(), donation.getAmount());
+            donationRepository.createDonation(donation.getAccount().getId(), donation.getCampaign().getId(), donation.getAmount());
         } catch(Exception e) {
             LOGGER.error(e.getMessage());
         }

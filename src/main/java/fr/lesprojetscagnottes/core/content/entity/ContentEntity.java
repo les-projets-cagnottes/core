@@ -18,7 +18,7 @@ import javax.persistence.Table;
 public class ContentEntity extends ContentModel {
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"})
     private OrganizationEntity organization = new OrganizationEntity();
 
 

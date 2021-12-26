@@ -64,7 +64,7 @@ public class UserEntity extends UserModel implements UserDetails {
     private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "members")
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private Set<OrganizationEntity> organizations = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "sponsor")
@@ -72,7 +72,7 @@ public class UserEntity extends UserModel implements UserDetails {
     private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
     @ManyToMany(mappedBy = "peopleGivingTime")
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organizations", "news"})
+    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organization", "news"})
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "contributor")

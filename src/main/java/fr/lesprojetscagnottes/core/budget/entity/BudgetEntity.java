@@ -26,7 +26,7 @@ public class BudgetEntity extends BudgetModel {
     private ContentEntity rules = new ContentEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam"})
+    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE)

@@ -24,7 +24,7 @@ public class NewsEntity extends NewsModel {
     private UserEntity author = new UserEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties({"name", "members", "campaigns", "budgets", "contents", "organizationAuthorities", "slackTeam", "news"})
+    @JsonIgnoreProperties({"name", "members", "projects", "budgets", "contents", "organizationAuthorities", "slackTeam", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @ManyToOne

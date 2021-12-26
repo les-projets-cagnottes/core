@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.project.controller;
 
-import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
@@ -9,14 +8,13 @@ import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import java.security.Principal;
 import java.util.LinkedHashSet;
@@ -46,15 +43,6 @@ import java.util.Set;
 @RequestMapping("/api")
 @Tag(name = "Projects", description = "The Projects API")
 public class ProjectController {
-
-    @Autowired
-    private Gson gson;
-
-    @Autowired
-    private SpringTemplateEngine templateEngine;
-
-    @Autowired
-    private SlackClientService slackClientService;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -143,46 +131,6 @@ public class ProjectController {
         return models;
     }
 
-    @Operation(summary = "Get project organizations", description = "Get project organizations", tags = { "Projects" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding organizations", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
-            @ApiResponse(responseCode = "400", description = "Project ID is incorrect", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "User is not member of concerned organizations", content = @Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/project/{id}/organizations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Set<OrganizationModel> getOrganizations(Principal principal, @PathVariable("id") Long id) {
-
-        // Fails if project ID is missing
-        if(id <= 0) {
-            log.error("Impossible to get organizations by project ID : Project ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that principal is in one organization of the project
-        long userLoggedInId = userService.get(principal).getId();
-        if(projectRepository.findByUserAndId(userLoggedInId, id).isEmpty() && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to get organizations by project ID : user {} is not member of concerned organizations", userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Retrieve full referenced objects
-        ProjectEntity project = projectRepository.findById(id).orElse(null);
-
-        // Verify that any of references are not null
-        if(project == null) {
-            log.error("Impossible to get organizations by project ID : project {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Get and transform entities
-        Set<OrganizationEntity> entities = organizationRepository.findAllByProjects_Id(id);
-        Set<OrganizationModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(OrganizationModel.fromEntity(entity)));
-        return models;
-    }
-
     @Operation(summary = "Get paginated news", description = "Get paginated news", tags = { "Projects" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding news", content = @Content(schema = @Schema(implementation = DataPage.class))),
@@ -220,7 +168,45 @@ public class ProjectController {
         entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
         return models;
     }
-    
+
+    @Operation(summary = "Get teammates", description = "Get teammates of a project", tags = { "Projects" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding users", content = @Content(schema = @Schema(implementation = DataPage.class))),
+            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Project not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/project/{id}/teammates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Set<UserModel> listTeammates(Principal principal, @PathVariable("id") Long id) {
+
+        // Verify that IDs are corrects
+        if(id <= 0) {
+            log.error("Impossible to get teammates : parameters are incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that organization exists
+        ProjectEntity project = projectRepository.findById(id).orElse(null);
+        if(project == null) {
+            log.error("Impossible to get teammates : project not found");
+            throw new NotFoundException();
+        }
+
+        // Verify if principal has correct privileges
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
+            log.error("Impossible to get teammates : principal is not a member of any of the project organizations");
+            throw new ForbiddenException();
+        }
+
+        // Get users
+        Set<UserEntity> entities = userRepository.findAllByProjects_Id(id);
+        Set<UserModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(UserModel.fromEntity(entity)));
+        return models;
+    }
+
     @Operation(summary = "Create a project", description = "Create a project", tags = { "Projects" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Project created", content = @Content(schema = @Schema(implementation = ProjectModel.class))),
