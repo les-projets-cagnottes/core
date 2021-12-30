@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.organization.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
@@ -29,45 +28,37 @@ public class OrganizationEntity extends OrganizationModel {
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<UserEntity> members = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organization", "news"})
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
     private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties({"submitter", "organization", "followers", "tags"})
     private Set<IdeaEntity> ideas = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties({"author", "organization", "project"})
     private Set<NewsEntity> news = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",
             orphanRemoval = true)
-    @JsonIgnoreProperties(value = {"organization"})
     private Set<ContentEntity> contents = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "organization", cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties(value = {"organization", "users"})
     private Set<OrganizationAuthorityEntity> organizationAuthorities = new LinkedHashSet<>();
 
     @OneToOne(mappedBy = "organization")
-    @JsonIgnoreProperties(value = {"organization", "slackUsers"})
     private SlackTeamEntity slackTeam;
 
 }

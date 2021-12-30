@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.authentication;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
@@ -29,7 +28,6 @@ public class AuthenticationResponseEntity extends AuthenticationResponseModel im
     private Date expiration = new Date();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private UserEntity user = new UserEntity();
 
     public AuthenticationResponseEntity() {}

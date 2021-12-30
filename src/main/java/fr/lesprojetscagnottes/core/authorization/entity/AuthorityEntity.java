@@ -1,8 +1,7 @@
 package fr.lesprojetscagnottes.core.authorization.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.model.AuthorityModel;
+import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,6 +12,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import java.io.Serial;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,10 +22,10 @@ import java.util.Set;
 @Table(name = "authorities")
 public class AuthorityEntity extends AuthorityModel implements GrantedAuthority {
 
+    @Serial
     private static final long serialVersionUID = -8193848589240726612L;
 
     @ManyToMany(mappedBy = "userAuthorities", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<UserEntity> users = new LinkedHashSet<>();
 
     public AuthorityEntity() {

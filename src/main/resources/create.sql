@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_
  AS $BODY$
 	DECLARE
 		_account_amount FLOAT4;
-		_user_id INT8;
 		_donation_id INT8;
 		_budget_id INT8;
 	BEGIN
@@ -17,11 +16,11 @@ CREATE OR REPLACE FUNCTION public.create_donation(_account_id bigint, _campaign_
 		END IF;
 
 		select nextval('hibernate_sequence') into _donation_id;
-		select budget_id, owner_id
-			into _budget_id, _user_id
+		select budget_id
+			into _budget_id
 			from accounts where id = _account_id;
-		insert into donations (id, amount, contributor_id, campaign_id, account_id)
-			values(_donation_id, _amount, _user_id, _campaign_id, _account_id);
+		insert into donations (id, amount, campaign_id, account_id)
+			values(_donation_id, _amount, _campaign_id, _account_id);
 		update accounts set amount = (amount - _amount) where id = _account_id;
 		update campaigns set total_donations = total_donations  + _amount where id = _campaign_id;
 		update budgets set total_donations = total_donations + _amount where id = _budget_id;

@@ -16,9 +16,7 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
 
     Set<Donation> findAllByAccountId(Long id);
 
-    Set<Donation> findAllByContributorIdOrderByCreatedAtAsc(long contributorId);
-
-    Set<Donation> findAllByContributorIdAndAccountIdInOrderByCreatedAtAsc(long contributorId, Set<Long> accountIds);
+    Set<Donation> findAllByAccountIdInOrderByCreatedAtAsc(Set<Long> accountIds);
 
     Page<Donation> findByCampaign_idOrderByIdAsc(long id, Pageable pageable);
 

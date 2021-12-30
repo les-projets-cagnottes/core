@@ -27,11 +27,11 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign         | budget             | contributor | amount |
-      | Awesome Campaign | Annual Company Pot | Mike        | 50     |
+      | campaign         | budget             | amount |
+      | Awesome Campaign | Annual Company Pot | 50     |
     Then Last HTTP code was "201"
 
-  Scenario: A member cannot contribute on a campaign with a nonexistent account, campaign or contributor
+  Scenario: A member cannot contribute on a campaign with a nonexistent account or campaign
     Given Empty database
     And The following organizations are registered
       | name            |
@@ -60,10 +60,9 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign             | budget                  | contributor | amount |
-      | Nonexistent Campaign | Annual Company Pot      | Mike        | 50     |
-      | Awesome Campaign     | Nonexistent Company Pot | Mike        | 50     |
-      | Awesome Campaign     | Annual Company Pot      | Ned         | 50     |
+      | campaign             | budget                  | amount |
+      | Nonexistent Campaign | Annual Company Pot      | 50     |
+      | Awesome Campaign     | Nonexistent Company Pot | 50     |
     Then Last HTTP code was "404"
 
   Scenario: A member cannot contribute on a campaign in progress whose deadline has been reached
@@ -92,8 +91,8 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign         | budget             | contributor | amount |
-      | Awesome Campaign | Annual Company Pot | Mike        | 50     |
+      | campaign         | budget             | amount |
+      | Awesome Campaign | Annual Company Pot | 50     |
     Then Last HTTP code was "400"
 
   Scenario: A member cannot contribute on a campaign not in progress
@@ -122,8 +121,8 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | FAILED | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign         | budget             | contributor | amount |
-      | Awesome Campaign | Annual Company Pot | Mike        | 50     |
+      | campaign         | budget             | amount |
+      | Awesome Campaign | Annual Company Pot | 50     |
     Then "Mike" has "0" donation on the "Annual Company Pot" account
     Then Last HTTP code was "400"
 
@@ -154,39 +153,9 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign         | budget                           | contributor | amount |
-      | Awesome Campaign | Annual Company Pot Previous Year | Mike        | 50     |
+      | campaign         | budget                           | amount |
+      | Awesome Campaign | Annual Company Pot Previous Year | 50     |
     Then Last HTTP code was "400"
-
-  Scenario: A member cannot contribute behalf of another member
-    Given Empty database
-    And The following organizations are registered
-      | name            |
-      | Unnamed Company |
-    And The following users are members of organization "Unnamed Company"
-      | firstname | email                      | password |
-      | Mike      | mike@unnamedcompany.com    | mike     |
-      | Sabrina   | sabrina@unnamedcompany.com | sabrina  |
-    And The following contents are saved
-      | organization    | name         | value     |
-      | Unnamed Company | Terms of Use | Blablabla |
-    And The following budgets are available
-      | organization    | name               | amountPerMember | isDistributed | sponsor | rules        |
-      | Unnamed Company | Annual Company Pot | 150             | true          | Sabrina | Terms of Use |
-    And The following accounts are created
-      | owner | budget             | amount | initialAmount |
-      | Mike  | Annual Company Pot | 150    | 150           |
-    And The following projects are created
-      | organization    | title           | leader  | status      | peopleRequired |
-      | Unnamed Company | Awesome Project | Sabrina | IN_PROGRESS | 2              |
-    And The following campaigns are running
-      | project         | title            | budget             | status      | donationsRequired |
-      | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
-    And "Mike" is logged in
-    When "Mike" submit the following donations
-      | campaign         | budget             | contributor | amount |
-      | Awesome Campaign | Annual Company Pot | Sabrina     | 50     |
-    Then Last HTTP code was "404"
 
   Scenario: A member cannot contribute on a campaign if he has not enough budget
     Given Empty database
@@ -214,6 +183,6 @@ Feature: Donation - Create
       | Awesome Project | Awesome Campaign | Annual Company Pot | IN_PROGRESS | 200               |
     And "Mike" is logged in
     When "Mike" submit the following donations
-      | campaign         | budget             | contributor | amount |
-      | Awesome Campaign | Annual Company Pot | Mike        | 200    |
+      | campaign         | budget             | amount |
+      | Awesome Campaign | Annual Company Pot | 200    |
     Then Last HTTP code was "400"

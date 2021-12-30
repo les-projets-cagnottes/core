@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.common.audit;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,10 +19,6 @@ import java.util.Date;
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@JsonIgnoreProperties(
-        value = {"updatedAt"},
-        allowGetters = true
-)
 public class AuditEntity<U> extends GenericModel {
 
     @CreatedDate

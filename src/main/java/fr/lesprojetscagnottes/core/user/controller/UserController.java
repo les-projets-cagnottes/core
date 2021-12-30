@@ -5,8 +5,6 @@ import fr.lesprojetscagnottes.core.account.model.AccountModel;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
-import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
-import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
@@ -447,8 +445,13 @@ public class UserController {
             throw new NotFoundException();
         }
 
+        // Find all user accounts
+        Set<AccountEntity> accounts = accountRepository.findAllByOwnerId(contributorId);
+        Set<Long> accountIds = new LinkedHashSet<>();
+        accounts.forEach(account -> accountIds.add(account.getId()));
+
         // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByContributorIdOrderByCreatedAtAsc(contributorId);
+        Set<Donation> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 
@@ -489,7 +492,7 @@ public class UserController {
         }
 
         // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByContributorIdAndAccountIdInOrderByCreatedAtAsc(contributorId, accountIds);
+        Set<Donation> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 

@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.campaign.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
@@ -20,15 +19,12 @@ import java.util.Set;
 public class CampaignEntity extends CampaignModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "campaigns", "peopleGivingTime", "organization", "news"})
     private ProjectEntity project = new ProjectEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"organization", "campaigns", "sponsor", "donations", "accounts"})
     private BudgetEntity budget = new BudgetEntity();
 
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties(value = {"contributor", "campaign", "budget", "account"})
     private Set<Donation> donations = new LinkedHashSet<>();
 
 }
