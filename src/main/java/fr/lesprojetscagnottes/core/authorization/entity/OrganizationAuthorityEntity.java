@@ -1,8 +1,7 @@
 package fr.lesprojetscagnottes.core.authorization.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
+import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
@@ -25,11 +24,9 @@ public class OrganizationAuthorityEntity extends OrganizationAuthorityModel {
     private static final long serialVersionUID = -5098047340982969186L;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @ManyToMany(mappedBy = "userOrganizationAuthorities")
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private Set<UserEntity> users = new LinkedHashSet<>();
 
     public OrganizationAuthorityEntity() {

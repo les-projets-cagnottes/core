@@ -1,8 +1,7 @@
 package fr.lesprojetscagnottes.core.slack.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.slack.model.SlackUserModel;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,11 +17,9 @@ import javax.persistence.Table;
 public class SlackUserEntity extends SlackUserModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private UserEntity user = new UserEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties({"organization", "slackUsers"})
     private SlackTeamEntity slackTeam;
 
 }
