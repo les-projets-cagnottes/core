@@ -1,8 +1,8 @@
 package fr.lesprojetscagnottes.core.steps;
 
 import com.google.gson.reflect.TypeToken;
-import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CampaignHttpClient;
@@ -16,8 +16,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Type;
@@ -26,8 +24,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class DonationStepDefinitions {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DonationStepDefinitions.class);
 
     @Autowired
     private AuthenticationHttpClient authenticationHttpClient;
@@ -53,7 +49,6 @@ public class DonationStepDefinitions {
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + columns.get("contributor")));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
-            donation.setContributor(context.getUsers().get(columns.get("contributor")));
             donationRepository.save(donation);
         }
     }
@@ -68,9 +63,8 @@ public class DonationStepDefinitions {
             // Create donation
             donation = new Donation();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
-            donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + columns.get("contributor")));
+            donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + userFirstname));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
-            donation.setContributor(context.getUsers().get(columns.get("contributor")));
 
             // Refresh Token
             authenticationHttpClient.setBearerAuth(context.getAuths().get(userFirstname).getToken());
@@ -101,13 +95,11 @@ public class DonationStepDefinitions {
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + columns.get("contributor")));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
-            donation.setContributor(context.getUsers().get(columns.get("contributor")));
             final Donation donationFinal = donation;
             donationsReturned.stream()
                     .filter(donationReturned -> donationFinal.getAmount() == donationReturned.getAmount())
                     .filter(donationReturned -> donationFinal.getAccount().getId().equals(donationReturned.getAccount().getId()))
                     .filter(donationReturned -> donationFinal.getCampaign().getId().equals(donationReturned.getCampaign().getId()))
-                    .filter(donationReturned -> donationFinal.getContributor().getId().equals(donationReturned.getContributor().getId()))
                     .findAny()
                     .ifPresentOrElse(
                             donationsReturned::remove,

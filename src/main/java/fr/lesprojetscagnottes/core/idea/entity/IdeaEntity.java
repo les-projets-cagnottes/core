@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.idea.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.idea.model.IdeaModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
@@ -19,11 +18,9 @@ import java.util.Set;
 public class IdeaEntity extends IdeaModel {
 
     @ManyToOne
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "followedIdeas"})
     protected UserEntity submitter;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @ManyToMany
@@ -31,7 +28,6 @@ public class IdeaEntity extends IdeaModel {
             name = "ideas_users",
             joinColumns = {@JoinColumn(name = "idea_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    @JsonIgnoreProperties({"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "donations", "followedIdeas"})
     private Set<UserEntity> followers = new LinkedHashSet<>();
 
 }

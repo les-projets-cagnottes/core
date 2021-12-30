@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.budget.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
@@ -22,23 +21,18 @@ import java.util.Set;
 public class BudgetEntity extends BudgetModel {
 
     @ManyToOne
-    @JsonIgnoreProperties({"organizations"})
     private ContentEntity rules = new ContentEntity();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"leader", "peopleGivingTime", "organizations", "news"})
     private OrganizationEntity organization = new OrganizationEntity();
 
     @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties(value = {"leader", "budgets", "donations", "peopleGivingTime", "organizations"})
     private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"username", "password", "lastPasswordResetDate", "userAuthorities", "userOrganizationAuthorities", "authorities", "organizations", "budgets", "projects", "campaigns", "donations", "slackUsers", "apiTokens", "accounts"})
     private UserEntity sponsor = new UserEntity();
 
     @OneToMany(mappedBy = "budget")
-    @JsonIgnoreProperties(value = {"owner", "budget"})
     private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
     @Override

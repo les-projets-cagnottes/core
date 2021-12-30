@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.content.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import lombok.AccessLevel;
@@ -18,8 +17,6 @@ import javax.persistence.Table;
 public class ContentEntity extends ContentModel {
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"members", "projects", "budgets", "contents"})
     private OrganizationEntity organization = new OrganizationEntity();
-
 
 }

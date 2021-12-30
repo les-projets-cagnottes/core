@@ -164,8 +164,8 @@ public class DonationController {
     public void create(Principal principal, @RequestBody DonationModel donation) {
 
         // Verify that body is complete
-        if(donation == null || donation.getAccount() == null || donation.getCampaign() == null || donation.getContributor() == null
-        || donation.getCampaign().getId() == null || donation.getContributor().getId() == null || donation.getAccount().getId() == null) {
+        if(donation == null || donation.getAccount() == null || donation.getCampaign() == null
+        || donation.getCampaign().getId() == null || donation.getAccount().getId() == null) {
             log.error("Impossible to create donation : body is incomplete");
             throw new BadRequestException();
         }
@@ -173,15 +173,13 @@ public class DonationController {
         // Retrieve full referenced objects
         AccountEntity account = accountRepository.findById(donation.getAccount().getId()).orElse(null);
         CampaignEntity campaign = campaignRepository.findById(donation.getCampaign().getId()).orElse(null);
-        UserEntity contributor = userRepository.findById(donation.getContributor().getId()).orElse(null);
 
         log.debug("Submitting donation with following params :");
         log.debug("account = {}", account);
         log.debug("campaign = {}", campaign);
-        log.debug("contributor = {}", contributor);
 
         // Verify that any of references are not null
-        if(account == null || campaign == null || contributor == null || campaign.getProject() == null) {
+        if(account == null || campaign == null || campaign.getProject() == null) {
             log.error("Impossible to create donation : one or more reference(s) does not exist");
             throw new NotFoundException();
         }
@@ -193,10 +191,10 @@ public class DonationController {
             throw new NotFoundException();
         }
 
-        // Verify that principal is the contributor
+        // Verify that principal owns the account
         long userLoggedInId = userService.get(principal).getId();
-        if(userLoggedInId != contributor.getId()) {
-            log.error("Impossible to create donation : principal {} is not the contributor", userLoggedInId);
+        if(userLoggedInId != account.getOwner().getId()) {
+            log.error("Impossible to create donation : principal {} does not own the account", userLoggedInId);
             throw new ForbiddenException();
         }
 
@@ -221,7 +219,6 @@ public class DonationController {
         }
 
         // Verify that donation budget is associated with the campaign
-        Long budgetId = account.getBudget().getId();
         if(!campaign.getBudget().getId().equals(account.getBudget().getId())) {
             log.error("Impossible to create donation : budgets is not associated with the campaign");
             throw new BadRequestException();
@@ -238,7 +235,6 @@ public class DonationController {
         Donation donationToSave = new Donation();
         donationToSave.setAccount(account);
         donationToSave.setCampaign(campaign);
-        donationToSave.setContributor(contributor);
         donationToSave.setAmount(amount);
 
         // Add donation to queue
@@ -275,7 +271,7 @@ public class DonationController {
         // Verify that principal has correct privileges :
         // Principal is the contributor OR Principal is admin
         long userLoggedInId = userService.get(principal).getId();
-        if(userLoggedInId != donation.getContributor().getId() && userService.isNotAdmin(userLoggedInId)) {
+        if(userLoggedInId != donation.getAccount().getOwner().getId() && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to delete donation : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }

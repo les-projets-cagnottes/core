@@ -29,9 +29,6 @@ public class DonationModel extends AuditEntity<String> {
     protected GenericModel account;
 
     @Transient
-    protected GenericModel contributor;
-
-    @Transient
     protected GenericModel campaign;
 
     public static DonationModel fromEntity(Donation entity) {
@@ -43,7 +40,6 @@ public class DonationModel extends AuditEntity<String> {
         model.setId(entity.getId());
         model.setAmount(entity.getAmount());
         model.setAccount(new GenericModel(entity.getAccount()));
-        model.setContributor(new GenericModel(entity.getContributor()));
         model.setCampaign(new GenericModel(entity.getCampaign()));
         LOGGER.debug("Generated : " + model.toString());
         return model;
@@ -54,7 +50,6 @@ public class DonationModel extends AuditEntity<String> {
         return "DonationModel{" +
                 "amount=" + amount +
                 ", account=" + account +
-                ", contributor=" + contributor +
                 ", campaign=" + campaign +
                 ", id=" + id +
                 '}';
