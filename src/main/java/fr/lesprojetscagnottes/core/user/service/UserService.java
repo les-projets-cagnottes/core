@@ -38,6 +38,10 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    public UserEntity findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
     public UserEntity get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
@@ -60,10 +64,6 @@ public class UserService {
 
     public UserEntity findOne(String username) {
         return userRepository.findByUsername(username);
-    }
-
-    public UserEntity findById(Long id) {
-        return userRepository.findById(id).orElse(null);
     }
 
     public UserEntity save(UserEntity user) {
