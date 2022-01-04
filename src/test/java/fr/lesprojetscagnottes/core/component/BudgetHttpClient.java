@@ -4,8 +4,6 @@ import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
-
 import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 
 @Component
@@ -20,8 +18,8 @@ public class BudgetHttpClient extends GenericHttpClient {
         post("/api/budget", context.getGson().toJson(budget));
     }
 
-    public void save(final Set<BudgetModel> budgets) {
-        put("/api/budget", context.getGson().toJson(budgets));
+    public void save(final BudgetModel budget) {
+        put("/api/budget", context.getGson().toJson(budget));
     }
 
 }

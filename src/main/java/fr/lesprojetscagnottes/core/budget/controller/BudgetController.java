@@ -3,9 +3,10 @@ package fr.lesprojetscagnottes.core.budget.controller;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.account.model.AccountModel;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
+import fr.lesprojetscagnottes.core.budget.service.BudgetService;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
@@ -13,7 +14,6 @@ import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
-import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
@@ -39,7 +39,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -64,6 +65,9 @@ public class BudgetController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BudgetService budgetService;
 
     @Autowired
     private UserService userService;
@@ -227,7 +231,7 @@ public class BudgetController {
 
     @Operation(summary = "Create a budget", description = "Create a budget", tags = { "Budgets" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Budget created", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "201", description = "Budget created", content = @Content(schema = @Schema(implementation = BudgetModel.class))),
             @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Principal or sponsor has not enough privileges", content = @Content(schema = @Schema()))
@@ -235,118 +239,20 @@ public class BudgetController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void create(Principal principal, @RequestBody BudgetModel budget) {
-
-        // Fails if any of references are null
-        if(budget == null || budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
-                || budget.getOrganization().getId() == null || budget.getSponsor().getId() == null || budget.getRules().getId() == null) {
-            if(budget != null ) {
-                log.error("Impossible to create budget {} : some references are missing", budget.getName());
-            } else {
-                log.error("Impossible to create a null budget");
-            }
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        OrganizationEntity organization = organizationRepository.findById(budget.getOrganization().getId()).orElse(null);
-        UserEntity sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
-        ContentEntity rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
-
-        // Fails if any of references are null
-        if(organization == null || sponsor == null || rules == null) {
-            log.error("Impossible to create budget {} : one or more reference(s) doesn't exist", budget.getName());
-            throw new NotFoundException();
-        }
-
-        // Test that user logged in has correct rights
-        UserEntity userLoggedIn = userService.get(principal);
-        if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
-            log.error("Impossible to create budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
-            throw new ForbiddenException();
-        }
-
-        // Test that sponsor has correct rights
-        Long sponsorId = budget.getSponsor().getId();
-        if(!userService.isSponsorOfOrganization(sponsorId, organization.getId())) {
-            log.error("Impossible to create budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
-            throw new ForbiddenException();
-        }
-
-        // Save budget
-        BudgetEntity budgetToSave = new BudgetEntity();
-        budgetToSave.setName(budget.getName());
-        budgetToSave.setAmountPerMember(budget.getAmountPerMember());
-        budgetToSave.setStartDate(budget.getStartDate());
-        budgetToSave.setEndDate(budget.getEndDate());
-        budgetToSave.setIsDistributed(budget.getIsDistributed());
-        budgetToSave.setOrganization(organization);
-        budgetToSave.setSponsor(sponsor);
-        budgetToSave.setRules(rules);
-        budgetRepository.save(budgetToSave);
+    public BudgetModel create(Principal principal, @RequestBody BudgetModel budget) {
+        return budgetService.save(principal, budget);
     }
 
-    @Operation(summary = "Save multiple budgets", description = "Save a collection of budgets", tags = { "Budgets" })
+    @Operation(summary = "Save a budget", description = "Save a budget", tags = { "Budgets" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Budgets saved", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "200", description = "Budget saved", content = @Content(schema = @Schema(implementation = BudgetModel.class))),
+            @ApiResponse(responseCode = "200", description = "Budget saved", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "Body is missing", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/budget", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void save(Principal principal, @RequestBody List<BudgetModel> budgets) {
-
-        // Fails if body is null
-        if(budgets == null) {
-            log.error("Impossible to update null budgets");
-            throw new BadRequestException();
-        }
-
-        UserEntity userLoggedIn = userService.get(principal);
-        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedIn.getId());
-
-        for(BudgetModel budget : budgets) {
-
-            // Fails if any of references are null
-            if(budget.getOrganization() == null || budget.getSponsor() == null || budget.getRules() == null
-                    || budget.getOrganization().getId() == null || budget.getSponsor().getId() == null || budget.getRules().getId() == null) {
-                log.error("Impossible to update budget {} : some references are missing", budget.getId());
-                continue;
-            }
-
-            // Retrieve full referenced objects
-            BudgetEntity budgetInDb = budgetRepository.findById(budget.getId()).orElse(null);
-            OrganizationEntity organization = organizationRepository.findById(budget.getOrganization().getId()).orElse(null);
-            UserEntity sponsor = userRepository.findById(budget.getSponsor().getId()).orElse(null);
-            ContentEntity rules = contentRepository.findById(budget.getRules().getId()).orElse(null);
-            if(budgetInDb == null || organization == null || sponsor == null || rules == null) {
-                log.error("Impossible to update budget {} : one or more reference(s) doesn't exist", budget.getId());
-                continue;
-            }
-
-            // Test that user logged in has correct rights
-            if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userLoggedIn_isNotAdmin) {
-                log.error("Impossible to update budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
-                continue;
-            }
-
-            // Test that sponsor has correct rights
-            if(!userService.isSponsorOfOrganization(budget.getSponsor().getId(), organization.getId())) {
-                log.error("Impossible to update budget {} : sponsor {} has not enough privileges", budget.getName(), sponsor.getId());
-                continue;
-            }
-
-            // Update budget in DB
-            budgetInDb.setName(budget.getName());
-            if(!budget.getIsDistributed()) {
-                budgetInDb.setStartDate(budget.getStartDate());
-                budgetInDb.setEndDate(budget.getEndDate());
-                budgetInDb.setAmountPerMember(budget.getAmountPerMember());
-                budgetInDb.setOrganization(organization);
-                budgetInDb.setSponsor(sponsor);
-                budgetInDb.setRules(rules);
-            }
-            budgetRepository.save(budgetInDb);
-        }
+    public BudgetModel save(Principal principal, @RequestBody BudgetModel budget) {
+        return budgetService.save(principal, budget);
     }
 
     @Operation(summary = "Distribute a budget", description = "Distribute a budget between members of organization", tags = { "Budgets" })

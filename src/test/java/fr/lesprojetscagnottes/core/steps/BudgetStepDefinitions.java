@@ -163,7 +163,7 @@ public class BudgetStepDefinitions {
 
         // Create budget
         budgetHttpClient.setBearerAuth(response.getToken());
-        budgetHttpClient.save(budgets);
+        budgets.forEach(budgetModel -> budgetHttpClient.save(budgetModel));
     }
 
     @Then("It returns following budgets")
