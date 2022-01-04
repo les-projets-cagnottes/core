@@ -100,7 +100,7 @@ Feature: Budget - Update
     When "Sabrina" updates following budgets
       | organization    | name                  | amountPerMember | isDistributed | sponsor  | rules        |
       | Unnamed Company | Annual Company Pot #1 | 100             | false         | Sinclair | Terms of Use |
-    Then Last HTTP code was "200"
+    Then Last HTTP code was "403"
     And Following budgets are registered
       | organization    | name                  | amountPerMember | isDistributed | sponsor  | rules        |
       | Unnamed Company | Annual Company Pot #1 | 150             | false         | Sinclair | Terms of Use |
@@ -126,7 +126,7 @@ Feature: Budget - Update
     When "Sabrina" updates following budgets
       | organization    | name                  | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot #1 | 100             | false         | Sabrina | Terms of Use |
-    Then Last HTTP code was "200"
+    Then Last HTTP code was "403"
     And Following budgets are registered
       | organization    | name                  | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot #1 | 150             | false         | Sabrina | Terms of Use |
@@ -157,7 +157,7 @@ Feature: Budget - Update
     When "Sabrina" updates following budgets
       | organization    | name                  | amountPerMember | isDistributed | sponsor  | rules        |
       | Unnamed Company | Annual Company Pot #1 | 150             | false         | Sinclair | Terms of Use |
-    Then Last HTTP code was "200"
+    Then Last HTTP code was "403"
     And Following budgets are registered
       | organization    | name                  | amountPerMember | isDistributed | sponsor | rules        |
       | Unnamed Company | Annual Company Pot #1 | 150             | false         | Sabrina | Terms of Use |
