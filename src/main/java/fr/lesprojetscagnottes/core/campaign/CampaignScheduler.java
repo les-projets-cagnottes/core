@@ -52,14 +52,7 @@ public class CampaignScheduler {
     @Value("${fr.lesprojetscagnottes.web.url}")
     private String webUrl;
 
-    @Scheduled(cron = "0 0 2 * * *")
-    public void processTotalDonations() {
-        log.info("[processTotalDonations] Start total donations calculation");
-        campaignRepository.updateTotalDonations();
-        log.info("[processTotalDonations] End total donations calculation");
-    }
-
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "${fr.lesprojetscagnottes.core.schedule.campaignfunding}")
     @Transactional
     public void processCampaignFundingDeadlines() {
         log.info("[processCampaignFundingDeadlines] Start Campaign Funding Deadlines Processing");
@@ -88,7 +81,7 @@ public class CampaignScheduler {
         log.info("[processCampaignFundingDeadlines] End Campaign Funding Deadlines Processing");
     }
 
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "${fr.lesprojetscagnottes.core.schedule.campaignalmostfinished}")
     public void notifyCampaignsAlmostFinished() {
         log.info("[notifyCampaignsAlmostFinished] Start Notify Campaign Almost Finished");
         Set<CampaignEntity> campaigns = campaignRepository.findAllByStatus(CampaignStatus.IN_PROGRESS);
