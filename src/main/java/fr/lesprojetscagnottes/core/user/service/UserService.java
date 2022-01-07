@@ -8,6 +8,7 @@ import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,6 +57,26 @@ public class UserService {
         List<UserEntity> list = new ArrayList<>();
         userRepository.findAll().iterator().forEachRemaining(list::add);
         return list;
+    }
+
+    public String generateAvatarUrl(UserModel userModel) {
+        String avatarUrl;
+        if(userModel.getAvatarUrl() == null || userModel.getAvatarUrl().isEmpty()) {
+            avatarUrl = "https://eu.ui-avatars.com/api/?name=";
+            boolean hasFirstname = userModel.getFirstname() != null && !userModel.getFirstname().isEmpty();
+            if(hasFirstname) {
+                avatarUrl+= userModel.getFirstname();
+            }
+            if(userModel.getLastname() != null && !userModel.getLastname().isEmpty()) {
+                if(hasFirstname) {
+                    avatarUrl+= "+";
+                }
+                avatarUrl+= userModel.getLastname();
+            }
+        } else {
+            avatarUrl = userModel.getAvatarUrl();
+        }
+        return avatarUrl;
     }
 
     public void delete(long id) {
