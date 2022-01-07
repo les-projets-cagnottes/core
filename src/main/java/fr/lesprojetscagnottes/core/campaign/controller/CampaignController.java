@@ -247,6 +247,13 @@ public class CampaignController {
             throw new ForbiddenException();
         }
 
+        // Verify that there are enough teammates
+        // TODO: Define this value on the budget entity
+        if(project.getPeopleGivingTime().size() < 3) {
+            log.error("Impossible to create campaign : not enough people in teammates");
+            throw new ForbiddenException();
+        }
+
         // Verify that budgets are usable
         Set<BudgetEntity> budgetsUsable = budgetRepository.findAllUsableBudgetsInOrganization(new Date(), project.getOrganization().getId());
         if(!budgetsUsable.contains(budget)) {

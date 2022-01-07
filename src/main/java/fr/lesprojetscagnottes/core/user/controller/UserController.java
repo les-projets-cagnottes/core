@@ -521,7 +521,7 @@ public class UserController {
         user.setEmail(userModel.getEmail());
         user.setFirstname(userModel.getFirstname());
         user.setLastname(userModel.getLastname());
-        user.setAvatarUrl(userModel.getAvatarUrl());
+        user.setAvatarUrl(userService.generateAvatarUrl(userModel));
         user.setEnabled(userModel.getEnabled());
         user.setPassword(passwordEncoder.encode(userModel.getPassword()));
         userRepository.save(user);
@@ -570,7 +570,7 @@ public class UserController {
         user.setEmail(userModel.getEmail());
         user.setFirstname(userModel.getFirstname());
         user.setLastname(userModel.getLastname());
-        user.setAvatarUrl(userModel.getAvatarUrl());
+        user.setAvatarUrl(userService.generateAvatarUrl(userModel));
         user.setEnabled(userModel.getEnabled());
         userRepository.save(user);
     }
