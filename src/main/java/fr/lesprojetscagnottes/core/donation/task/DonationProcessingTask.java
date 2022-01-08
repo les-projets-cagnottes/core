@@ -1,8 +1,5 @@
 package fr.lesprojetscagnottes.core.donation.task;
 
-import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
@@ -18,15 +15,6 @@ import java.util.TimerTask;
 @Slf4j
 @Component
 public class DonationProcessingTask extends TimerTask {
-
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private BudgetRepository budgetRepository;
-
-    @Autowired
-    private CampaignRepository campaignRepository;
 
     @Autowired
     private DonationRepository donationRepository;

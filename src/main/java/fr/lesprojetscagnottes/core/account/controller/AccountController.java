@@ -43,4 +43,17 @@ public class AccountController {
         return accountService.getByIds(principal, ids);
     }
 
+    @Operation(summary = "Get the account of a user on a budget", description = "Get the account of a user on a budget", tags = { "Accounts" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Returns corresponding account", content = @Content(schema = @Schema(implementation = AccountModel.class))),
+            @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Account not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/account", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"budgetId", "userId"})
+    public AccountModel getByBudgetAndUser(Principal principal, @RequestParam("budgetId") Long budgetId, @RequestParam("userId") Long userId) {
+        return accountService.getByBudgetAndUser(principal, budgetId, userId);
+    }
+
 }

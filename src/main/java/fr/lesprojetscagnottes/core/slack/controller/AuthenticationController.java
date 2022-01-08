@@ -2,11 +2,11 @@ package fr.lesprojetscagnottes.core.slack.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.authentication.service.AuthService;
-import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.InternalServerException;
@@ -21,8 +21,8 @@ import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -77,9 +77,6 @@ public class AuthenticationController {
     private TokenProvider jwtTokenUtil;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -99,6 +96,9 @@ public class AuthenticationController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private AccountService accountService;
 
     @Operation(summary = "Sign in with Slack", description = "Exchanging a verification code for an access token with Slack", tags = {"Authentication"})
     @ApiResponses(value = {
@@ -201,7 +201,7 @@ public class AuthenticationController {
 
                 Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
                 budgets.forEach(budget -> {
-                    AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                    AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
                     if (account == null) {
                         account = new AccountEntity();
                         account.setAmount(budget.getAmountPerMember());
@@ -209,7 +209,7 @@ public class AuthenticationController {
                     }
                     account.setInitialAmount(budget.getAmountPerMember());
                     account.setOwner(userInDb);
-                    accountRepository.save(account);
+                    accountService.save(account);
                 });
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));

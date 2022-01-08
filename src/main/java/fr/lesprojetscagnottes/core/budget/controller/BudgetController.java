@@ -3,6 +3,7 @@ package fr.lesprojetscagnottes.core.budget.controller;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.account.model.AccountModel;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
@@ -65,6 +66,9 @@ public class BudgetController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AccountService accountService;
 
     @Autowired
     private BudgetService budgetService;
@@ -291,7 +295,7 @@ public class BudgetController {
         // Create personal accounts for all members
         Set<UserEntity> members = userRepository.findAllByOrganizations_id(organizationId);
         members.forEach(member -> {
-            AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(member.getId(), budget.getId());
+            AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), member.getId());
             if(account == null) {
                 account = new AccountEntity();
                 account.setAmount(budget.getAmountPerMember());
@@ -299,7 +303,7 @@ public class BudgetController {
             }
             account.setInitialAmount(budget.getAmountPerMember());
             account.setOwner(member);
-            accountRepository.save(account);
+            accountService.save(account);
         });
 
         // Distribute budget

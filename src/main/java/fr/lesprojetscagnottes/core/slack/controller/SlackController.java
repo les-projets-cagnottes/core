@@ -1,25 +1,25 @@
 package fr.lesprojetscagnottes.core.slack.controller;
 
-import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.service.AccountService;
+import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
-import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
+import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
+import fr.lesprojetscagnottes.core.slack.SlackClientService;
+import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -53,9 +53,6 @@ public class SlackController {
     private SpringTemplateEngine templateEngine;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -75,6 +72,9 @@ public class SlackController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AccountService accountService;
 
     @Autowired
     private UserService userService;
@@ -235,7 +235,7 @@ public class SlackController {
             // Distribute usable budgets
             Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
-                AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userWithSlackUser.getId(), budget.getId());
+                AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userWithSlackUser.getId());
                 if(account == null) {
                     account = new AccountEntity();
                     account.setAmount(budget.getAmountPerMember());
@@ -243,7 +243,7 @@ public class SlackController {
                 }
                 account.setInitialAmount(budget.getAmountPerMember());
                 account.setOwner(userWithSlackUser);
-                accountRepository.save(account);
+                accountService.save(account);
             });
 
             Map<String, Object> model = new HashMap<>();

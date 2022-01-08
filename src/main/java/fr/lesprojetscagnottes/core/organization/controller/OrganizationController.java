@@ -2,14 +2,14 @@ package fr.lesprojetscagnottes.core.organization.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
+import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
-import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
-import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
@@ -98,9 +98,6 @@ public class OrganizationController {
     private SlackClientService slackClientService;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
     private BudgetRepository budgetRepository;
 
     @Autowired
@@ -132,6 +129,9 @@ public class OrganizationController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AccountService accountService;
 
     @Autowired
     private UserService userService;
@@ -996,7 +996,7 @@ public class OrganizationController {
             // Create accounts onboarding users
             Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
-                AccountEntity account = accountRepository.findByOwnerIdAndBudgetId(userInDb.getId(), budget.getId());
+                AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
                 if(account == null) {
                     account = new AccountEntity();
                     account.setAmount(budget.getAmountPerMember());
@@ -1004,7 +1004,7 @@ public class OrganizationController {
                 }
                 account.setInitialAmount(budget.getAmountPerMember());
                 account.setOwner(userInDb);
-                accountRepository.save(account);
+                accountService.save(account);
             });
         }
         return null;
