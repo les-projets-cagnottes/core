@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.slack;
+package fr.lesprojetscagnottes.core.providers.slack.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -6,8 +6,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

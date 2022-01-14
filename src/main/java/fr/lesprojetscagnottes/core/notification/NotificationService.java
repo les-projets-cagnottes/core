@@ -1,9 +1,9 @@
 package fr.lesprojetscagnottes.core.notification;
 
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

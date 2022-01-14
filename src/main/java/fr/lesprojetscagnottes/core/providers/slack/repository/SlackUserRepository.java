@@ -1,6 +1,6 @@
-package fr.lesprojetscagnottes.core.slack.repository;
+package fr.lesprojetscagnottes.core.providers.slack.repository;
 
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Set;
