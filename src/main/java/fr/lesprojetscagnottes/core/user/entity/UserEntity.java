@@ -10,7 +10,7 @@ import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import lombok.AccessLevel;
 import lombok.Getter;

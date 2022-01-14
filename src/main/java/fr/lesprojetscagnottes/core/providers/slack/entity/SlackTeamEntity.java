@@ -1,7 +1,7 @@
-package fr.lesprojetscagnottes.core.slack.entity;
+package fr.lesprojetscagnottes.core.providers.slack.entity;
 
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.slack.model.SlackTeamModel;
+import fr.lesprojetscagnottes.core.providers.slack.model.SlackTeamModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

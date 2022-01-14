@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.slack.controller;
+package fr.lesprojetscagnottes.core.providers.slack.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -16,11 +16,11 @@ import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
