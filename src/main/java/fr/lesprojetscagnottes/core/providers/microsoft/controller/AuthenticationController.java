@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.providers.microsoft.controller;
 
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
+import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.service.MicrosoftGraphService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,6 +36,9 @@ public class AuthenticationController {
     @RequestMapping(value = "/auth/login/microsoft", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponseModel login(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
         String token = microsoftGraphService.token(code, redirect_uri);
+        if(token != null) {
+            MicrosoftUserEntity msUser = microsoftGraphService.whoami(token);
+        }
         return null;
     }
 
