@@ -14,7 +14,7 @@ import javax.persistence.Table;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@Table(name = "slack_team")
+@Table(name = "ms_team")
 public class MicrosoftTeamEntity extends MicrosoftTeamModel {
 
     @OneToOne
