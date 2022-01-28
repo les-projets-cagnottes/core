@@ -38,6 +38,9 @@ public class OrganizationModel extends AuditEntity<String> {
     private GenericModel slackTeam;
 
     @Transient
+    private GenericModel msTeam;
+
+    @Transient
     private Set<Long> contentsRef = new LinkedHashSet<>();
 
     @Transient
@@ -54,6 +57,7 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setSocialName(entity.getSocialName());
         model.setLogoUrl(entity.getLogoUrl());
         model.setSlackTeam(new GenericModel(entity.getSlackTeam()));
+        model.setMsTeam(new GenericModel(entity.getMsTeam()));
         entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
         entity.getContents().forEach(content -> model.getContentsRef().add(content.getId()));
         LOGGER.debug("Generated : " + model);
