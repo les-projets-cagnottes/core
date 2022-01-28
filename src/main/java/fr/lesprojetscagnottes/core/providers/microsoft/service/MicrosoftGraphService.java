@@ -115,4 +115,5 @@ public class MicrosoftGraphService {
         }
         return msUser;
     }
+
 }

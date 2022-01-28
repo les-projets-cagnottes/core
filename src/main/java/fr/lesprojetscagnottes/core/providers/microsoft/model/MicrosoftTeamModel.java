@@ -18,6 +18,9 @@ public class MicrosoftTeamModel extends AuditEntity<String> {
     @Column(name = "access_token")
     private String accessToken;
 
+    @Column(name = "tenant_id")
+    private String tenantId;
+
     @Transient
     protected GenericModel organization;
 
@@ -29,6 +32,7 @@ public class MicrosoftTeamModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setAccessToken(entity.getAccessToken());
+        model.setTenantId(entity.getTenantId());
         model.setOrganization(new GenericModel(entity.getOrganization()));
         return model;
     }

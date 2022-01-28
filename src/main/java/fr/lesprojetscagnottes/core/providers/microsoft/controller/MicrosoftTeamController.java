@@ -1,0 +1,59 @@
+package fr.lesprojetscagnottes.core.providers.microsoft.controller;
+
+import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
+import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
+import fr.lesprojetscagnottes.core.providers.microsoft.service.MicrosoftTeamService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+
+@Slf4j
+@RequestMapping("/api")
+@Tag(name = "Team:Microsoft", description = "The Microsoft Team API")
+@RestController
+public class MicrosoftTeamController {
+
+    @Autowired
+    private MicrosoftTeamService microsoftTeamService;
+
+    @Operation(summary = "Create a MS Team", description = "Create a MS Team", tags = { "Team:Microsoft" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "MS Team created", content = @Content(schema = @Schema(implementation = BudgetModel.class))),
+            @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/team/ms", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public MicrosoftTeamModel create(Principal principal, @RequestBody MicrosoftTeamModel msTeam) {
+        // TODO Verify consent before saving
+        return microsoftTeamService.save(principal, msTeam);
+    }
+
+    @Operation(summary = "Delete a MS Team by its ID", description = "Delete a MS Team by its ID", tags = { "Team:Microsoft" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "MS Team deleted", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "MS Team not found", content = @Content(schema = @Schema()))
+    })
+    @RequestMapping(value = "/team/ms/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @PreAuthorize("hasRole('USER')")
+    public void delete(Principal principal, @PathVariable("id") long id) {
+        microsoftTeamService.delete(principal, id);
+    }
+
+}
