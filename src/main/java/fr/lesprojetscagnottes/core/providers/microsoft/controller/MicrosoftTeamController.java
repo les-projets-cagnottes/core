@@ -4,6 +4,7 @@ import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.service.MicrosoftTeamService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,6 +28,18 @@ public class MicrosoftTeamController {
     @Autowired
     private MicrosoftTeamService microsoftTeamService;
 
+    @Operation(summary = "Get MS Teams by its ID", description = "Get a MS Team by its ID", tags = { "Team:Microsoft" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return the MS Team", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/team/ms/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public MicrosoftTeamModel getById(Principal principal, @PathVariable("id") Long id) {
+        return microsoftTeamService.findById(principal, id);
+    }
+
     @Operation(summary = "Create a MS Team", description = "Create a MS Team", tags = { "Team:Microsoft" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "MS Team created", content = @Content(schema = @Schema(implementation = BudgetModel.class))),
@@ -38,7 +51,6 @@ public class MicrosoftTeamController {
     @RequestMapping(value = "/team/ms", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public MicrosoftTeamModel create(Principal principal, @RequestBody MicrosoftTeamModel msTeam) {
-        // TODO Verify consent before saving
         return microsoftTeamService.save(principal, msTeam);
     }
 

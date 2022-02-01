@@ -15,8 +15,14 @@ import javax.persistence.Transient;
 @MappedSuperclass
 public class MicrosoftTeamModel extends AuditEntity<String> {
 
-    @Column(name = "access_token")
+    @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
+
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column(name = "groupId")
+    private String groupId;
 
     @Column(name = "tenant_id")
     private String tenantId;
@@ -32,6 +38,8 @@ public class MicrosoftTeamModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setAccessToken(entity.getAccessToken());
+        model.setDisplayName(entity.getDisplayName());
+        model.setGroupId(entity.getGroupId());
         model.setTenantId(entity.getTenantId());
         model.setOrganization(new GenericModel(entity.getOrganization()));
         return model;
