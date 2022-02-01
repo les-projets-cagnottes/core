@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.providers.microsoft.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
@@ -19,9 +20,6 @@ import java.time.Duration;
 @Slf4j
 @Service
 public class MicrosoftGraphService {
-
-    @Value("${fr.lesprojetscagnottes.microsoft.tenant_id}")
-    private String microsoftTenantId;
 
     @Value("${fr.lesprojetscagnottes.microsoft.client_id}")
     private String microsoftClientId;
@@ -43,18 +41,22 @@ public class MicrosoftGraphService {
         return microsoftUserRepository.save(entity);
     }
 
-    public String token(String code, String redirect_uri) {
+    public String token(String tenantId, String scope, String code, String redirect_uri) {
 
-        String url = "https://login.microsoftonline.com/" + microsoftTenantId + "/oauth2/v2.0/token";
+        String url = "https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token";
         String token = null;
         try {
 
             String urlParameters = "client_id=" + microsoftClientId;
-            urlParameters+= "&scope=openid+profile+offline_access";
-            urlParameters+= "&code=" + code;
-            urlParameters+= "&redirect_uri=" + redirect_uri;
-            urlParameters+= "&grant_type=authorization_code";
+            urlParameters+= "&scope=" + scope;
             urlParameters+= "&client_secret=" + microsoftClientSecret;
+            if(code != null && code.length() > 0) {
+                urlParameters+= "&redirect_uri=" + redirect_uri;
+                urlParameters+= "&grant_type=authorization_code";
+                urlParameters+= "&code=" + code;
+            } else {
+                urlParameters+= "&grant_type=client_credentials";
+            }
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -114,6 +116,45 @@ public class MicrosoftGraphService {
             log.error(e.getMessage(), e);
         }
         return msUser;
+    }
+
+    public String getOrganizationName(String token, String tenantId) {
+        String url = "https://graph.microsoft.com/v1.0/organization";
+        String organizationName = null;
+        try {
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMinutes(1))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token)
+                    .build();
+
+            log.debug("Call {}", url);
+            HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("Response from {} : {}", url, response.body());
+
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            log.debug("Response converted into json : {}", json);
+            if (json.get("value") != null && json.getAsJsonArray("value").size() > 0) {
+                JsonArray organizations = json.getAsJsonArray("value");
+                int indexOrg = 0;
+                boolean found = false;
+                JsonObject organization;
+                while(!found && indexOrg < organizations.size()) {
+                    organization = organizations.get(indexOrg).getAsJsonObject();
+                    found = tenantId.equals(organization.get("id").getAsString());
+                    indexOrg++;
+                }
+                if(found) {
+                    organizationName = organizations.get(indexOrg - 1).getAsJsonObject().get("displayName").getAsString();
+                }
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return organizationName;
     }
 
 }

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -24,6 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Authentication", description = "The Authentication API")
 public class AuthenticationController {
 
+    @Value("${fr.lesprojetscagnottes.microsoft.tenant_id}")
+    private String microsoftTenantId;
+
     @Autowired
     private MicrosoftGraphService microsoftGraphService;
 
@@ -35,7 +39,7 @@ public class AuthenticationController {
     })
     @RequestMapping(value = "/auth/login/microsoft", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponseModel login(@RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-        String token = microsoftGraphService.token(code, redirect_uri);
+        String token = microsoftGraphService.token(microsoftTenantId, "openid+profile+offline_access", code, redirect_uri);
         if(token != null) {
             MicrosoftUserEntity msUser = microsoftGraphService.whoami(token);
         }

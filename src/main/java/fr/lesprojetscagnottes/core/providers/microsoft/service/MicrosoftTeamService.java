@@ -21,6 +21,9 @@ import java.security.Principal;
 public class MicrosoftTeamService {
 
     @Autowired
+    private MicrosoftGraphService microsoftGraphService;
+
+    @Autowired
     private OrganizationService organizationService;
 
     @Autowired
@@ -33,8 +36,72 @@ public class MicrosoftTeamService {
         return microsoftTeamRepository.findById(id).orElse(null);
     }
 
+    public MicrosoftTeamModel findById(Principal principal, Long id) {
+
+        // Verify that ID is correct
+        if(id <= 0) {
+            log.error("Impossible to get MS Teams by ID : ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that entity exists
+        MicrosoftTeamEntity entity = findById(id);
+        if(entity == null) {
+            log.error("Impossible to get MS Teams by ID : news not found");
+            throw new NotFoundException();
+        }
+
+        // If the news is in an organization, verify that principal is in this organization
+        if(entity.getOrganization() != null) {
+            Long userLoggedInId = userService.get(principal).getId();
+            if(!userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+                log.error("Impossible to get MS Teams by ID : principal has not enough privileges");
+                throw new ForbiddenException();
+            }
+        }
+
+        // Transform and return organization
+        return MicrosoftTeamModel.fromEntity(entity);
+    }
+
     public MicrosoftTeamEntity findByOrganizationId(Long id) {
         return microsoftTeamRepository.findByOrganizationId(id);
+    }
+
+    public MicrosoftTeamEntity save(MicrosoftTeamModel msTeam) {
+
+        // Retrieve full referenced objects
+        OrganizationEntity organization = organizationService.findById(msTeam.getOrganization().getId());
+
+        // Fails if any of references are null
+        if(organization == null) {
+            log.error("Impossible to save ms team {} : one or more reference(s) doesn't exist", msTeam);
+            throw new NotFoundException();
+        }
+
+        // Retrieve MS Team if ID is provided
+        MicrosoftTeamEntity msTeamToSave;
+        if(msTeam.getId() > 0)  {
+            msTeamToSave = findById(msTeam.getId());
+            if(msTeamToSave == null) {
+                log.error("Impossible to save ms team {} : it does not exist", msTeam);
+                throw new NotFoundException();
+            }
+        } else {
+            msTeamToSave = findByOrganizationId(msTeam.getOrganization().getId());
+            if(msTeamToSave == null) {
+                msTeamToSave = new MicrosoftTeamEntity();
+            }
+        }
+
+        // Pass new values
+        msTeamToSave.setAccessToken(microsoftGraphService.token(msTeam.getTenantId(), "https://graph.microsoft.com/.default", null, null));
+        msTeamToSave.setDisplayName(microsoftGraphService.getOrganizationName(msTeamToSave.getAccessToken(), msTeam.getTenantId()));
+        msTeamToSave.setTenantId(msTeam.getTenantId());
+        msTeamToSave.setOrganization(organization);
+
+        // Save
+        return microsoftTeamRepository.save(msTeamToSave);
     }
 
     public MicrosoftTeamModel save(Principal principal, MicrosoftTeamModel msTeam) {
@@ -66,27 +133,7 @@ public class MicrosoftTeamService {
             throw new ForbiddenException();
         }
 
-        // Retrieve MS Team if ID is provided
-        MicrosoftTeamEntity msTeamToSave;
-        if(msTeam.getId() > 0)  {
-            msTeamToSave = findById(msTeam.getId());
-            if(msTeamToSave == null) {
-                log.error("Impossible to save ms team {} : it does not exist", msTeam);
-                throw new NotFoundException();
-            }
-        } else {
-            msTeamToSave = findByOrganizationId(msTeam.getOrganization().getId());
-            if(msTeamToSave == null) {
-                msTeamToSave = new MicrosoftTeamEntity();
-            }
-        }
-
-        // Pass new values
-        msTeamToSave.setTenantId(msTeam.getTenantId());
-        msTeamToSave.setOrganization(organization);
-
-        // Save
-        return MicrosoftTeamModel.fromEntity(microsoftTeamRepository.save(msTeamToSave));
+        return MicrosoftTeamModel.fromEntity(this.save(msTeam));
     }
 
     public void delete(Principal principal, Long id) {
