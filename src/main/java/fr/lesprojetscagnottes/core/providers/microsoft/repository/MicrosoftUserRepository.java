@@ -4,5 +4,5 @@ import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntit
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MicrosoftUserRepository extends JpaRepository<MicrosoftUserEntity, Long> {
-    MicrosoftUserEntity findByMail(String slackUserId);
+    MicrosoftUserEntity findByMsId(String msId);
 }

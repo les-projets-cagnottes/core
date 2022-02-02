@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
+import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
-import fr.lesprojetscagnottes.core.providers.microsoft.repository.MicrosoftUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,17 +29,6 @@ public class MicrosoftGraphService {
 
     @Autowired
     private HttpClientService httpClientService;
-
-    @Autowired
-    private MicrosoftUserRepository microsoftUserRepository;
-
-    public MicrosoftUserEntity getMsUserByMail(String mail) {
-        return microsoftUserRepository.findByMail(mail);
-    }
-
-    public MicrosoftUserEntity saveMsUser(MicrosoftUserEntity entity) {
-        return microsoftUserRepository.save(entity);
-    }
 
     public String token(String tenantId, String scope, String code, String redirect_uri) {
 
@@ -101,16 +90,12 @@ public class MicrosoftGraphService {
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             log.debug("Response converted into json : {}", json);
             if (json.get("mail") != null) {
-                msUser = this.getMsUserByMail(json.get("mail").getAsString());
-                if(msUser == null) {
-                    msUser = new MicrosoftUserEntity();
-                    msUser.setMail(json.get("mail").getAsString());
-                }
+                msUser = new MicrosoftUserEntity();
                 msUser.setAccessToken(token);
+                msUser.setMail(json.get("mail").getAsString());
                 msUser.setMsId(json.get("id").getAsString());
                 msUser.setGivenName(json.get("givenName").getAsString());
                 msUser.setSurname(json.get("surname").getAsString());
-                msUser = this.saveMsUser(msUser);
             }
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage(), e);
@@ -118,9 +103,9 @@ public class MicrosoftGraphService {
         return msUser;
     }
 
-    public String getOrganizationName(String token, String tenantId) {
+    public MicrosoftTeamEntity getOrganization(String token, String tenantId) {
         String url = "https://graph.microsoft.com/v1.0/organization";
-        String organizationName = null;
+        MicrosoftTeamEntity msTeam = null;
         try {
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -148,13 +133,14 @@ public class MicrosoftGraphService {
                     indexOrg++;
                 }
                 if(found) {
-                    organizationName = organizations.get(indexOrg - 1).getAsJsonObject().get("displayName").getAsString();
+                    msTeam = new MicrosoftTeamEntity();
+                    msTeam.setDisplayName(organizations.get(indexOrg - 1).getAsJsonObject().get("displayName").getAsString());
+                    msTeam.setTenantId(tenantId);
                 }
             }
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage(), e);
         }
-        return organizationName;
+        return msTeam;
     }
-
 }

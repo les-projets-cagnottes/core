@@ -68,6 +68,10 @@ public class MicrosoftTeamService {
         return microsoftTeamRepository.findByOrganizationId(id);
     }
 
+    public MicrosoftTeamEntity findByTenantId(String tenantId) {
+        return microsoftTeamRepository.findByTenantId(tenantId);
+    }
+
     public MicrosoftTeamEntity save(MicrosoftTeamModel msTeam) {
 
         // Retrieve full referenced objects
@@ -94,9 +98,13 @@ public class MicrosoftTeamService {
             }
         }
 
+        // Retrieve data from Microsoft Graph
+        String token = microsoftGraphService.token(msTeam.getTenantId(), "https://graph.microsoft.com/.default", null, null);
+        MicrosoftTeamEntity msTeamFromMsGraph = microsoftGraphService.getOrganization(token, msTeam.getTenantId());
+
         // Pass new values
-        msTeamToSave.setAccessToken(microsoftGraphService.token(msTeam.getTenantId(), "https://graph.microsoft.com/.default", null, null));
-        msTeamToSave.setDisplayName(microsoftGraphService.getOrganizationName(msTeamToSave.getAccessToken(), msTeam.getTenantId()));
+        msTeamToSave.setAccessToken(token);
+        msTeamToSave.setDisplayName(msTeamFromMsGraph.getDisplayName());
         msTeamToSave.setTenantId(msTeam.getTenantId());
         msTeamToSave.setOrganization(organization);
 

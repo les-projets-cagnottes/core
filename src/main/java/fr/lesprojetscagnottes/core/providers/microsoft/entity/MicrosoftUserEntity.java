@@ -20,6 +20,6 @@ public class MicrosoftUserEntity extends MicrosoftUserModel {
     private UserEntity user = new UserEntity();
 
     @ManyToOne
-    private MicrosoftTeamEntity msTeam;
+    private MicrosoftTeamEntity msTeam = new MicrosoftTeamEntity();
 
 }
