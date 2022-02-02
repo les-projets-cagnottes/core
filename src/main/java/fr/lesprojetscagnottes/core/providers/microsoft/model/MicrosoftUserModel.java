@@ -34,7 +34,7 @@ public class MicrosoftUserModel extends AuditEntity<String> {
     protected GenericModel user;
 
     @Transient
-    protected GenericModel microsoftTeam;
+    protected GenericModel msTeam;
 
     public static MicrosoftUserModel fromEntity(MicrosoftUserModel entity) {
         MicrosoftUserModel model = new MicrosoftUserModel();
@@ -49,7 +49,7 @@ public class MicrosoftUserModel extends AuditEntity<String> {
         model.setGivenName(entity.getGivenName());
         model.setSurname(entity.getSurname());
         model.setUser(new GenericModel(entity.getUser()));
-        model.setMicrosoftTeam(new GenericModel(entity.getMicrosoftTeam()));
+        model.setMsTeam(new GenericModel(entity.getMsTeam()));
         return model;
     }
 
