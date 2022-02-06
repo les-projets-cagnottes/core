@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -111,4 +112,19 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
+    public void createUserAccountsForUsableBudgets(UserEntity user, Long organizationId) {
+        Set<BudgetEntity> budgets = budgetService.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(new Date(), true, organizationId);
+        log.debug("budgets : {}", budgets.size());
+        budgets.forEach(budget -> {
+            AccountEntity account = this.getByBudgetAndUser(budget.getId(), user.getId());
+            if (account == null) {
+                account = new AccountEntity();
+                account.setAmount(budget.getAmountPerMember());
+                account.setBudget(budget);
+            }
+            account.setInitialAmount(budget.getAmountPerMember());
+            account.setOwner(user);
+            save(account);
+        });
+    }
 }

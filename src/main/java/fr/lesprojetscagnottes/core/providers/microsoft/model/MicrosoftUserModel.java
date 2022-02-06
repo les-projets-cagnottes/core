@@ -18,9 +18,6 @@ public class MicrosoftUserModel extends AuditEntity<String> {
     @Column
     private String msId;
 
-    @Column(name = "access_token")
-    private String accessToken;
-
     @Column
     private String mail;
 
@@ -44,7 +41,6 @@ public class MicrosoftUserModel extends AuditEntity<String> {
         model.setUpdatedBy(entity.getUpdatedBy());
         model.setId(entity.getId());
         model.setMsId(entity.getMsId());
-        model.setAccessToken(entity.getAccessToken());
         model.setMail(entity.getMail());
         model.setGivenName(entity.getGivenName());
         model.setSurname(entity.getSurname());
