@@ -22,4 +22,8 @@ public class OrganizationService {
     public Set<OrganizationEntity> findAllByMembersId(Long userId) {
         return organizationRepository.findAllByMembers_Id(userId);
     }
+
+    public OrganizationEntity save(OrganizationEntity organization) {
+        return organizationRepository.save(organization);
+    }
 }

@@ -233,7 +233,7 @@ public class SlackController {
                     );
 
             // Distribute usable budgets
-            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
                 AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userWithSlackUser.getId());
                 if(account == null) {

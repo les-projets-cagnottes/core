@@ -91,7 +91,6 @@ public class MicrosoftGraphService {
             log.debug("Response converted into json : {}", json);
             if (json.get("mail") != null) {
                 msUser = new MicrosoftUserEntity();
-                msUser.setAccessToken(token);
                 msUser.setMail(json.get("mail").getAsString());
                 msUser.setMsId(json.get("id").getAsString());
                 msUser.setGivenName(json.get("givenName").getAsString());

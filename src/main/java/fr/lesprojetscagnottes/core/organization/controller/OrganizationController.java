@@ -994,7 +994,7 @@ public class OrganizationController {
             organizationRepository.save(organization);
 
             // Create accounts onboarding users
-            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
                 AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
                 if(account == null) {

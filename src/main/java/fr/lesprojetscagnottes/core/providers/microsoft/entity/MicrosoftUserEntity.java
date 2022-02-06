@@ -17,9 +17,9 @@ import javax.persistence.Table;
 public class MicrosoftUserEntity extends MicrosoftUserModel {
 
     @ManyToOne
-    private UserEntity user = new UserEntity();
+    private UserEntity user = null;
 
     @ManyToOne
-    private MicrosoftTeamEntity msTeam = new MicrosoftTeamEntity();
+    private MicrosoftTeamEntity msTeam = null;
 
 }
