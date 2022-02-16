@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.providers.microsoft.controller;
 
-import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.service.MicrosoftTeamService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +29,7 @@ public class MicrosoftTeamController {
 
     @Operation(summary = "Get MS Teams by its ID", description = "Get a MS Team by its ID", tags = { "Team:Microsoft" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Return the MS Team", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
+            @ApiResponse(responseCode = "200", description = "Return the MS Team", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MicrosoftTeamModel.class)))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
     })
@@ -42,7 +41,7 @@ public class MicrosoftTeamController {
 
     @Operation(summary = "Create a MS Team", description = "Create a MS Team", tags = { "Team:Microsoft" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "MS Team created", content = @Content(schema = @Schema(implementation = BudgetModel.class))),
+            @ApiResponse(responseCode = "201", description = "MS Team created", content = @Content(schema = @Schema(implementation = MicrosoftTeamModel.class))),
             @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
@@ -62,7 +61,6 @@ public class MicrosoftTeamController {
             @ApiResponse(responseCode = "404", description = "MS Team not found", content = @Content(schema = @Schema()))
     })
     @RequestMapping(value = "/team/ms/{id}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(Principal principal, @PathVariable("id") long id) {
         microsoftTeamService.delete(principal, id);
