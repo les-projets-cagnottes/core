@@ -24,6 +24,9 @@ public class MicrosoftTeamModel extends AuditEntity<String> {
     @Column(name = "groupId")
     private String groupId;
 
+    @Column(name = "channelId")
+    private String channelId;
+
     @Column(name = "tenant_id")
     private String tenantId;
 
@@ -40,6 +43,7 @@ public class MicrosoftTeamModel extends AuditEntity<String> {
         model.setAccessToken(entity.getAccessToken());
         model.setDisplayName(entity.getDisplayName());
         model.setGroupId(entity.getGroupId());
+        model.setChannelId(entity.getChannelId());
         model.setTenantId(entity.getTenantId());
         model.setOrganization(new GenericModel(entity.getOrganization()));
         return model;
