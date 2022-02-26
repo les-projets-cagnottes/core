@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -142,4 +144,50 @@ public class MicrosoftGraphService {
         }
         return msTeam;
     }
+
+    public List<MicrosoftUserEntity> getUsers(String token, String companyFilter) {
+        String url = "https://graph.microsoft.com/v1.0/users?$select=id,surname,givenName,mail,companyName";
+        List<MicrosoftUserEntity> msUsers = new ArrayList<>();
+        try {
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMinutes(1))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token)
+                    .build();
+
+            log.debug("Call {}", url);
+            HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("Response from {} : {}", url, response.body());
+
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            log.debug("Response converted into json : {}", json);
+            if (json.get("value") != null && json.getAsJsonArray("value").size() > 0) {
+                JsonArray msUsersJson = json.getAsJsonArray("value");
+                msUsersJson.forEach(msUsersJsonElement -> {
+                    JsonObject msUserJson = msUsersJsonElement.getAsJsonObject();
+
+                    MicrosoftUserEntity msUser = new MicrosoftUserEntity();
+                    msUser.setMsId(msUserJson.get("id").getAsString());
+                    msUser.setSurname(msUserJson.get("surname").getAsString());
+                    msUser.setGivenName(msUserJson.get("givenName").getAsString());
+                    msUser.setMail(msUserJson.get("mail").getAsString());
+
+                    if(!msUserJson.get("companyName").isJsonNull()) {
+                        msUser.setCompanyName(msUserJson.get("companyName").getAsString());
+                    }
+
+                    if(companyFilter == null || companyFilter.isEmpty() || companyFilter.equals(msUser.getCompanyName())) {
+                        msUsers.add(msUser);
+                    }
+                });
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return msUsers;
+    }
+
 }

@@ -6,6 +6,7 @@ import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.service.OrganizationService;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
+import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.repository.MicrosoftTeamRepository;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -103,7 +105,6 @@ public class MicrosoftTeamService {
         MicrosoftTeamEntity msTeamFromMsGraph = microsoftGraphService.getOrganization(token, msTeam.getTenantId());
 
         // Pass new values
-        msTeamToSave.setAccessToken(token);
         msTeamToSave.setDisplayName(msTeamFromMsGraph.getDisplayName());
         msTeamToSave.setTenantId(msTeam.getTenantId());
         msTeamToSave.setOrganization(organization);
@@ -153,7 +154,7 @@ public class MicrosoftTeamService {
         }
 
         // Verify that MS Team exists
-        MicrosoftTeamEntity msTeam = microsoftTeamRepository.findById(id).orElse(null);
+        MicrosoftTeamEntity msTeam = findById(id);
         if(msTeam == null) {
             log.error("Impossible disconnect MS Team from organization : MS Team {} not found", id);
             throw new NotFoundException();
@@ -172,4 +173,37 @@ public class MicrosoftTeamService {
         microsoftTeamRepository.deleteById(id);
     }
 
+    public String sync(Principal principal, Long id) {
+
+        // Verify that parameters are correct
+        if(id <= 0) {
+            log.error("Impossible to sync MS Team data with organization : ID is incorrect");
+            throw new BadRequestException();
+        }
+
+        // Verify that MS Team exists
+        MicrosoftTeamEntity msTeam = findById(id);
+        if(msTeam == null) {
+            log.error("Impossible sync MS Team from organization : MS Team {} not found", id);
+            throw new NotFoundException();
+        }
+
+        // Verify if principal has correct privileges
+        Long userLoggedInId = userService.get(principal).getId();
+        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to sync MS Team data with organization : principal is not owner of organization {}", id);
+            throw new ForbiddenException();
+        }
+
+        // Get MS users
+        String token = microsoftGraphService.token(msTeam.getTenantId(), "https://graph.microsoft.com/.default", null, null);
+        List<MicrosoftUserEntity> msUsers = microsoftGraphService.getUsers(token, "Mon organisation");
+
+        // For each MS user, retrieve its data
+        for(MicrosoftUserEntity msUser : msUsers) {
+            log.debug(msUser.getMail());
+        }
+
+        return null;
+    }
 }

@@ -66,4 +66,16 @@ public class MicrosoftTeamController {
         microsoftTeamService.delete(principal, id);
     }
 
+    @Operation(summary = "Sync MS Team with organization", description = "Sync MS Team with organization", tags = { "Team:Microsoft" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "MS Team data synced", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Organization not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/team/ms/{id}/sync", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String sync(Principal principal, @PathVariable long id) throws InterruptedException {
+        return microsoftTeamService.sync(principal, id);
+    }
 }

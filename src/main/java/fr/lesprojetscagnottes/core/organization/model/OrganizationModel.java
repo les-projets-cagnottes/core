@@ -1,13 +1,11 @@
 package fr.lesprojetscagnottes.core.organization.model;
 
-import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.GenericModel;
+import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
@@ -20,8 +18,6 @@ import java.util.Set;
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class OrganizationModel extends AuditEntity<String> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationModel.class);
 
     @Column
     @NotNull
@@ -60,7 +56,6 @@ public class OrganizationModel extends AuditEntity<String> {
         model.setMsTeam(new GenericModel(entity.getMsTeam()));
         entity.getMembers().forEach(member -> model.getMembersRef().add(member.getId()));
         entity.getContents().forEach(content -> model.getContentsRef().add(content.getId()));
-        LOGGER.debug("Generated : " + model);
         return model;
     }
 
