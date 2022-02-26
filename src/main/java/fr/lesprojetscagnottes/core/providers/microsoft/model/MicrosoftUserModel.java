@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.providers.microsoft.model;
 
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,16 +17,19 @@ import javax.persistence.Transient;
 public class MicrosoftUserModel extends AuditEntity<String> {
 
     @Column
-    private String msId;
+    private String msId = StringsCommon.EMPTY_STRING;
 
     @Column
-    private String mail;
+    private String mail = StringsCommon.EMPTY_STRING;
 
     @Column
-    private String givenName;
+    private String givenName = StringsCommon.EMPTY_STRING;
 
     @Column
-    private String surname;
+    private String surname = StringsCommon.EMPTY_STRING;
+
+    @Column
+    private String companyName = StringsCommon.EMPTY_STRING;
 
     @Transient
     protected GenericModel user;
@@ -44,6 +48,7 @@ public class MicrosoftUserModel extends AuditEntity<String> {
         model.setMail(entity.getMail());
         model.setGivenName(entity.getGivenName());
         model.setSurname(entity.getSurname());
+        model.setCompanyName(entity.getCompanyName());
         model.setUser(new GenericModel(entity.getUser()));
         model.setMsTeam(new GenericModel(entity.getMsTeam()));
         return model;

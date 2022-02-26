@@ -21,6 +21,6 @@ public class MicrosoftTeamEntity extends MicrosoftTeamModel {
     private OrganizationEntity organization = new OrganizationEntity();
 
     @OneToMany(mappedBy = "msTeam", cascade = CascadeType.REMOVE)
-    private Set<MicrosoftUserEntity> msTeam = new LinkedHashSet<>();
+    private Set<MicrosoftUserEntity> msUsers = new LinkedHashSet<>();
 
 }
