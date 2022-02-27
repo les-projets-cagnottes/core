@@ -1,29 +1,44 @@
 package fr.lesprojetscagnottes.core.providers.microsoft.service;
 
+import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.service.OrganizationService;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import fr.lesprojetscagnottes.core.providers.microsoft.repository.MicrosoftTeamRepository;
+import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
 public class MicrosoftTeamService {
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AccountService accountService;
+
+    @Autowired
     private MicrosoftGraphService microsoftGraphService;
+
+    @Autowired
+    private MicrosoftUserService microsoftUserService;
 
     @Autowired
     private OrganizationService organizationService;
@@ -135,6 +150,11 @@ public class MicrosoftTeamService {
             throw new NotFoundException();
         }
 
+        // Fails if a SlackTeam already exists
+        if(organization.getSlackTeam() != null) {
+            log.error("Impossible to save ms team {} : a Slack Team is already associated with the organization {}", msTeam, organization.getId());
+        }
+
         // Test that user logged in has correct rights
         UserEntity userLoggedIn = userService.get(principal);
         if(!userService.isOwnerOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
@@ -200,9 +220,74 @@ public class MicrosoftTeamService {
         List<MicrosoftUserEntity> msUsers = microsoftGraphService.getUsers(token, "Mon organisation");
 
         // For each MS user, retrieve its data
+        UserEntity user;
+        OrganizationEntity organization = msTeam.getOrganization();
+        Set<MicrosoftUserEntity> msUsersBeforeSync = msTeam.getMsUsers();
+        List<Long> msUserIdsAdded = new ArrayList<>();
         for(MicrosoftUserEntity msUser : msUsers) {
             log.debug(msUser.getMail());
+
+            // Sync with existing MS User
+            MicrosoftUserEntity msUserInDb = microsoftUserService.getByMsId(msUser.getMsId());
+            if(msUserInDb != null) {
+                msUserInDb.setSurname(msUser.getSurname());
+                msUserInDb.setGivenName(msUser.getGivenName());
+                msUserInDb.setMail(msUser.getMail());
+            } else {
+                msUserInDb = msUser;
+            }
+            msUserInDb.setMsTeam(msTeam);
+
+            // Sync with user
+            user = userService.findByEmail(msUserInDb.getMail());
+            if(user == null) {
+                user = UserGenerator.newUser(new UserEntity());
+                user.setCreatedBy("MS Sync");
+                user.setFirstname(msUserInDb.getGivenName());
+                user.setLastname(msUserInDb.getSurname());
+                user.setUsername(msUserInDb.getMail());
+                user.setEmail(msUserInDb.getMail());
+                user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
+            }
+            user.setUpdatedBy("MS Sync");
+            user.setEnabled(true);
+            
+            // Save data
+            final UserEntity userInDb = userService.save(user);
+            msUserInDb.setUser(userInDb);
+            msUserInDb = microsoftUserService.save(msUserInDb);
+            msUserIdsAdded.add(msUserInDb.getId());
+
+            // Add user in MS Team organization
+            msTeam.getOrganization().getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
+                    .findAny()
+                    .ifPresentOrElse(
+                            member -> member = userInDb,
+                            () -> organization.getMembers().add(userInDb)
+                    );
+            organizationService.save(organization);
+
+            // Create accounts onboarding users
+            accountService.createUserAccountsForUsableBudgets(userInDb, organization.getId());
         }
+
+        // Remove MS User not in AD anymore
+        msUsersBeforeSync.forEach(msUser -> log.debug(msUser.getMail()));
+        msUsersBeforeSync.forEach(msUserBeforeSync -> {
+            if(!msUserIdsAdded.contains(msUserBeforeSync.getId())) {
+
+                // Remove user from organization
+                UserEntity userBeforeSync = msUserBeforeSync.getUser();
+                if(userBeforeSync != null) {
+                    organization.getMembers().stream().filter(member -> member.getId().equals(userBeforeSync.getId()))
+                            .findAny()
+                            .ifPresent(member -> organization.getMembers().remove(member));
+                }
+
+                // Delete MS user
+                microsoftUserService.delete(msUserBeforeSync);
+            }
+        });
 
         return null;
     }

@@ -20,4 +20,8 @@ public class MicrosoftUserService {
     public MicrosoftUserEntity save(MicrosoftUserEntity msUser) {
         return microsoftUserRepository.save(msUser);
     }
+
+    public void delete(MicrosoftUserEntity msUserBeforeSync) {
+        microsoftUserRepository.delete(msUserBeforeSync);
+    }
 }
