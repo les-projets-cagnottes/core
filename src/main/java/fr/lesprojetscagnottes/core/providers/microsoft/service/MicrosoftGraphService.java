@@ -171,15 +171,22 @@ public class MicrosoftGraphService {
 
                     MicrosoftUserEntity msUser = new MicrosoftUserEntity();
                     msUser.setMsId(msUserJson.get("id").getAsString());
-                    msUser.setSurname(msUserJson.get("surname").getAsString());
-                    msUser.setGivenName(msUserJson.get("givenName").getAsString());
-                    msUser.setMail(msUserJson.get("mail").getAsString());
 
+                    if(!msUserJson.get("mail").isJsonNull()) {
+                        msUser.setMail(msUserJson.get("mail").getAsString());
+                    }
+                    if(!msUserJson.get("surname").isJsonNull()) {
+                        msUser.setSurname(msUserJson.get("surname").getAsString());
+                    }
+                    if(!msUserJson.get("givenName").isJsonNull()) {
+                        msUser.setGivenName(msUserJson.get("givenName").getAsString());
+                    }
                     if(!msUserJson.get("companyName").isJsonNull()) {
                         msUser.setCompanyName(msUserJson.get("companyName").getAsString());
                     }
 
                     if(companyFilter == null || companyFilter.isEmpty() || companyFilter.equals(msUser.getCompanyName())) {
+                        log.debug("{} eligible to sync", msUser.getMail());
                         msUsers.add(msUser);
                     }
                 });
