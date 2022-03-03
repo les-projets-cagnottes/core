@@ -217,7 +217,7 @@ public class MicrosoftTeamService {
 
         // Get MS users
         String token = microsoftGraphService.token(msTeam.getTenantId(), "https://graph.microsoft.com/.default", null, null);
-        List<MicrosoftUserEntity> msUsers = microsoftGraphService.getUsers(token, "Mon organisation");
+        List<MicrosoftUserEntity> msUsers = microsoftGraphService.getUsers(token, msTeam.getCompanyFilter());
 
         // For each MS user, retrieve its data
         UserEntity user;
@@ -249,6 +249,7 @@ public class MicrosoftTeamService {
                 user.setEmail(msUserInDb.getMail());
                 user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
             }
+            user.setAvatarUrl(microsoftGraphService.getPhoto(token, msUser.getMsId()));
             user.setUpdatedBy("MS Sync");
             user.setEnabled(true);
             

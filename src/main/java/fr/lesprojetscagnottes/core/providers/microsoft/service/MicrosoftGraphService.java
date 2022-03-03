@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
+import fr.lesprojetscagnottes.core.file.entity.FileEntity;
+import fr.lesprojetscagnottes.core.file.service.FileService;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftUserEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +33,9 @@ public class MicrosoftGraphService {
 
     @Value("${fr.lesprojetscagnottes.microsoft.client_secret}")
     private String microsoftClientSecret;
+
+    @Autowired
+    private FileService fileService;
 
     @Autowired
     private HttpClientService httpClientService;
@@ -73,7 +81,7 @@ public class MicrosoftGraphService {
     }
 
     public MicrosoftUserEntity whoami(String token) {
-        String url = "https://graph.microsoft.com/v1.0/me";
+        String url = "https://graph.microsoft.com/v1.0/me?$select=id,surname,givenName,mail,companyName";
         MicrosoftUserEntity msUser = null;
         try {
 
@@ -93,15 +101,50 @@ public class MicrosoftGraphService {
             log.debug("Response converted into json : {}", json);
             if (json.get("mail") != null) {
                 msUser = new MicrosoftUserEntity();
-                msUser.setMail(json.get("mail").getAsString());
                 msUser.setMsId(json.get("id").getAsString());
-                msUser.setGivenName(json.get("givenName").getAsString());
-                msUser.setSurname(json.get("surname").getAsString());
+                if(!json.get("mail").isJsonNull()) {
+                    msUser.setMail(json.get("mail").getAsString());
+                }
+                if(!json.get("surname").isJsonNull()) {
+                    msUser.setSurname(json.get("surname").getAsString());
+                }
+                if(!json.get("givenName").isJsonNull()) {
+                    msUser.setGivenName(json.get("givenName").getAsString());
+                }
+                if(!json.get("companyName").isJsonNull()) {
+                    msUser.setCompanyName(json.get("companyName").getAsString());
+                }
             }
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage(), e);
         }
         return msUser;
+    }
+
+    public String getPhoto(String token, String msId) {
+        String url = "https://graph.microsoft.com/v1.0/users/" + msId + "/photo/$value";
+        String photoUrl = "";
+        try {
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMinutes(1))
+                    .header("Authorization", "Bearer " + token)
+                    .build();
+
+            log.debug("Call {}", url);
+            HttpResponse<Path> response = httpClientService.getHttpClient().send(request,
+                    HttpResponse.BodyHandlers.ofFile(Paths.get(msId)));
+            List<String> contenType = response.headers().map().get("Content-Type");
+            if(contenType.size() == 1) {
+                FileEntity fileEntity = fileService.saveOnFilesystem(new File(msId), contenType.get(0), "ms-avatar", msId);
+                fileEntity = fileService.saveInDb(fileEntity);
+                photoUrl = fileEntity.getUrl();
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return photoUrl;
     }
 
     public MicrosoftTeamEntity getOrganization(String token, String tenantId) {
