@@ -94,6 +94,13 @@ public class MicrosoftAuthenticationService {
             throw new UnauthaurizedException();
         }
 
+        // Verify MS User is complying with company filter
+        String companyFilter = msTeam.getCompanyFilter();
+        if((companyFilter != null && !companyFilter.isEmpty() && !companyFilter.equals(msGraphUser.getCompanyName()))) {
+            log.error("Unable to login with Microsoft : user is not in the valid company");
+            throw new UnauthaurizedException();
+        }
+
         // Save MS User
         MicrosoftUserEntity msUser = microsoftUserService.getByMsId(msGraphUser.getMsId());
         if(msUser == null) {
@@ -115,6 +122,7 @@ public class MicrosoftAuthenticationService {
         } else if (user.getPassword().isEmpty()) {
             user.setPassword(StringGenerator.randomString());
         }
+        user.setAvatarUrl(microsoftGraphService.getPhoto(token, msUser.getMsId()));
         user.setUsername(msUser.getMail());
         UserEntity savedUser = userService.save(user);
 

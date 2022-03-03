@@ -47,10 +47,33 @@ public class FileService {
         return fileContent;
     }
 
-    public FileEntity saveOnFilesystem(MultipartFile multipartFile, String directory, String name) throws IOException {
+    public FileEntity saveOnFilesystem(File file, String mimeType, String directory, String name) throws IOException {
 
-        String fullPath;
-        String finalFileName;
+        // Extract data from File
+        log.debug("contentType: " + mimeType);
+        String format = MimeTypes.getDefaultExt(mimeType);
+        log.debug("format: " + format);
+        String finalFileName = name + "." + format;
+        log.debug("saved filename: " + finalFileName);
+
+        // Write file on filesystem
+        prepareDirectories(directory);
+        String fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
+        if(!file.renameTo(new File(fullPath))) {
+            log.error("Cannot move file to {}", fullPath);
+        }
+
+        // Create entity to return
+        FileEntity entity = new FileEntity();
+        entity.setDirectory(directory);
+        entity.setName(name);
+        entity.setFormat(format);
+        entity.setUrl(coreUrl + "/files/" + directory + "/" + finalFileName);
+
+        return entity;
+    }
+
+    public FileEntity saveOnFilesystem(MultipartFile multipartFile, String directory, String name) throws IOException {
 
         // Extract data from MultipartFile
         InputStream inputStream = multipartFile.getInputStream();
@@ -59,16 +82,14 @@ public class FileService {
         log.debug("originalName: " + originalName);
         String contentType = multipartFile.getContentType();
         log.debug("contentType: " + contentType);
-        long size = multipartFile.getSize();
-        log.debug("size: " + size);
         String format = MimeTypes.getDefaultExt(contentType);
         log.debug("format: " + format);
-        finalFileName = name + "." + format;
+        String finalFileName = name + "." + format;
         log.debug("saved filename: " + finalFileName);
 
         // Write file on filesystem
         prepareDirectories(directory);
-        fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
+        String fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
         java.io.File file = new java.io.File(fullPath);
         FileOutputStream os = new FileOutputStream(file);
         os.write(multipartFile.getBytes());
@@ -131,6 +152,10 @@ public class FileService {
         return Boolean.TRUE;
     }
 
+    public String getPath(FileEntity entity) {
+        return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
+    }
+
     private void prepareDirectories(String directoryPath) {
         File directory = new File(rootStorageFolder);
         if (!directory.exists()) {
@@ -156,10 +181,6 @@ public class FileService {
                 log.error("The path {} is not a directory", directory.getPath());
             }
         }
-    }
-
-    public String getPath(FileEntity entity) {
-        return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
     }
 
 }
