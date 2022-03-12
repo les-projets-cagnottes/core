@@ -1,7 +1,7 @@
 package fr.lesprojetscagnottes.core.slack.model;
 
-import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.GenericModel;
+import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -14,32 +14,25 @@ import javax.persistence.Transient;
 @MappedSuperclass
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder()
 public class SlackTeamModel extends AuditEntity<String> {
-
-    @Column(name = "access_token")
-    private String accessToken;
-
-    @Column(name = "team_id")
-    private String teamId;
-
-    @Column(name = "team_name")
-    private String teamName;
-
-    @Column(name = "bot_user_id")
-    private String botUserId;
-
-    @Column(name = "bot_access_token")
-    private String botAccessToken;
-
-    @Column(name = "publication_channel")
-    private String publicationChannel;
-
-    @Column(name = "publication_channel_id")
-    private String publicationChannelId;
 
     @Transient
     protected GenericModel organization;
+    @Column(name = "access_token")
+    private String accessToken;
+    @Column(name = "team_id")
+    private String teamId;
+    @Column(name = "team_name")
+    private String teamName;
+    @Column(name = "bot_user_id")
+    private String botUserId;
+    @Column(name = "bot_access_token")
+    private String botAccessToken;
+    @Column(name = "publication_channel")
+    private String publicationChannel;
+    @Column(name = "publication_channel_id")
+    private String publicationChannelId;
 
     public static SlackTeamModel fromEntity(SlackTeamModel entity) {
 
