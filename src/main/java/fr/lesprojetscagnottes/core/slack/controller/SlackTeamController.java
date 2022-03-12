@@ -1,17 +1,12 @@
 package fr.lesprojetscagnottes.core.slack.controller;
 
-import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
-import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
 import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.slack.model.SlackTeamModel;
 import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,8 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,25 +29,8 @@ import java.security.Principal;
 @RestController
 public class SlackTeamController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SlackTeamController.class);
-
-    @Autowired
-    private OrganizationAuthorityRepository organizationAuthorityRepository;
-
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private SlackUserRepository slackUserRepository;
-
     @Autowired
     private SlackTeamRepository slackTeamRepository;
-
-    @Autowired
-    private SlackClientService slackClientService;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private UserService userService;
@@ -71,14 +47,14 @@ public class SlackTeamController {
 
         // Verify that ID is correct
         if (id <= 0) {
-            LOGGER.error("Impossible to get Slack team by ID : ID is incorrect");
+            log.error("Impossible to get Slack team by ID : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that entity exists
         SlackTeamEntity entity = slackTeamRepository.findById(id).orElse(null);
         if (entity == null) {
-            LOGGER.error("Impossible to get Slack team by ID : Slack team not found");
+            log.error("Impossible to get Slack team by ID : Slack team not found");
             throw new NotFoundException();
         }
 
@@ -86,7 +62,7 @@ public class SlackTeamController {
         // Else => all organizations
         Long userLoggedInId = userService.get(principal).getId();
         if (!userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get Slack team by ID : principal has not enough privileges");
+            log.error("Impossible to get Slack team by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
 
@@ -123,12 +99,12 @@ public class SlackTeamController {
         // Else => all organizations
         Long userLoggedInId = userService.get(principal).getId();
         if (!userService.isManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
-            LOGGER.error("Impossible to get Slack team by ID : principal has not enough privileges");
+            log.error("Impossible to get Slack team by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
 
         if (entity == null) {
-            LOGGER.error("Impossible to get Slack team by ID : Slack team not found");
+            log.error("Impossible to get Slack team by ID : Slack team not found");
             throw new NotFoundException();
         }
 
