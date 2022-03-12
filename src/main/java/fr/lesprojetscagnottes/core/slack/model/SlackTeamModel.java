@@ -2,9 +2,8 @@ package fr.lesprojetscagnottes.core.slack.model;
 
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.GenericModel;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
@@ -13,6 +12,9 @@ import javax.persistence.Transient;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
 public class SlackTeamModel extends AuditEntity<String> {
 
     @Column(name = "access_token")
@@ -40,21 +42,22 @@ public class SlackTeamModel extends AuditEntity<String> {
     protected GenericModel organization;
 
     public static SlackTeamModel fromEntity(SlackTeamModel entity) {
-        SlackTeamModel model = new SlackTeamModel();
-        model.setCreatedAt(entity.getCreatedAt());
-        model.setCreatedBy(entity.getCreatedBy());
-        model.setUpdatedAt(entity.getUpdatedAt());
-        model.setUpdatedBy(entity.getUpdatedBy());
-        model.setId(entity.getId());
-        model.setAccessToken(entity.getAccessToken());
-        model.setTeamId(entity.getTeamId());
-        model.setTeamName(entity.getTeamName());
-        model.setBotUserId(entity.getBotUserId());
-        model.setBotAccessToken(entity.getBotAccessToken());
-        model.setPublicationChannel(entity.getPublicationChannel());
-        model.setPublicationChannelId(entity.getPublicationChannelId());
-        model.setOrganization(new GenericModel(entity.getOrganization()));
-        return model;
+
+        return SlackTeamModel.builder()
+                .createdAt(entity.getCreatedAt())
+                .createdBy(entity.getUpdatedBy())
+                .updatedAt(entity.getUpdatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .updatedBy(entity.getUpdatedBy())
+                .id(entity.getId())
+                .accessToken(entity.getAccessToken())
+                .teamId(entity.getTeamId())
+                .teamName(entity.getTeamName())
+                .botUserId(entity.getBotUserId())
+                .botAccessToken(entity.getBotAccessToken())
+                .publicationChannel(entity.getPublicationChannel())
+                .publicationChannelId(entity.getPublicationChannelId())
+                .organization(new GenericModel(entity.getOrganization())).build();
     }
 
 }

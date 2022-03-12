@@ -118,25 +118,24 @@ public class SlackTeamController {
         }
         // Verify that entity exists
         SlackTeamEntity entity = slackTeamRepository.findByTeamId(slackTeamModel.getTeamId());
-        if (entity == null) {
-            LOGGER.error("Impossible to get Slack team by ID : Slack team not found");
-            throw new NotFoundException();
-        } else {
-            entity.setPublicationChannelId(slackTeamModel.getPublicationChannelId());
-            entity.setTeamName(slackTeamModel.getTeamName());
-            SlackTeamModel.fromEntity(slackTeamRepository.save(entity));
-        }
 
         // If user is not admin => organization where principal is member
         // Else => all organizations
         Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             LOGGER.error("Impossible to get Slack team by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
 
+        if (entity == null) {
+            LOGGER.error("Impossible to get Slack team by ID : Slack team not found");
+            throw new NotFoundException();
+        }
+
+        entity.setPublicationChannelId(slackTeamModel.getPublicationChannelId());
+        entity.setTeamName(slackTeamModel.getTeamName());
         // Transform and return organization
-        return SlackTeamModel.fromEntity(entity);
+        return SlackTeamModel.fromEntity(slackTeamRepository.save(entity));
     }
 
 
