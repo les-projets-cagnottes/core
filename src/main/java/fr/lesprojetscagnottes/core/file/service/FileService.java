@@ -39,6 +39,7 @@ public class FileService {
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String matchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String pathFile = new AntPathMatcher().extractPathWithinPattern(matchPattern, path);
+        pathFile = pathFile.replaceAll("/files", "");
         pathFile = pathFile.replaceAll("/", Matcher.quoteReplacement(File.separator));
         InputStream in = new FileInputStream(rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);
         log.debug("Getting image {}", rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);

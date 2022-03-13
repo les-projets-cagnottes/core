@@ -3,6 +3,7 @@ package fr.lesprojetscagnottes.core.common;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -12,6 +13,7 @@ import javax.persistence.MappedSuperclass;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
+@SuperBuilder
 public class GenericModel {
 
     @Id
