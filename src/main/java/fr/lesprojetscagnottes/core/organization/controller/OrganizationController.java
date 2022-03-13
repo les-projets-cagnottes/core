@@ -35,12 +35,12 @@ import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.controller.SlackController;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
+import fr.lesprojetscagnottes.core.providers.slack.controller.SlackController;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.controller.UserController;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
@@ -994,7 +994,7 @@ public class OrganizationController {
             organizationRepository.save(organization);
 
             // Create accounts onboarding users
-            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
+            Set<BudgetEntity> budgets = budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(new Date(), true, organization.getId());
             budgets.forEach(budget -> {
                 AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
                 if(account == null) {

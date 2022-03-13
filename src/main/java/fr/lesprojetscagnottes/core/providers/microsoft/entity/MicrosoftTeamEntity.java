@@ -1,7 +1,7 @@
-package fr.lesprojetscagnottes.core.slack.entity;
+package fr.lesprojetscagnottes.core.providers.microsoft.entity;
 
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.slack.model.SlackTeamModel;
+import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,14 +13,14 @@ import java.util.Set;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @Entity
-@Table(name = "slack_team")
-public class SlackTeamEntity extends SlackTeamModel {
+@Table(name = "ms_team")
+public class MicrosoftTeamEntity extends MicrosoftTeamModel {
 
     @OneToOne
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @OneToMany(mappedBy = "slackTeam", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private Set<SlackUserEntity> slackUsers = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "msTeam", cascade = CascadeType.REMOVE)
+    private Set<MicrosoftUserEntity> msUsers = new LinkedHashSet<>();
 
 }

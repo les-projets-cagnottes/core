@@ -20,8 +20,8 @@ import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepositor
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
