@@ -84,7 +84,7 @@ public class SlackTeamController {
 
         // Verify that ID is correct
         // Fails if any of references are null
-        if (slackTeamModel == null || StringUtils.isEmpty(slackTeamModel.getTeamId()) || StringUtils.isEmpty(slackTeamModel.getPublicationChannelId())) {
+        if (slackTeamModel == null || StringUtils.isEmpty(slackTeamModel.getTeamId())) {
             if (slackTeamModel != null) {
                 log.error("Impossible to update project {} : some references are missing", slackTeamModel.getId());
             } else {
