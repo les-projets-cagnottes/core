@@ -443,6 +443,7 @@ public class OrganizationController {
         // Update entity
         entity.setName(organizationModel.getName());
         entity.setLogoUrl(organizationModel.getLogoUrl());
+        entity.setSocialName(organizationModel.getSocialName());
         organizationRepository.save(entity);
     }
 
