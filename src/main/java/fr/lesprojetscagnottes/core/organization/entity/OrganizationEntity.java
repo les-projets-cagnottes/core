@@ -7,7 +7,8 @@ import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -61,4 +62,6 @@ public class OrganizationEntity extends OrganizationModel {
     @OneToOne(mappedBy = "organization")
     private SlackTeamEntity slackTeam;
 
+    @OneToOne(mappedBy = "organization")
+    private MicrosoftTeamEntity msTeam;
 }

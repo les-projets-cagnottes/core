@@ -1,8 +1,9 @@
-package fr.lesprojetscagnottes.core.slack.repository;
+package fr.lesprojetscagnottes.core.providers.slack.repository;
 
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import javax.transaction.Transactional;
 import java.util.Set;
 
 public interface SlackUserRepository extends JpaRepository<SlackUserEntity, Long> {
@@ -10,6 +11,7 @@ public interface SlackUserRepository extends JpaRepository<SlackUserEntity, Long
 
     SlackUserEntity findBySlackId(String slackUserId);
 
+    @Transactional
     void deleteAllBySlackTeamId(Long slackTeamId);
 
 }

@@ -1,12 +1,10 @@
-package fr.lesprojetscagnottes.core.slack.controller;
+package fr.lesprojetscagnottes.core.providers.slack.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.authentication.service.AuthService;
-import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.InternalServerException;
@@ -16,11 +14,11 @@ import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
@@ -49,8 +47,6 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Date;
-import java.util.Set;
 
 @Slf4j
 @RestController("slackAuthenticationController")
@@ -154,14 +150,12 @@ public class AuthenticationController {
                 log.debug("user found : {}", user);
                 if (user == null) {
                     user = new UserEntity();
-                    user.setCreatedBy("Slack Login");
                     user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
                     user.setFirstname(slackUser.getName());
                     user.setEmail(slackUser.getEmail());
                 } else if (user.getPassword().isEmpty()) {
                     user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
                 }
-                user.setUpdatedBy("Slack Login");
                 user.setUsername(slackUser.getEmail());
                 user.setAvatarUrl(slackUser.getImage_192());
                 final UserEntity userInDb = userRepository.save(UserGenerator.newUser(user));
@@ -199,23 +193,13 @@ public class AuthenticationController {
                         );
                 organizationRepository.save(organization);
 
-                Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
-                budgets.forEach(budget -> {
-                    AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
-                    if (account == null) {
-                        account = new AccountEntity();
-                        account.setAmount(budget.getAmountPerMember());
-                        account.setBudget(budget);
-                    }
-                    account.setInitialAmount(budget.getAmountPerMember());
-                    account.setOwner(userInDb);
-                    accountService.save(account);
-                });
+                // Create accounts for usable budgets
+                accountService.createUserAccountsForUsableBudgets(user, organization.getId());
 
+                // Generate token
                 Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                final String token = jwtTokenUtil.generateToken(authentication);
-                return new AuthenticationResponseModel(token);
+                return new AuthenticationResponseModel(jwtTokenUtil.generateToken(authentication));
             } else {
                 throw new InternalServerException();
             }

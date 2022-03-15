@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Date;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -36,6 +38,11 @@ public class BudgetService {
 
     public BudgetEntity findById(Long id) {
         return budgetRepository.findById(id).orElse(null);
+    }
+
+    public Set<BudgetEntity> findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(Date date, boolean isDistributed, Long organizationId) {
+        // FIXME
+        return budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(date, isDistributed, organizationId);
     }
 
     public BudgetModel save(Principal principal, BudgetModel budgetModel) {

@@ -1,4 +1,4 @@
-package fr.lesprojetscagnottes.core.slack.model;
+package fr.lesprojetscagnottes.core.providers.slack.model;
 
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
