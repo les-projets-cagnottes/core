@@ -6,6 +6,7 @@ import fr.lesprojetscagnottes.core.component.ProjectHttpClient;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
+import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
@@ -46,6 +47,7 @@ public class ProjectStepDefinitions {
             project.setShortDescription(columns.get("shortDescription"));
             project.setLongDescription(columns.get("longDescription"));
             project.setPeopleRequired(Integer.parseInt(columns.get("peopleRequired")));
+            project.setStatus(ProjectStatus.IN_PROGRESS);
             project = projectRepository.save(project);
 
             // Save in Test Map

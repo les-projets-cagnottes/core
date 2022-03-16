@@ -34,14 +34,19 @@ public class OrganizationModel extends AuditEntity<String> {
     private String socialName;
 
     @URL
+    @Column(name = "logo_url")
     private String logoUrl;
 
+    @Transient
     private GenericModel slackTeam;
 
+    @Transient
     private GenericModel msTeam;
 
+    @Transient
     private Set<Long> contentsRef = new LinkedHashSet<>();
 
+    @Transient
     private Set<Long> membersRef = new LinkedHashSet<>();
 
     public static OrganizationModel fromEntity(OrganizationEntity entity) {

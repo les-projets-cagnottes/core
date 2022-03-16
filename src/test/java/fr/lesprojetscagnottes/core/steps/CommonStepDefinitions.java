@@ -113,6 +113,7 @@ public class CommonStepDefinitions {
             // Create organization
             organization = new OrganizationEntity();
             organization.setName(columns.get("name"));
+            organization.setSocialName(columns.get("name"));
             organization = organizationRepository.save(organization);
 
             // Create organization's authorities

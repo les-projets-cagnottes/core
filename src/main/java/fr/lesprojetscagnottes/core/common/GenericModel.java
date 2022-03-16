@@ -21,9 +21,6 @@ public class GenericModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Min(0)
-    @NotNull
-    @NotEmpty
     protected Long id = 0L;
 
     public GenericModel() {}

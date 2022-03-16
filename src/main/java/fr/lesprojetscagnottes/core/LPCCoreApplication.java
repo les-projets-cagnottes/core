@@ -34,6 +34,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.context.annotation.ApplicationScope;
 
 import javax.sql.DataSource;
 import java.io.File;
