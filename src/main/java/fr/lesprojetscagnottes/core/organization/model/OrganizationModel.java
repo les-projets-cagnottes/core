@@ -1,15 +1,18 @@
 package fr.lesprojetscagnottes.core.organization.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -17,17 +20,20 @@ import java.util.Set;
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
+@NotNull
 public class OrganizationModel extends AuditEntity<String> {
 
     @Column
     @NotNull
+    @NotEmpty
+    @JsonProperty(required = true)
     private String name;
 
     @Column
     @NotNull
     private String socialName;
 
-    @Column(name = "logo_url")
+    @URL
     private String logoUrl;
 
     @Transient

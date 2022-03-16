@@ -67,6 +67,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -82,59 +83,70 @@ import java.util.*;
 @RestController
 public class OrganizationController {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+    private final HttpClientService httpClientService;
+
+    private final SlackClientService slackClientService;
+
+    private final BudgetRepository budgetRepository;
+
+    private final ContentRepository contentRepository;
+
+    private final IdeaRepository ideaRepository;
+
+    private final NewsRepository newsRepository;
+
+    private final OrganizationAuthorityRepository organizationAuthorityRepository;
+
+    private final OrganizationRepository organizationRepository;
+
+    private final ProjectRepository projectRepository;
+
+
+    private final SlackUserRepository slackUserRepository;
+
+
+    private final SlackTeamRepository slackTeamRepository;
+
+    private final UserRepository userRepository;
+
+    private final AccountService accountService;
+
+    private final UserService userService;
 
     @Autowired
-    private SlackController slackController;
-
-    @Autowired
-    private UserController userController;
-
-    @Autowired
-    private HttpClientService httpClientService;
-
-    @Autowired
-    private SlackClientService slackClientService;
-
-    @Autowired
-    private BudgetRepository budgetRepository;
-
-    @Autowired
-    private CampaignRepository campaignRepository;
-
-    @Autowired
-    private ContentRepository contentRepository;
-
-    @Autowired
-    private IdeaRepository ideaRepository;
-
-    @Autowired
-    private NewsRepository newsRepository;
-
-    @Autowired
-    private OrganizationAuthorityRepository organizationAuthorityRepository;
-
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private SlackUserRepository slackUserRepository;
-
-    @Autowired
-    private SlackTeamRepository slackTeamRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AccountService accountService;
-
-    @Autowired
-    private UserService userService;
+    public OrganizationController(PasswordEncoder passwordEncoder,
+                                  HttpClientService httpClientService,
+                                  SlackClientService slackClientService,
+                                  BudgetRepository budgetRepository,
+                                  ContentRepository contentRepository,
+                                  IdeaRepository ideaRepository,
+                                  NewsRepository newsRepository,
+                                  OrganizationAuthorityRepository organizationAuthorityRepository,
+                                  OrganizationRepository organizationRepository,
+                                  ProjectRepository projectRepository,
+                                  SlackUserRepository slackUserRepository,
+                                  SlackTeamRepository slackTeamRepository,
+                                  UserRepository userRepository,
+                                  AccountService accountService,
+                                  UserService userService) {
+        this.passwordEncoder = passwordEncoder;
+        this.httpClientService = httpClientService;
+        this.slackClientService = slackClientService;
+        this.budgetRepository = budgetRepository;
+        this.contentRepository = contentRepository;
+        this.ideaRepository = ideaRepository;
+        this.newsRepository = newsRepository;
+        this.organizationAuthorityRepository = organizationAuthorityRepository;
+        this.organizationRepository = organizationRepository;
+        this.projectRepository = projectRepository;
+        this.slackUserRepository = slackUserRepository;
+        this.slackTeamRepository = slackTeamRepository;
+        this.userRepository = userRepository;
+        this.accountService = accountService;
+        this.userService = userService;
+    }
 
     @Value("${fr.lesprojetscagnottes.slack.client_id}")
     private String slackClientId;
@@ -417,33 +429,25 @@ public class OrganizationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/organization", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void update(Principal principal, @RequestBody OrganizationModel organizationModel) {
-
-        // Verify that body is complete
-        if(organizationModel == null || organizationModel.getName() == null || organizationModel.getId() <= 0) {
-            log.error("Impossible to update organization : body is incomplete");
-            throw new BadRequestException();
-        }
+    public void update(Principal principal, @Valid @RequestBody OrganizationModel organizationModel) {
 
         // Get corresponding entity
-        OrganizationEntity entity = organizationRepository.findById(organizationModel.getId()).orElse(null);
-        if(entity == null) {
+        organizationRepository.findById(organizationModel.getId()).ifPresentOrElse(organizationEntity -> {
+            // Verify that principal has correct privileges :
+            // Principal is owner of the organization OR Principal is admin
+            final Long userLoggedInId = userService.get(principal).getId();
+            if(!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
+                log.error("Impossible to update organization : principal {} has not enough privileges", userLoggedInId);
+                throw new ForbiddenException();
+            }
+            // Update entity
+            organizationEntity.setName(organizationModel.getName());
+            organizationEntity.setLogoUrl(organizationModel.getLogoUrl());
+            organizationRepository.save(organizationEntity);
+        }, ()-> {
             log.error("Impossible to update organization : organization {} not found", organizationModel.getId());
             throw new NotFoundException();
-        }
-
-        // Verify that principal has correct privileges :
-        // Principal is owner of the organization OR Principal is admin
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Update entity
-        entity.setName(organizationModel.getName());
-        entity.setLogoUrl(organizationModel.getLogoUrl());
-        organizationRepository.save(entity);
+        });
     }
 
     @Operation(summary = "Delete an organization by its ID", description = "Delete an organization by its ID", tags = { "Organizations" })
