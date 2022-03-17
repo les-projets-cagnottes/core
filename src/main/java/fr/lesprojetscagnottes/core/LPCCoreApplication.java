@@ -20,6 +20,7 @@ import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -34,6 +35,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -46,7 +49,7 @@ import java.util.*;
 @Slf4j
 @SpringBootApplication
 @EnableScheduling
-public class LPCCoreApplication {
+public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -104,6 +107,9 @@ public class LPCCoreApplication {
 
 	@Value("${spring.datasource.driver-class-name}")
 	private String datasourceDriverClassName;
+
+	@Value("${springdoc.swagger-ui.path}")
+	private String swaggerUrl;
 
 	private static ConfigurableApplicationContext context;
 
@@ -256,6 +262,11 @@ public class LPCCoreApplication {
 
 	public void shutdown() {
 		context.close();
+	}
+
+	@Override
+	public void addViewControllers(ViewControllerRegistry registry) {
+		registry.addRedirectViewController("/", StringUtils.isNotEmpty(swaggerUrl) ? swaggerUrl : "/");
 	}
 }
 
