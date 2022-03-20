@@ -443,6 +443,7 @@ public class OrganizationController {
             // Update entity
             organizationEntity.setName(organizationModel.getName());
             organizationEntity.setLogoUrl(organizationModel.getLogoUrl());
+            organizationEntity.setSocialName(organizationModel.getSocialName());
             organizationRepository.save(organizationEntity);
         }, ()-> {
             log.error("Impossible to update organization : organization {} not found", organizationModel.getId());
