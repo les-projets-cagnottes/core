@@ -123,9 +123,16 @@ public class MicrosoftGraphService {
 
     public String getPhoto(String token, String msId) {
         String url = "https://graph.microsoft.com/v1.0/users/" + msId + "/photo/$value";
+        String filePath = "/tmp/ms-avatar/" + msId;
         String photoUrl = "";
-        try {
 
+        // Create temporary directory to save file
+        File temporaryDir = new File("/tmp/ms-avatar/");
+        if(!temporaryDir.mkdirs() && !temporaryDir.isDirectory()) {
+            log.error("Cannot create directory {}", temporaryDir.getAbsolutePath());
+        }
+
+        try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .timeout(Duration.ofMinutes(1))
@@ -134,10 +141,10 @@ public class MicrosoftGraphService {
 
             log.debug("Call {}", url);
             HttpResponse<Path> response = httpClientService.getHttpClient().send(request,
-                    HttpResponse.BodyHandlers.ofFile(Paths.get(msId)));
+                    HttpResponse.BodyHandlers.ofFile(Paths.get(filePath)));
             List<String> contenType = response.headers().map().get("Content-Type");
             if(contenType.size() == 1) {
-                FileEntity fileEntity = fileService.saveOnFilesystem(new File(msId), contenType.get(0), "ms-avatar", msId);
+                FileEntity fileEntity = fileService.saveOnFilesystem(filePath, contenType.get(0), "ms-avatar", msId);
                 fileEntity = fileService.saveInDb(fileEntity);
                 photoUrl = fileEntity.getUrl();
             }
