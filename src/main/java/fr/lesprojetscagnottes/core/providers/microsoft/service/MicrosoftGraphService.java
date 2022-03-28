@@ -199,48 +199,56 @@ public class MicrosoftGraphService {
         String url = "https://graph.microsoft.com/v1.0/users?$select=id,surname,givenName,mail,companyName";
         List<MicrosoftUserEntity> msUsers = new ArrayList<>();
         try {
+            while(url != null) {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofMinutes(1))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + token)
+                        .build();
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(Duration.ofMinutes(1))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + token)
-                    .build();
+                log.debug("Call {}", url);
+                HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+                log.debug("Response from {} : {}", url, response.body());
 
-            log.debug("Call {}", url);
-            HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            log.debug("Response from {} : {}", url, response.body());
+                Gson gson = new Gson();
+                JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+                log.debug("Response converted into json : {}", json);
+                if (json.get("value") != null && json.getAsJsonArray("value").size() > 0) {
+                    JsonArray msUsersJson = json.getAsJsonArray("value");
+                    msUsersJson.forEach(msUsersJsonElement -> {
+                        JsonObject msUserJson = msUsersJsonElement.getAsJsonObject();
 
-            Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
-            log.debug("Response converted into json : {}", json);
-            if (json.get("value") != null && json.getAsJsonArray("value").size() > 0) {
-                JsonArray msUsersJson = json.getAsJsonArray("value");
-                msUsersJson.forEach(msUsersJsonElement -> {
-                    JsonObject msUserJson = msUsersJsonElement.getAsJsonObject();
+                        MicrosoftUserEntity msUser = new MicrosoftUserEntity();
+                        msUser.setMsId(msUserJson.get("id").getAsString());
 
-                    MicrosoftUserEntity msUser = new MicrosoftUserEntity();
-                    msUser.setMsId(msUserJson.get("id").getAsString());
+                        if(!msUserJson.get("mail").isJsonNull()) {
+                            msUser.setMail(msUserJson.get("mail").getAsString());
+                        }
+                        if(!msUserJson.get("surname").isJsonNull()) {
+                            msUser.setSurname(msUserJson.get("surname").getAsString());
+                        }
+                        if(!msUserJson.get("givenName").isJsonNull()) {
+                            msUser.setGivenName(msUserJson.get("givenName").getAsString());
+                        }
+                        if(!msUserJson.get("companyName").isJsonNull()) {
+                            msUser.setCompanyName(msUserJson.get("companyName").getAsString());
+                        }
 
-                    if(!msUserJson.get("mail").isJsonNull()) {
-                        msUser.setMail(msUserJson.get("mail").getAsString());
-                    }
-                    if(!msUserJson.get("surname").isJsonNull()) {
-                        msUser.setSurname(msUserJson.get("surname").getAsString());
-                    }
-                    if(!msUserJson.get("givenName").isJsonNull()) {
-                        msUser.setGivenName(msUserJson.get("givenName").getAsString());
-                    }
-                    if(!msUserJson.get("companyName").isJsonNull()) {
-                        msUser.setCompanyName(msUserJson.get("companyName").getAsString());
-                    }
+                        if(companyFilter == null || companyFilter.isEmpty() || companyFilter.equals(msUser.getCompanyName())) {
+                            log.debug("{} eligible to sync", msUser.getMail());
+                            msUsers.add(msUser);
+                        }
+                    });
+                }
 
-                    if(companyFilter == null || companyFilter.isEmpty() || companyFilter.equals(msUser.getCompanyName())) {
-                        log.debug("{} eligible to sync", msUser.getMail());
-                        msUsers.add(msUser);
-                    }
-                });
+                if(json.get("@odata.nextLink") != null) {
+                    url = json.get("@odata.nextLink").getAsString();
+                } else {
+                    url = null;
+                }
             }
+
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage(), e);
         }
