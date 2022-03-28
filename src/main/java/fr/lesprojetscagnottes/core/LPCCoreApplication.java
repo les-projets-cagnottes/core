@@ -2,8 +2,6 @@ package fr.lesprojetscagnottes.core;
 
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.authentication.ApiTokenRepository;
-import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
-import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
@@ -11,11 +9,11 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
+import fr.lesprojetscagnottes.core.providers.slack.task.CatcherTokenProviderTask;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
@@ -32,19 +30,16 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Objects;
+import java.util.Timer;
 
 @Slf4j
 @SpringBootApplication
@@ -62,6 +57,9 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Autowired
 	private DonationProcessingTask donationProcessingTask;
+
+	@Autowired
+	private CatcherTokenProviderTask catcherTokenProviderTask;
 
 	@Autowired
 	private UserGenerator userGenerator;
@@ -84,12 +82,6 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Autowired
-	private TokenProvider jwtTokenUtil;
-
-	@Autowired
-	private AuthService authService;
-
 	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
 
@@ -98,9 +90,6 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Value("${fr.lesprojetscagnottes.core.storage.data}")
 	private String dataStorageFolder;
-
-	@Value("${fr.lesprojetscagnottes.core.storage.slackeventscatcher}")
-	private String slackEventsCatcherStorage;
 
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
@@ -191,42 +180,9 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 
 		}
 
-		// If Slack is enabled, we create a dedicated user account
 		if(slackEnabled) {
-			log.info("Slack module is enabled. Retrieving a token for slack-events-catcher");
-			if(admin == null) {
-				admin = userRepository.findByEmail("admin");
-			}
-			List<AuthenticationResponseEntity> apiTokens = apiTokenRepository.findAllByDescription("slack-events-catcher");
-			AuthenticationResponseEntity apiToken;
-			if(apiTokens.size() == 1) {
-				apiToken = apiTokens.get(0);
-			} else if(apiTokens.size() == 0) {
-				Calendar cal = Calendar.getInstance();
-				cal.add(Calendar.YEAR, 1);
-				Date nextYear = cal.getTime();
-				Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, authService.getAuthorities(admin.getId()));
-				apiToken = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
-				apiToken.setDescription("slack-events-catcher");
-				apiToken.setExpiration(nextYear);
-				apiToken.setUser(admin);
-			} else {
-				log.error("Too many tokens registered for slack-events-catcher");
-				return;
-			}
-			prepareRootDirectories(slackEventsCatcherStorage);
-			String token = apiTokenRepository.save(apiToken).getToken();
-			String tokenFilePath = rootStorageFolder + File.separator + slackEventsCatcherStorage + File.separator + "token";
-			FileWriter myWriter;
-			try {
-				myWriter = new FileWriter(tokenFilePath);
-				myWriter.write(token);
-				myWriter.close();
-			} catch (IOException e) {
-				log.debug("Cannot save slack-events-catcher token in {}", tokenFilePath);
-			}
-		} else {
-			log.info("Slack module is disabled.");
+			catcherTokenProviderTask.run();
+			new Timer().schedule(catcherTokenProviderTask, 0, 1200000);
 		}
 
 		prepareRootDirectories(dataStorageFolder);

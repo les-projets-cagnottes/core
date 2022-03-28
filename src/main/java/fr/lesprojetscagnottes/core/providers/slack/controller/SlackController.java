@@ -180,14 +180,20 @@ public class SlackController {
 
         user.getSlackUsers().forEach(slackUser -> {
 
+            // Create Slack User if not exists in DB
             SlackUserEntity slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
+            if(slackUserInDb == null) {
+                slackUserInDb = new SlackUserEntity();
+                slackUserInDb.setSlackId(slackUser.getSlackId());
+                slackUserInDb.setUser(null);
+            }
             slackUserInDb.setEmail(slackUser.getEmail());
             slackUserInDb.setSlackTeam(slackTeam);
-            slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
-            final SlackUserEntity slackUserFinal = slackUserRepository.save(slackUserInDb);
+            slackUserInDb.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUser.getSlackId()));
+            final SlackUserEntity slackUserEntityFinal = slackUserRepository.save(slackUserInDb);
 
             // Create User if not exists in DB
-            UserEntity userInDb = userRepository.findBySlackUsers_Id(slackUserFinal.getId());
+            UserEntity userInDb = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
             if (userInDb == null) {
                 userInDb = UserGenerator.newUser(user);
             }
@@ -202,14 +208,14 @@ public class SlackController {
             userInDbFinal.getSlackUsers().stream().filter(userSlackUser -> userSlackUser.getUser().getId().equals(userInDbFinal.getId()))
                     .findAny()
                     .ifPresentOrElse(
-                            userSlackUser -> userSlackUser = slackUserFinal,
-                            () -> userInDbFinal.getSlackUsers().add(slackUserFinal));
+                            userSlackUser -> userSlackUser = slackUserEntityFinal,
+                            () -> userInDbFinal.getSlackUsers().add(slackUserEntityFinal));
 
             final UserEntity userWithSlackUser = userRepository.save(userInDbFinal);
 
             // Complete SlackUser with user saved
-            slackUserInDb.setUser(userInDb);
-            final SlackUserEntity slackUserFinal2 = slackUserRepository.save(slackUserInDb);
+            slackUserEntityFinal.setUser(userWithSlackUser);
+            final SlackUserEntity slackUserFinal2 = slackUserRepository.save(slackUserEntityFinal);
 
             // If the SlackTeam doesnt have the SlackUser -> Add it
             slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
@@ -254,7 +260,7 @@ public class SlackController {
             context.setVariables(model);
             String slackMessage = templateEngine.process("slack/fr/new-member", context);
 
-            slackClientService.postMessage(slackTeam, slackUser.getImId(), slackMessage);
+            slackClientService.postMessage(slackTeam, slackUserInDb.getImId(), slackMessage);
         });
     }
 
@@ -291,17 +297,16 @@ public class SlackController {
             throw new NotFoundException();
         }
 
-        user.getSlackUsers().stream()
-                .findFirst()
-                .ifPresent(slackUser -> {
+        user.getSlackUsers().forEach(slackUser -> {
                     SlackUserEntity slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
 
                     UserEntity userEditted = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
+                    userEditted.setAvatarUrl(user.getAvatarUrl());
                     userEditted.setEnabled(user.getEnabled());
                     final UserEntity userInDb = userRepository.save(userEditted);
 
                     slackUserInDb.setSlackTeam(slackTeam);
-                    slackUserInDb.setUser(user);
+                    slackUserInDb.setUser(userInDb);
                     final SlackUserEntity slackUserFinal = slackUserRepository.save(slackUserInDb);
 
                     if(user.getEnabled()) {
