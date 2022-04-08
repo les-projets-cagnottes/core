@@ -853,7 +853,7 @@ public class OrganizationController {
         }
 
         // Prepare Slack request
-        String url = "https://slack.com/api/oauth.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        String url = "https://slack.com/api/oauth.v2.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
         String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
         log.debug("POST " + url);
         log.debug("body : " + body);
