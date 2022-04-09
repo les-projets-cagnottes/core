@@ -181,7 +181,6 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 		}
 
 		if(slackEnabled) {
-			catcherTokenProviderTask.run();
 			new Timer().schedule(catcherTokenProviderTask, 0, 1200000);
 		}
 
