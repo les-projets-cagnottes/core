@@ -25,6 +25,8 @@ public class SlackTeamModel extends AuditEntity<String> {
     private String teamId;
     @Column(name = "team_name")
     private String teamName;
+    @Column(name = "bot_id")
+    private String botId;
     @Column(name = "bot_user_id")
     private String botUserId;
     @Column(name = "bot_access_token")
@@ -46,6 +48,7 @@ public class SlackTeamModel extends AuditEntity<String> {
                 .accessToken(entity.getAccessToken())
                 .teamId(entity.getTeamId())
                 .teamName(entity.getTeamName())
+                .botId(entity.getBotId())
                 .botUserId(entity.getBotUserId())
                 .botAccessToken(entity.getBotAccessToken())
                 .publicationChannel(entity.getPublicationChannel())

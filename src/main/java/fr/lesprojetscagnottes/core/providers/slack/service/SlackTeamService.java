@@ -155,6 +155,7 @@ public class SlackTeamService {
                 slackTeam.setBotAccessToken(json.get("access_token").getAsString());
                 slackTeam.setBotUserId(json.get("bot_user_id").getAsString());
                 slackTeam.setOrganization(organization);
+                slackTeam.setBotId(slackClientService.getBotId(slackTeam));
                 slackTeamRepository.save(slackTeam);
             }
             return response.body();

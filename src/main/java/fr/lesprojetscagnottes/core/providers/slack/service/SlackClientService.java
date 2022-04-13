@@ -179,4 +179,28 @@ public class SlackClientService {
         return StringsCommon.EMPTY_STRING;
     }
 
+    public String getBotId(SlackTeamEntity slackTeam) {
+        String url = "https://slack.com/api/auth.test";
+        log.debug("GET " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Authorization", "Bearer " + slackTeam.getBotAccessToken())
+                .build();
+        HttpResponse<String> response;
+        String botId = null;
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("response : " + response.body());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean() && !json.get("bot_id").isJsonNull()) {
+                botId = json.get("bot_id").getAsString();
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return botId;
+    }
 }
