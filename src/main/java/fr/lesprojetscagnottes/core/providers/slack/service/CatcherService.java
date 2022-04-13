@@ -35,7 +35,7 @@ public class CatcherService {
                 .build();
         HttpResponse<String> response;
         try {
-            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            response = httpClientService.getHttpClientWithoutProxy().send(request, HttpResponse.BodyHandlers.ofString());
             log.debug("response : " + response.body());
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage());
