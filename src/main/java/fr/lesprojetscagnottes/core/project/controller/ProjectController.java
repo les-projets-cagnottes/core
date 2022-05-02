@@ -1,22 +1,11 @@
 package fr.lesprojetscagnottes.core.project.controller;
 
-import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
-import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
-import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
-import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
-import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
-import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import fr.lesprojetscagnottes.core.news.service.NewsService;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
-import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
-import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.project.service.ProjectService;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
-import fr.lesprojetscagnottes.core.user.repository.UserRepository;
-import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,16 +15,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Slf4j
@@ -45,19 +30,10 @@ import java.util.Set;
 public class ProjectController {
 
     @Autowired
-    private OrganizationRepository organizationRepository;
+    private NewsService newsService;
 
     @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private NewsRepository newsRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserService userService;
+    private ProjectService projectService;
 
     @Operation(summary = "Find a project by its ID", description = "Find a project by its ID", tags = { "Projects" })
     @ApiResponses(value = {
@@ -68,29 +44,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectModel findById(Principal principal, @PathVariable("id") Long id) {
-
-        // Verify that ID is correct
-        if(id <= 0) {
-            log.error("Impossible to get project by ID : ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that entity exists
-        ProjectEntity entity = projectRepository.findById(id).orElse(null);
-        if(entity == null) {
-            log.error("Impossible to get project by ID : project not found");
-            throw new NotFoundException();
-        }
-
-        // Verify that principal is in project organizations
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId())) {
-            log.error("Impossible to get project by ID : principal has not enough privileges");
-            throw new ForbiddenException();
-        }
-
-        // Transform and return organization
-        return ProjectModel.fromEntity(entity);
+        return projectService.findById(principal, id);
     }
 
     @Operation(summary = "Get list of projects by a list of IDs", description = "Find a list of projects by a list of IDs", tags = { "Projects" })
@@ -102,33 +56,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"ids"})
     public Set<ProjectModel> getByIds(Principal principal, @RequestParam("ids") Set<Long> ids) {
-
-        Long userLoggedInId = userService.get(principal).getId();
-        boolean userLoggedIn_isNotAdmin = userService.isNotAdmin(userLoggedInId);
-        Set<OrganizationEntity> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
-        Set<ProjectModel> models = new LinkedHashSet<>();
-
-        for(Long id : ids) {
-
-            // Retrieve full referenced objects
-            ProjectEntity project = projectRepository.findById(id).orElse(null);
-            if(project == null) {
-                log.error("Impossible to get project {} : it doesn't exist", id);
-                continue;
-            }
-
-            // Verify that principal share an organization with the user
-            Set<OrganizationEntity> projectOrganizations = organizationRepository.findAllByProjects_Id(id);
-            if(userService.hasNoACommonOrganization(userLoggedInOrganizations, projectOrganizations) && userLoggedIn_isNotAdmin) {
-                log.error("Impossible to get project {} : principal {} is not in its organizations", id, userLoggedInId);
-                continue;
-            }
-
-            // Add the user to returned list
-            models.add(ProjectModel.fromEntity(project));
-        }
-
-        return models;
+        return projectService.getByIds(principal, ids);
     }
 
     @Operation(summary = "Get paginated news", description = "Get paginated news", tags = { "Projects" })
@@ -141,32 +69,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project/{id}/news", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
     public DataPage<NewsModel> listNews(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-
-        // Verify that IDs are corrects
-        if(id <= 0) {
-            log.error("Impossible to get news : parameters are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        ProjectEntity project = projectRepository.findById(id).orElse(null);
-        if(project == null) {
-            log.error("Impossible to get news : project not found");
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
-            log.error("Impossible to get news : principal is not a member of any of the project organizations");
-            throw new ForbiddenException();
-        }
-
-        // Get and transform donations
-        Page<NewsEntity> entities = newsRepository.findAllByProjectId(id, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
-        DataPage<NewsModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
-        return models;
+        return newsService.listByProjects_Id(principal, id, offset, limit);
     }
 
     @Operation(summary = "Get teammates", description = "Get teammates of a project", tags = { "Projects" })
@@ -179,32 +82,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project/{id}/teammates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public Set<UserModel> listTeammates(Principal principal, @PathVariable("id") Long id) {
-
-        // Verify that IDs are corrects
-        if(id <= 0) {
-            log.error("Impossible to get teammates : parameters are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        ProjectEntity project = projectRepository.findById(id).orElse(null);
-        if(project == null) {
-            log.error("Impossible to get teammates : project not found");
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
-            log.error("Impossible to get teammates : principal is not a member of any of the project organizations");
-            throw new ForbiddenException();
-        }
-
-        // Get users
-        Set<UserEntity> entities = userRepository.findAllByProjects_Id(id);
-        Set<UserModel> models = new LinkedHashSet<>();
-        entities.forEach(entity -> models.add(UserModel.fromEntity(entity)));
-        return models;
+        return projectService.listTeammates(principal, id);
     }
 
     @Operation(summary = "Create a project", description = "Create a project", tags = { "Projects" })
@@ -218,48 +96,7 @@ public class ProjectController {
     @RequestMapping(value = "/project", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectModel create(Principal principal, @RequestBody ProjectModel project) {
-
-        // Fails if any of references are null
-        if(project == null || project.getLeader() == null || project.getLeader().getId() <= 0 ||
-            project.getOrganization() == null || project.getOrganization().getId() <= 0) {
-            if(project != null ) {
-                log.error("Impossible to create project \"{}\" : some references are missing", project.getTitle());
-            } else {
-                log.error("Impossible to create a null project");
-            }
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        UserEntity leader = userRepository.findById(project.getLeader().getId()).orElse(null);
-        OrganizationEntity organization = organizationRepository.findById(project.getOrganization().getId()).orElse(null);
-
-        // Fails if any of references are null
-        if(leader == null || organization == null) {
-            log.error("Impossible to create project \"{}\" : one or more reference(s) doesn't exist", project.getTitle());
-            throw new NotFoundException();
-        }
-
-        // Verify that principal is member of organizations
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId) && !userService.isMemberOfOrganization(userLoggedInId, organization.getId())) {
-            log.error("Impossible to create project \"{}\" : principal {} is not member of organization", project.getTitle(), userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Save project
-        ProjectEntity projectToSave = new ProjectEntity();
-        projectToSave.setTitle(project.getTitle());
-        projectToSave.setStatus(ProjectStatus.DRAFT);
-        projectToSave.setShortDescription(project.getShortDescription());
-        projectToSave.setLongDescription(project.getLongDescription());
-        projectToSave.setPeopleRequired(project.getPeopleRequired());
-        projectToSave.setWorkspace(project.getWorkspace());
-        projectToSave.setLeader(leader);
-        projectToSave.setOrganization(organization);
-        projectToSave.getPeopleGivingTime().add(leader);
-
-        return ProjectModel.fromEntity(projectRepository.save(projectToSave));
+        return projectService.create(principal, project);
     }
 
     @Operation(summary = "Update a project", description = "Update a project", tags = { "Projects" })
@@ -272,44 +109,7 @@ public class ProjectController {
     @RequestMapping(value = "/project", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
     public ProjectModel update(Principal principal, @RequestBody ProjectModel projectModel) {
-
-        // Fails if any of references are null
-        if(projectModel == null || projectModel.getId() <= 0 || projectModel.getLeader() == null || projectModel.getLeader().getId() < 0) {
-            if(projectModel != null ) {
-                log.error("Impossible to update project {} : some references are missing", projectModel.getId());
-            } else {
-                log.error("Impossible to update a null project");
-            }
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        UserEntity leader = userRepository.findById(projectModel.getLeader().getId()).orElse(null);
-        OrganizationEntity organization = organizationRepository.findById(projectModel.getOrganization().getId()).orElse(null);
-        ProjectEntity project = projectRepository.findById(projectModel.getId()).orElse(null);
-
-        // Fails if any of references are null
-        if(project == null || leader == null || organization == null) {
-            log.error("Impossible to update project {} : one or more reference(s) doesn't exist", projectModel.getId());
-            throw new NotFoundException();
-        }
-
-        // Verify that principal has enough privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!leader.getId().equals(userLoggedInId) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to update project {} : principal has not enough privileges", projectModel.getId());
-        }
-
-        // Save project
-        project.setTitle(projectModel.getTitle());
-        project.setShortDescription(projectModel.getShortDescription());
-        project.setLongDescription(projectModel.getLongDescription());
-        project.setPeopleRequired(projectModel.getPeopleRequired());
-        project.setWorkspace(projectModel.getWorkspace());
-        project.setLeader(projectModel.getLeader());
-        project.setOrganization(projectModel.getOrganization());
-
-        return ProjectModel.fromEntity(projectRepository.save(project));
+        return projectService.update(principal, projectModel);
     }
 
     @Operation(summary = "Join a project", description = "Make principal join the project as a member", tags = { "Projects" })
@@ -322,40 +122,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project/{id}/join", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void join(Principal principal, @PathVariable("id") Long id) {
-
-        // Fails if any of references are null
-        if(id < 0) {
-            log.error("Impossible to join project {} : some references are missing", id);
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        ProjectEntity project = projectRepository.findById(id).orElse(null);
-
-        // Fails if any of references are null
-        if(project == null) {
-            log.error("Impossible to join project {} : one or more reference(s) doesn't exist", id);
-            throw new NotFoundException();
-        }
-
-        // Verify that principal is member of organizations
-        UserEntity userLoggedIn = userService.get(principal);
-        Long userLoggedInId = userLoggedIn.getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, project.getOrganization().getId())) {
-            log.error("Impossible to join project {} : principal {} is not member of organization", id, userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Add or remove member
-        project.setPeopleGivingTime(userRepository.findAllByProjects_Id(id));
-        project.getPeopleGivingTime()
-                .stream()
-                .filter(member -> userLoggedInId.equals(member.getId()))
-                .findAny()
-                .ifPresentOrElse(
-                        user -> project.getPeopleGivingTime().remove(user),
-                        () -> project.getPeopleGivingTime().add(userLoggedIn));
-        projectRepository.save(project);
+        projectService.join(principal, id);
     }
 
     @Operation(summary = "Publish a project", description = "Update the project with the 'in progress' state", tags = { "Projects" })
@@ -368,33 +135,7 @@ public class ProjectController {
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/project/{id}/publish", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public void publish(Principal principal, @PathVariable("id") Long id) {
-
-        // Fails if any of references are null
-        if(id < 0) {
-            log.error("Impossible to publish project {} : some references are missing", id);
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        ProjectEntity project = projectRepository.findById(id).orElse(null);
-
-        // Fails if any of references are null
-        if(project == null) {
-            log.error("Impossible to publish project {} : one or more reference(s) doesn't exist", id);
-            throw new NotFoundException();
-        }
-
-        // Verify that principal has enough privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to publish project {} : principal has not enough privileges", project.getId());
-        }
-
-        // Add or remove member
-        if(project.getStatus().equals(ProjectStatus.DRAFT)) {
-            project.setStatus(ProjectStatus.IN_PROGRESS);
-            projectRepository.save(project);
-        }
+        projectService.publish(principal, id);
     }
 
 }

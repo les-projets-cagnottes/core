@@ -63,6 +63,10 @@ public class UserService {
         return list;
     }
 
+    public Set<UserEntity> findAllByProjects_Id(Long projectId) {
+        return userRepository.findAllByProjects_Id(projectId);
+    }
+
     public String generateAvatarUrl(UserModel userModel) {
         String avatarUrl;
         if(userModel.getAvatarUrl() == null || userModel.getAvatarUrl().isEmpty()) {
