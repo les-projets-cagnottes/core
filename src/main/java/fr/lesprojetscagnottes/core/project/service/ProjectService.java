@@ -244,6 +244,11 @@ public class ProjectService {
             throw new ForbiddenException();
         }
 
+        // Fails if project is finished
+        if(project.getStatus().equals(ProjectStatus.FINISHED)) {
+            log.error("Impossible to join project {} : status is finished", id);
+        }
+
         // Add or remove member
         project.setPeopleGivingTime(userService.findAllByProjects_Id(id));
         project.getPeopleGivingTime()
@@ -256,11 +261,11 @@ public class ProjectService {
         projectRepository.save(project);
     }
 
-    public void publish(Principal principal, Long id) {
+    public void updateStatus(Principal principal, Long id, ProjectStatus status) {
 
         // Fails if any of references are null
         if(id < 0) {
-            log.error("Impossible to publish project {} : some references are missing", id);
+            log.error("Impossible to update project status {} : some references are missing", id);
             throw new BadRequestException();
         }
 
@@ -269,23 +274,30 @@ public class ProjectService {
 
         // Fails if any of references are null
         if(project == null) {
-            log.error("Impossible to publish project {} : one or more reference(s) doesn't exist", id);
+            log.error("Impossible to update project status {} : one or more reference(s) doesn't exist", id);
             throw new NotFoundException();
         }
 
         // Verify that principal has enough privileges
         UserEntity userLoggedIn = userService.get(principal);
         Long userLoggedInId = userLoggedIn.getId();
-        if(userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to publish project {} : principal has not enough privileges", project.getId());
+        if(userService.isNotAdmin(userLoggedInId)
+                && !userService.isManagerOfOrganization(userLoggedInId, project.getOrganization().getId())
+                && !userLoggedInId.equals(project.getLeader().getId())) {
+            log.error("Impossible to update project status {} : principal has not enough privileges", project.getId());
+            throw new ForbiddenException();
         }
 
-        // Add or remove member
-        if(project.getStatus().equals(ProjectStatus.DRAFT)) {
-            project.setStatus(ProjectStatus.IN_PROGRESS);
-            projectRepository.save(project);
+        // Save previous status for notification purposes
+        ProjectStatus previousStatus = project.getStatus();
 
-            // Create notification
+        // Update status
+        project.setStatus(status);
+        projectRepository.save(project);
+
+        // Prepare & send notifications
+        if(previousStatus.equals(ProjectStatus.DRAFT)
+                && status.equals(ProjectStatus.IN_PROGRESS)) {
             Map<String, Object> model = new HashMap<>();
             model.put("user_fullname", userLoggedIn.getFullname());
             model.put("project_title", project.getTitle());
