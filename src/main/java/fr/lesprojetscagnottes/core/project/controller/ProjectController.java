@@ -4,6 +4,7 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.service.NewsService;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
+import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.service.ProjectService;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import io.swagger.v3.oas.annotations.Operation;
@@ -125,17 +126,17 @@ public class ProjectController {
         projectService.join(principal, id);
     }
 
-    @Operation(summary = "Publish a project", description = "Update the project with the 'in progress' state", tags = { "Projects" })
+    @Operation(summary = "Update the status of a project", description = "Update the project with the given status", tags = { "Projects" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Project published", content = @Content(schema = @Schema(implementation = ProjectModel.class))),
+            @ApiResponse(responseCode = "200", description = "Project updated"),
             @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
             @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/project/{id}/publish", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void publish(Principal principal, @PathVariable("id") Long id) {
-        projectService.publish(principal, id);
+    @RequestMapping(value = "/project/{id}/status", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void updateStatus(Principal principal, @PathVariable("id") Long id, @RequestBody String status) {
+        projectService.updateStatus(principal, id, ProjectStatus.valueOf(status));
     }
 
 }
