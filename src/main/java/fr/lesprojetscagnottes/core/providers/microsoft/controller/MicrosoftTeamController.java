@@ -53,6 +53,19 @@ public class MicrosoftTeamController {
         return microsoftTeamService.save(principal, msTeam);
     }
 
+    @Operation(summary = "Update a MS Team", description = "Update a MS Team", tags = { "Team:Microsoft" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "MS Team updated", content = @Content(schema = @Schema(implementation = MicrosoftTeamModel.class))),
+            @ApiResponse(responseCode = "400", description = "Some references are missing", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Some references doesn't exist", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Principal has not enough privileges", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/team/ms", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public MicrosoftTeamModel update(Principal principal, @RequestBody MicrosoftTeamModel msTeam) {
+        return microsoftTeamService.save(principal, msTeam);
+    }
+
     @Operation(summary = "Delete a MS Team by its ID", description = "Delete a MS Team by its ID", tags = { "Team:Microsoft" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "MS Team deleted", content = @Content(schema = @Schema())),

@@ -7,6 +7,8 @@ import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
+import fr.lesprojetscagnottes.core.notification.model.NotificationName;
+import fr.lesprojetscagnottes.core.notification.service.NotificationService;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
@@ -48,6 +50,9 @@ public class CampaignScheduler {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Value("${fr.lesprojetscagnottes.web.url}")
     private String webUrl;
@@ -102,9 +107,6 @@ public class CampaignScheduler {
 
     public void notifyCampaignStatus(CampaignEntity campaign, long daysUntilDeadline) {
 
-        int teamMatesMissing = campaign.getProject().getPeopleRequired() - campaign.getProject().getPeopleGivingTime().size();
-        log.info("[notifyCampaignStatus][" + campaign.getId() + "] Teammates missing : " + teamMatesMissing);
-
         Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
         float totalDonations = 0f;
         for (Donation donation : donations) {
@@ -117,16 +119,22 @@ public class CampaignScheduler {
         if(leader == null) {
             log.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
         } else {
-            if(teamMatesMissing > 0 || donationsMissing > 0) {
+            if(donationsMissing > 0) {
 
                 Map<String, Object> model = new HashMap<>();
+                model.put("days_until_deadline", daysUntilDeadline);
+                model.put("donation_missing_formatted", String.format("%.2f", donationsMissing));
+                model.put("project_title", campaign.getProject().getTitle());
+                model.put("project_url", webUrl + "/projects/" + campaign.getProject().getId());
+                model.put("profile_url", webUrl + "/profile");
+                notificationService.create(NotificationName.CAMPAIGN_REMINDER, model, campaign.getProject().getOrganization().getId());
+
+                // TODO : Remove Slack legacy notification
                 model.put("URL", webUrl);
                 model.put("campaign", campaign);
                 model.put("daysUntilDeadline", daysUntilDeadline);
-                model.put("teamMatesMissing", teamMatesMissing);
                 model.put("donationsMissing", donationsMissing);
                 model.put("donationsMissingFormatted", String.format("%.2f", donationsMissing));
-
                 OrganizationEntity organization = campaign.getProject().getOrganization();
                 if(organization.getSlackTeam() != null) {
                     SlackTeamEntity slackTeam = organization.getSlackTeam();

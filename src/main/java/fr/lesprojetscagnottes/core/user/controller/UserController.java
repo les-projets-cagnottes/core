@@ -3,7 +3,9 @@ package fr.lesprojetscagnottes.core.user.controller;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.account.model.AccountModel;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
+import fr.lesprojetscagnottes.core.authorization.model.AuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
@@ -606,6 +608,54 @@ public class UserController {
         entities.forEach(entity -> models.add(OrganizationAuthorityModel.fromEntity(entity)));
 
         return models;
+    }
+
+    @Operation(summary = "Grant a user with an authority", description = "Grant a user with an authority", tags = { "Users" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User granted", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @Content(schema = @Schema())),
+            @ApiResponse(responseCode = "404", description = "Authority not found", content = @Content(schema = @Schema()))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/user/{id}/authorities", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void grant(Principal principal, @PathVariable long id, @RequestBody AuthorityModel authorityModel) {
+
+        // All prerequisites are presents
+        if(id <= 0 || authorityModel == null || authorityModel.getId() <= 0) {
+            log.error("Impossible to grant user {} with authority {} : some parameters are missing", id, authorityModel);
+            throw new BadRequestException();
+        }
+
+        // Verify user and authority exists in DB
+        final UserEntity userInDb = userRepository.findById(id).orElse(null);
+        AuthorityEntity authority = authorityRepository.findById(authorityModel.getId()).orElse(null);
+        if(userInDb == null || authority == null) {
+            log.error("Impossible to grant user {} with authority {} : cannot find user or authority in DB", id, authorityModel.getId());
+            throw new NotFoundException();
+        }
+
+        // Test that user logged in has correct rights
+        Long userLoggedInId = userService.get(principal).getId();
+        if(userService.isNotAdmin(userLoggedInId)) {
+            log.error("Impossible to grant user {} with authority {} : principal has not enough privileges", id, authorityModel.getId());
+            throw new ForbiddenException();
+        }
+
+        // Grant or remove organization authority
+        userInDb.getUserAuthorities().stream().filter(userAuthority -> userAuthority.getId().equals(authority.getId()))
+                .findAny()
+                .ifPresentOrElse(
+                        userAuthority -> {
+                            log.debug("Remove authority {} from user {}", userAuthority.getId(), userAuthority.getId());
+                            userInDb.getUserAuthorities().remove(userAuthority);
+                        },
+                        () -> {
+                            log.debug("Add authority {} to user {}", authority.getId(), userInDb.getId());
+                            userInDb.getUserAuthorities().add(authority);
+                        }
+                );
+        userRepository.save(userInDb);
     }
 
     @Operation(summary = "Grant a user with an organization authority", description = "Grant a user with an organization authority", tags = { "Users" })

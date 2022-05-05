@@ -122,6 +122,9 @@ public class MicrosoftTeamService {
         // Pass new values
         msTeamToSave.setDisplayName(msTeamFromMsGraph.getDisplayName());
         msTeamToSave.setTenantId(msTeam.getTenantId());
+        msTeamToSave.setGroupId(msTeam.getGroupId());
+        msTeamToSave.setChannelId(msTeam.getChannelId());
+        msTeamToSave.setCompanyFilter(msTeam.getCompanyFilter());
         msTeamToSave.setOrganization(organization);
 
         // Save
@@ -289,6 +292,9 @@ public class MicrosoftTeamService {
                 microsoftUserService.delete(msUserBeforeSync);
             }
         });
+
+        // Apply member removal from organization
+        organizationService.save(organization);
 
         return null;
     }
