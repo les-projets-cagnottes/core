@@ -39,6 +39,7 @@ public class FileService {
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String matchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String pathFile = new AntPathMatcher().extractPathWithinPattern(matchPattern, path);
+        pathFile = pathFile.replaceAll("/files", "");
         pathFile = pathFile.replaceAll("/", Matcher.quoteReplacement(File.separator));
         InputStream in = new FileInputStream(rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);
         log.debug("Getting image {}", rootStorageFolder + File.separator + dataStorageFolder + File.separator + pathFile);
@@ -47,10 +48,31 @@ public class FileService {
         return fileContent;
     }
 
-    public FileEntity saveOnFilesystem(MultipartFile multipartFile, String directory, String name) throws IOException {
+    public FileEntity saveOnFilesystem(String filename, String mimeType, String directory, String name) throws IOException {
 
-        String fullPath;
-        String finalFileName;
+        // Extract data from File
+        log.debug("contentType: " + mimeType);
+        String format = MimeTypes.getDefaultExt(mimeType);
+        log.debug("format: " + format);
+        String finalFileName = name + "." + format;
+        log.debug("saved filename: " + finalFileName);
+
+        // Write file on filesystem
+        prepareDirectories(directory);
+        String destination = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
+        move(filename, destination);
+
+        // Create entity to return
+        FileEntity entity = new FileEntity();
+        entity.setDirectory(directory);
+        entity.setName(name);
+        entity.setFormat(format);
+        entity.setUrl(coreUrl + "/files/" + directory + "/" + finalFileName);
+
+        return entity;
+    }
+
+    public FileEntity saveOnFilesystem(MultipartFile multipartFile, String directory, String name) throws IOException {
 
         // Extract data from MultipartFile
         InputStream inputStream = multipartFile.getInputStream();
@@ -59,16 +81,14 @@ public class FileService {
         log.debug("originalName: " + originalName);
         String contentType = multipartFile.getContentType();
         log.debug("contentType: " + contentType);
-        long size = multipartFile.getSize();
-        log.debug("size: " + size);
         String format = MimeTypes.getDefaultExt(contentType);
         log.debug("format: " + format);
-        finalFileName = name + "." + format;
+        String finalFileName = name + "." + format;
         log.debug("saved filename: " + finalFileName);
 
         // Write file on filesystem
         prepareDirectories(directory);
-        fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
+        String fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
         java.io.File file = new java.io.File(fullPath);
         FileOutputStream os = new FileOutputStream(file);
         os.write(multipartFile.getBytes());
@@ -131,6 +151,27 @@ public class FileService {
         return Boolean.TRUE;
     }
 
+    public String getPath(FileEntity entity) {
+        return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
+    }
+
+    private void move(String source, String destination) {
+        try (InputStream is = new FileInputStream(source); OutputStream os = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+            if(!new File(source).delete()) {
+                log.warn("Cannot delete {}", source);
+            }
+        } catch (FileNotFoundException e) {
+            log.error("File {} or {} not found", source, destination, e);
+        } catch (IOException e) {
+            log.error("An error occurred when copying {} to {}", source, destination, e);
+        }
+    }
+
     private void prepareDirectories(String directoryPath) {
         File directory = new File(rootStorageFolder);
         if (!directory.exists()) {
@@ -156,10 +197,6 @@ public class FileService {
                 log.error("The path {} is not a directory", directory.getPath());
             }
         }
-    }
-
-    public String getPath(FileEntity entity) {
-        return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
     }
 
 }

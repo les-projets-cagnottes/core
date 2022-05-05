@@ -61,10 +61,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/").permitAll()
                 .antMatchers(HttpMethod.OPTIONS,"**").permitAll()
                 .antMatchers(HttpMethod.GET,"/files/**").permitAll()
                 .antMatchers(HttpMethod.POST,"/api/auth/login**").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/auth/login/slack**").permitAll()
+                .antMatchers(HttpMethod.GET,"/api/auth/login/microsoft**").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/health").permitAll()
                 .antMatchers(HttpMethod.GET,"/actuator/health").permitAll()
                 .antMatchers(HttpMethod.GET,"/actuator/**").permitAll()

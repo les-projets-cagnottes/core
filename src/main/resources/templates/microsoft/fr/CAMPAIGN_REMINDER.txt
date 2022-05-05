@@ -1,0 +1,9 @@
+<p>⏲ Il reste <b>[(${days_until_deadline})] jour(s)</b> pour compléter la campagne de financement du projet [(${project_title})]</p>
+
+<p>A ce jour, il manque [(${donation_missing_formatted})] €</p>
+
+<p>Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement" :<br/>
+<a href="[(${project_url})]">[(${project_url})]</a></p>
+
+<p>pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :<br/>
+<a href="[(${profile_url})]">[(${profile_url})]</a></p>

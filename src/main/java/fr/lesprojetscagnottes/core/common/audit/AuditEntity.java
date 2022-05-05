@@ -3,7 +3,9 @@ package fr.lesprojetscagnottes.core.common.audit;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -19,6 +21,8 @@ import java.util.Date;
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
+@SuperBuilder(builderMethodName = "auditEntityBuilder")
 public class AuditEntity<U> extends GenericModel {
 
     @CreatedDate
@@ -36,6 +40,5 @@ public class AuditEntity<U> extends GenericModel {
     @LastModifiedBy
     @Column(name = "updated_by", columnDefinition = "varchar(255) default 'System'")
     private U updatedBy;
-
 }
 

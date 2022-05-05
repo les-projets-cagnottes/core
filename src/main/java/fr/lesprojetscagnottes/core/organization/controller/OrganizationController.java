@@ -1,8 +1,5 @@
 package fr.lesprojetscagnottes.core.organization.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
 import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
@@ -12,13 +9,11 @@ import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
-import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
-import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
@@ -35,13 +30,10 @@ import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.controller.SlackController;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.slack.entity.SlackUserEntity;
-import fr.lesprojetscagnottes.core.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.user.UserGenerator;
+import fr.lesprojetscagnottes.core.providers.slack.controller.SlackController;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
+import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.controller.UserController;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
@@ -56,7 +48,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -64,16 +55,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.security.Principal;
-import java.sql.Timestamp;
-import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -81,9 +65,6 @@ import java.util.*;
 @Tag(name = "Organizations", description = "The Organizations API")
 @RestController
 public class OrganizationController {
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private SlackController slackController;
@@ -136,12 +117,6 @@ public class OrganizationController {
     @Autowired
     private UserService userService;
 
-    @Value("${fr.lesprojetscagnottes.slack.client_id}")
-    private String slackClientId;
-
-    @Value("${fr.lesprojetscagnottes.slack.client_secret}")
-    private String slackClientSecret;
-    
     @Operation(summary = "Find all organizations paginated", description = "Find all organizations paginated", tags = { "Organizations" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organizations paginated", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class)))
@@ -443,6 +418,7 @@ public class OrganizationController {
         // Update entity
         entity.setName(organizationModel.getName());
         entity.setLogoUrl(organizationModel.getLogoUrl());
+        entity.setSocialName(organizationModel.getSocialName());
         organizationRepository.save(entity);
     }
 
@@ -817,238 +793,6 @@ public class OrganizationController {
         Set<ContentModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(ContentModel.fromEntity(entity)));
         return models;
-    }
-
-    @Operation(summary = "Add Slack workspace to organization", description = "Add Slack workspace to organization", tags = { "Organizations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Slack workspace added", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Organization not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/slack", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, params = {"code", "redirect_uri"})
-    @ResponseStatus(HttpStatus.CREATED)
-    public String slack(Principal principal, @PathVariable long id, @RequestParam String code, @RequestParam String redirect_uri) throws AuthenticationException {
-
-        // Verify that parameters are correct
-        if(id <= 0 || code == null || code.isEmpty() || redirect_uri == null || redirect_uri.isEmpty()) {
-            log.error("Impossible to add Slack workspace to organization : parameters are incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
-            log.error("Impossible to add Slack workspace to organization : organization {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to add Slack workspace to organization : principal is not owner of organization {}", id);
-            throw new ForbiddenException();
-        }
-
-        // Prepare Slack request
-        String url = "https://slack.com/api/oauth.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
-        String body = "{\"code\":\"" + code + "\", \"redirect_uri\":\"" + redirect_uri + "\"}";
-        log.debug("POST " + url);
-        log.debug("body : " + body);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json")
-                .header("Authorization", basicAuth())
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-        HttpResponse<String> response;
-
-        // Send Slack request and process response
-        try {
-            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            log.debug("response : " + response.body());
-            Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
-            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
-                SlackTeamEntity slackTeam;
-                if(organization.getSlackTeam() != null) {
-                    slackTeam = organization.getSlackTeam();
-                } else {
-                    slackTeam = new SlackTeamEntity();
-                }
-                JsonObject jsonBot = json.get("bot").getAsJsonObject();
-                slackTeam.setAccessToken(json.get("access_token").getAsString());
-                slackTeam.setTeamId(json.get("team_id").getAsString());
-                slackTeam.setTeamName(json.get("team_name").getAsString());
-                slackTeam.setBotAccessToken(jsonBot.get("bot_access_token").getAsString());
-                slackTeam.setBotUserId(jsonBot.get("bot_user_id").getAsString());
-                slackTeam.setOrganization(organization);
-                slackTeamRepository.save(slackTeam);
-            }
-            return response.body();
-
-        } catch (IOException | InterruptedException e) {
-            log.error("Impossible to add Slack workspace to organization");
-            log.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
-    @Operation(summary = "Sync Slack data with organization", description = "Sync Slack data with organization", tags = { "Organizations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Slack data synced", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Organization not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/slack/sync", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String slackSync(Principal principal, @PathVariable long id) throws InterruptedException {
-
-        // Verify that parameters are correct
-        if(id <= 0) {
-            log.error("Impossible to sync Slack data with organization : ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
-            log.error("Impossible to sync Slack data with organization : organization {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
-            throw new ForbiddenException();
-        }
-
-        // Get Slack users
-        SlackTeamEntity slackTeam = organization.getSlackTeam();
-        List<SlackUserEntity> slackUsers = slackClientService.listUsers(organization.getSlackTeam());
-
-        // For each Slack user, retrieve its data
-        UserEntity user;
-        long delay;
-        long tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
-        for(SlackUserEntity slackUser : slackUsers) {
-
-            // Sync with existing Slack user
-            SlackUserEntity slackUserEditted = slackUserRepository.findBySlackId(slackUser.getSlackId());
-            if(slackUserEditted != null) {
-                slackUserEditted.setName(slackUser.getName());
-                slackUserEditted.setImage_192(slackUser.getImage_192());
-                slackUserEditted.setEmail(slackUser.getEmail());
-            } else {
-                slackUserEditted = slackUser;
-            }
-            slackUserEditted.setSlackTeam(slackTeam);
-
-            // Slack conversations.open method is Web API Tier 3 (50+ per minute) so wait 1200ms
-            delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterOpenIm;
-            if(delay > 1200) {
-                delay = 1200;
-            }
-            Thread.sleep(1200 - delay);
-
-            // Open IM with Slack user
-            slackUserEditted.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackUserEditted.getSlackId()));
-            tsAfterOpenIm = (new Timestamp(System.currentTimeMillis())).getTime();
-
-            // Sync with user
-            user = userRepository.findByEmail(slackUser.getEmail());
-            if(user == null) {
-                user = UserGenerator.newUser(new UserEntity());
-                user.setCreatedBy("Slack Sync");
-                user.setFirstname(slackUserEditted.getName());
-                user.setUsername(slackUserEditted.getEmail());
-                user.setEmail(slackUserEditted.getEmail());
-                user.setAvatarUrl(slackUserEditted.getImage_192());
-                user.setPassword(passwordEncoder.encode(StringGenerator.randomString()));
-            }
-            user.setUpdatedBy("Slack Sync");
-            user.setEnabled(!(slackUser.getDeleted() || slackUser.getIsRestricted()));
-
-            // Save data
-            final UserEntity userInDb = userRepository.save(user);
-            slackUserEditted.setUser(userInDb);
-            slackUserRepository.save(slackUserEditted);
-
-            // Add or remove user from organization according to enable parameter
-            if(userInDb.getEnabled()) {
-                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                        .findAny()
-                        .ifPresentOrElse(
-                                member -> member = userInDb,
-                                () -> organization.getMembers().add(userInDb)
-                        );
-            } else {
-                organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                        .findAny()
-                        .ifPresent(member -> organization.getMembers().remove(member));
-            }
-            organizationRepository.save(organization);
-
-            // Create accounts onboarding users
-            Set<BudgetEntity> budgets = budgetRepository.findALlByEndDateGreaterThanAndIsDistributedAndAndOrganizationId(new Date(), true, organization.getId());
-            budgets.forEach(budget -> {
-                AccountEntity account = accountService.getByBudgetAndUser(budget.getId(), userInDb.getId());
-                if(account == null) {
-                    account = new AccountEntity();
-                    account.setAmount(budget.getAmountPerMember());
-                    account.setBudget(budget);
-                }
-                account.setInitialAmount(budget.getAmountPerMember());
-                account.setOwner(userInDb);
-                accountService.save(account);
-            });
-        }
-        return null;
-    }
-
-    @Operation(summary = "Disconnect Slack workspace from organization", description = "Disconnect Slack workspace from organization", tags = { "Organizations" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Slack workspace removed", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Organization or User not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/slack", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void slackDisconnect(Principal principal, @PathVariable long id) {
-
-        // Verify that parameters are correct
-        if(id <= 0) {
-            log.error("Impossible disconnect Slack workspace from organization : ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that organization and Slack Team exists
-        OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null ||organization.getSlackTeam() == null) {
-            log.error("Impossible disconnect Slack workspace from organization : organization or Slack Team {} not found", id);
-            throw new NotFoundException();
-        }
-
-        // Verify if principal has correct privileges
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible disconnect Slack workspace from organization : principal is not owner of organization {}", id);
-            throw new ForbiddenException();
-        }
-
-        // Delete Slack Team
-        Long slackTeamId = organization.getSlackTeam().getId();
-        slackUserRepository.deleteAllBySlackTeamId(slackTeamId);
-        slackTeamRepository.deleteById(slackTeamId);
-    }
-
-    private String basicAuth() {
-        return "Basic " + Base64.getEncoder().encodeToString((slackClientId + ":" + slackClientSecret).getBytes());
     }
 
 }

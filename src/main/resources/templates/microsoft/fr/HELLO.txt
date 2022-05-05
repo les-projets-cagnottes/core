@@ -1,0 +1,14 @@
+<p>Bonjour à tous 👋</p>
+
+<p>Connaissez-vous <b>Les Projets Cagnottes</b> ? Avec ces projets, chacun est libre de :</p>
+
+<ul>
+<li>🚀 Lancer un projet</li>
+<li>🤝 Rejoindre un projet</li>
+<li>💰 Financer un projet avec sa part du budget de l'organisation</li>
+</ul>
+
+<p>Découvrez vite les projets en cours ou lancer le vôtre à l'adresse suivante :<br/>
+<a href="[(${URL})]">[(${URL})]</a></p>
+
+<p>Pour toute question, vous pouvez contacter : [(${contact})]</p>

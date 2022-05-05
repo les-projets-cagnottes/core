@@ -43,6 +43,10 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
+    public UserEntity findByEmail(String mail) {
+        return userRepository.findByEmail(mail);
+    }
+
     public UserEntity get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
         UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
@@ -57,6 +61,10 @@ public class UserService {
         List<UserEntity> list = new ArrayList<>();
         userRepository.findAll().iterator().forEachRemaining(list::add);
         return list;
+    }
+
+    public Set<UserEntity> findAllByProjects_Id(Long projectId) {
+        return userRepository.findAllByProjects_Id(projectId);
     }
 
     public String generateAvatarUrl(UserModel userModel) {
@@ -88,18 +96,11 @@ public class UserService {
     }
 
     public UserEntity save(UserEntity user) {
-        UserEntity newUser = new UserEntity();
-        newUser.setUsername(user.getUsername());
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-            newUser.setLastPasswordResetDate(new Date());
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setLastPasswordResetDate(new Date());
         }
-        newUser.setEmail(user.getEmail());
-        newUser.setFirstname(user.getFirstname());
-        newUser.setLastname(user.getLastname());
-        newUser.setAvatarUrl(user.getAvatarUrl());
-        newUser.setEnabled(user.getEnabled());
-        return userRepository.save(newUser);
+        return userRepository.save(user);
     }
 
     public boolean isMemberOfOrganization(long userId, long organizationId) {

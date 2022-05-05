@@ -1,8 +1,8 @@
 package fr.lesprojetscagnottes.core.authorization.controller;
 
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
-import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.model.AuthorityModel;
+import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -33,12 +34,30 @@ public class AuthorityController {
     @Autowired
     private UserService userService;
 
+    @Operation(summary = "Find all authorities", description = "Find all authorities", tags = { "Authorities" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Return all authorities", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthorityModel.class))))
+    })
+    @PreAuthorize("hasRole('USER')")
+    @RequestMapping(value = "/authority", method = RequestMethod.GET)
+    public Set<AuthorityModel> list() {
+
+        // Get user organizations
+        List<AuthorityEntity> entities = authorityRepository.findAll();
+
+        // Convert all entities to models
+        Set<AuthorityModel> models = new LinkedHashSet<>();
+        entities.forEach(entity -> models.add(AuthorityModel.fromEntity(entity)));
+
+        return models;
+    }
+
     @Operation(summary = "Find all authorities for current user", description = "Find all authorities for current user", tags = { "Authorities" })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all authorities for current user", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthorityModel.class))))
     })
     @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/authority", method = RequestMethod.GET)
+    @RequestMapping(value = "/authority/me", method = RequestMethod.GET)
     public Set<AuthorityModel> getUserAuthorities(Principal principal) {
 
         // Get user organizations

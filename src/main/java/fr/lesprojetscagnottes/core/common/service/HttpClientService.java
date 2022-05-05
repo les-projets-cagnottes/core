@@ -23,12 +23,16 @@ public class HttpClientService {
                     .version(HttpClient.Version.HTTP_2)
                     .build();
         } else {
-            httpClient = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .build();
+            httpClient = getHttpClientWithoutProxy();
         }
 
         return httpClient;
+    }
+
+    public HttpClient getHttpClientWithoutProxy() {
+        return HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build();
     }
 
 }

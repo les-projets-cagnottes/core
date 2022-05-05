@@ -15,13 +15,15 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
+import fr.lesprojetscagnottes.core.notification.model.NotificationName;
+import fr.lesprojetscagnottes.core.notification.service.NotificationService;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.slack.SlackClientService;
-import fr.lesprojetscagnottes.core.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
@@ -84,6 +86,9 @@ public class CampaignController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private UserService userService;
@@ -278,13 +283,21 @@ public class CampaignController {
         }
 
         Map<String, Object> model = new HashMap<>();
-        model.put("URL", webUrl);
-        model.put("project", campaignFinal.getProject());
 
         // Send a notification if project is in progress state
         if(project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
             OrganizationEntity organization = project.getOrganization();
             UserEntity leader = project.getLeader();
+
+            // Send Notification
+            model.put("project_title", project.getTitle());
+            model.put("project_url", webUrl + "/projects/" + project.getId());
+            model.put("profile_url", webUrl + "/profile");
+            notificationService.create(NotificationName.CAMPAIGN_STARTED, model, project.getOrganization().getId());
+
+            // TODO : Remove Slack legacy notification
+            model.put("URL", webUrl);
+            model.put("project", campaignFinal.getProject());
             if(organization.getSlackTeam() != null) {
 
                 SlackTeamEntity slackTeam = organization.getSlackTeam();
