@@ -4,8 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 logs
-data
-slack-events-catcher
+files
 
 ### STS ###
 .apt_generated
