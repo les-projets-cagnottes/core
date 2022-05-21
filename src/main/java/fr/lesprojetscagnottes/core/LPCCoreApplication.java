@@ -26,9 +26,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.support.EncodedResource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -36,8 +33,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.net.URL;
-import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Timer;
 
@@ -109,36 +104,7 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
 
-		// Execute src/main/resources/create.sql file
-		if (!datasourceDriverClassName.equals("org.postgresql.Driver")) {
-			log.warn("File 'create.sql' will not be executed as the datasource is not configured for postgresql");
-		} else {
-			ClassLoader classLoader = getClass().getClassLoader();
-			URL resource = classLoader.getResource("create.sql");
-			if (resource == null) {
-				String error = "File 'create.sql' not found";
-				log.error(error);
-				shutdown();
-			} else {
-				try {
-					ScriptUtils.executeSqlScript(
-							datasource.getConnection(),
-							new EncodedResource(new FileSystemResource(resource.getFile()), "UTF-8"),
-							false,
-							false,
-							ScriptUtils.DEFAULT_COMMENT_PREFIX,
-							";;",
-							ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
-							ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER);
-				} catch (SQLException e) {
-					String error = "Error while executing 'create.sql' file";
-					log.error(error, e);
-					shutdown();
-				}
-			}
-		}
-
-		UserEntity admin = null;
+		UserEntity admin;
 
 		// First launch of App
 		if (authorityRepository.count() == 0) {
