@@ -15,7 +15,7 @@
     <description>Core component of "Les Projets Cagnottes"</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>18</java.version>
         <liquibase.version>4.5.0</liquibase.version>
         <liquibase.propertyFile>liquibase.properties</liquibase.propertyFile>
     </properties>
