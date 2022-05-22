@@ -12,8 +12,12 @@ import java.util.Set;
 @Service
 public class OrganizationService {
 
+    private final OrganizationRepository organizationRepository;
+
     @Autowired
-    private OrganizationRepository organizationRepository;
+    public OrganizationService(OrganizationRepository organizationRepository) {
+        this.organizationRepository = organizationRepository;
+    }
 
     public OrganizationEntity findById(Long id) {
         return organizationRepository.findById(id).orElse(null);

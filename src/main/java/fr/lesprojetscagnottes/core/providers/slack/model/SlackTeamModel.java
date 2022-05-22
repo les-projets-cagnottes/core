@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.providers.slack.model;
 
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -36,7 +37,7 @@ public class SlackTeamModel extends AuditEntity<String> {
     @Column(name = "publication_channel_id")
     private String publicationChannelId;
 
-    public static SlackTeamModel fromEntity(SlackTeamModel entity) {
+    public static SlackTeamModel fromEntity(SlackTeamEntity entity) {
 
         return SlackTeamModel.builder()
                 .createdAt(entity.getCreatedAt())
