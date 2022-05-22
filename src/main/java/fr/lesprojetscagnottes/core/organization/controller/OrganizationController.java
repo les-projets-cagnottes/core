@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.organization.controller;
 
-import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
@@ -8,12 +7,10 @@ import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorit
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.model.BudgetModel;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
-import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
@@ -30,11 +27,6 @@ import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectModel;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.providers.slack.controller.SlackController;
-import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
-import fr.lesprojetscagnottes.core.user.controller.UserController;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
@@ -57,6 +49,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.security.Principal;
 import java.util.*;
 
@@ -66,58 +59,47 @@ import java.util.*;
 @RestController
 public class OrganizationController {
 
-    @Autowired
-    private SlackController slackController;
+    private final BudgetRepository budgetRepository;
+
+    private final ContentRepository contentRepository;
+
+    private final IdeaRepository ideaRepository;
+
+    private final NewsRepository newsRepository;
+
+    private final OrganizationAuthorityRepository organizationAuthorityRepository;
+
+    private final OrganizationRepository organizationRepository;
+
+    private final ProjectRepository projectRepository;
+
+    private final UserRepository userRepository;
+
+    private final UserService userService;
 
     @Autowired
-    private UserController userController;
+    public OrganizationController(
+            BudgetRepository budgetRepository,
+            ContentRepository contentRepository,
+            IdeaRepository ideaRepository,
+            NewsRepository newsRepository,
+            OrganizationAuthorityRepository organizationAuthorityRepository,
+            OrganizationRepository organizationRepository,
+            ProjectRepository projectRepository,
+            UserRepository userRepository,
+            UserService userService) {
+        this.budgetRepository = budgetRepository;
+        this.contentRepository = contentRepository;
+        this.ideaRepository = ideaRepository;
+        this.newsRepository = newsRepository;
+        this.organizationAuthorityRepository = organizationAuthorityRepository;
+        this.organizationRepository = organizationRepository;
+        this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+        this.userService = userService;
+    }
 
-    @Autowired
-    private HttpClientService httpClientService;
-
-    @Autowired
-    private SlackClientService slackClientService;
-
-    @Autowired
-    private BudgetRepository budgetRepository;
-
-    @Autowired
-    private CampaignRepository campaignRepository;
-
-    @Autowired
-    private ContentRepository contentRepository;
-
-    @Autowired
-    private IdeaRepository ideaRepository;
-
-    @Autowired
-    private NewsRepository newsRepository;
-
-    @Autowired
-    private OrganizationAuthorityRepository organizationAuthorityRepository;
-
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private SlackUserRepository slackUserRepository;
-
-    @Autowired
-    private SlackTeamRepository slackTeamRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AccountService accountService;
-
-    @Autowired
-    private UserService userService;
-
-    @Operation(summary = "Find all organizations paginated", description = "Find all organizations paginated", tags = { "Organizations" })
+    @Operation(summary = "Find all organizations paginated", description = "Find all organizations paginated", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organizations paginated", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class)))
     })
@@ -131,7 +113,7 @@ public class OrganizationController {
         // Else => all organizations
         Page<OrganizationEntity> entities;
         long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotAdmin(userLoggedInId)) {
             entities = organizationRepository.findAllByMembers_Id(userLoggedInId, pageable);
         } else {
             entities = organizationRepository.findAll(pageable);
@@ -143,7 +125,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Find all organizations for current user", description = "Find all organizations for current user", tags = { "Organizations" })
+    @Operation(summary = "Find all organizations for current user", description = "Find all organizations for current user", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organizations for current user", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class))))
     })
@@ -162,7 +144,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Find an organization by its ID", description = "Find an organization by its ID", tags = { "Organizations" })
+    @Operation(summary = "Find an organization by its ID", description = "Find an organization by its ID", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return the organization", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = OrganizationModel.class))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -173,7 +155,7 @@ public class OrganizationController {
     public OrganizationModel getById(Principal principal, @PathVariable("id") Long id) {
 
         // Verify that ID is correct
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get organization by ID : ID is incorrect");
             throw new BadRequestException();
         }
@@ -182,14 +164,14 @@ public class OrganizationController {
         // Else => all organizations
         OrganizationEntity entity;
         long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotAdmin(userLoggedInId)) {
             entity = organizationRepository.findByIdAndMembers_Id(id, userLoggedInId);
         } else {
             entity = organizationRepository.findById(id).orElse(null);
         }
 
         // Verify that entity exists
-        if(entity == null) {
+        if (entity == null) {
             log.error("Impossible to get organization by ID : organization not found");
             throw new NotFoundException();
         }
@@ -198,7 +180,7 @@ public class OrganizationController {
         return OrganizationModel.fromEntity(entity);
     }
 
-    @Operation(summary = "Get list of organizations by a list of IDs", description = "Find a list of organizations by a list of IDs", tags = { "Users" })
+    @Operation(summary = "Get list of organizations by a list of IDs", description = "Find a list of organizations by a list of IDs", tags = {"Users"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return the organizations", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationModel.class)))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -213,17 +195,17 @@ public class OrganizationController {
         Set<OrganizationEntity> userLoggedInOrganizations = organizationRepository.findAllByMembers_Id(userLoggedInId);
         Set<OrganizationModel> models = new LinkedHashSet<>();
 
-        for(Long id : ids) {
+        for (Long id : ids) {
 
             // Retrieve full referenced objects
             OrganizationEntity entity = organizationRepository.findById(id).orElse(null);
-            if(entity == null) {
+            if (entity == null) {
                 log.error("Impossible to get organization {} : it doesn't exist", id);
                 continue;
             }
 
             // Verify that principal share an organization with the user
-            if(!userLoggedInOrganizations.contains(entity) && userLoggedIn_isNotAdmin) {
+            if (!userLoggedInOrganizations.contains(entity) && userLoggedIn_isNotAdmin) {
                 log.error("Impossible to get organization {} : principal {} is not in it", id, userLoggedInId);
                 continue;
             }
@@ -235,7 +217,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Find all ideas for an organization", description = "Find all ideas for an organization", tags = { "Organizations" })
+    @Operation(summary = "Find all ideas for an organization", description = "Find all ideas for an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding ideas", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
             @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -247,21 +229,21 @@ public class OrganizationController {
     public DataPage<IdeaModel> getIdeas(Principal principal, @PathVariable("id") Long organizationId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
 
         // Verify that ID is correct
-        if(organizationId <= 0) {
+        if (organizationId <= 0) {
             log.error("Impossible to get ideas of organization : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get ideas of organization {} : principal is not a member of organization", organizationId);
             throw new ForbiddenException();
         }
 
         // Verify that organization and user exists
         OrganizationEntity organization = organizationRepository.findById(organizationId).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get ideas of organization {} : organization doesnt exist", organizationId);
             throw new NotFoundException();
         }
@@ -275,7 +257,7 @@ public class OrganizationController {
     }
 
 
-    @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = { "Organizations" })
+    @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all budgets for an organization", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
             @ApiResponse(responseCode = "404", description = "Principal is not a member of organization", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
@@ -285,7 +267,7 @@ public class OrganizationController {
     public Set<BudgetModel> getBudgets(Principal principal, @PathVariable("id") Long organizationId) {
 
         // Verify that ID is correct
-        if(organizationId <= 0) {
+        if (organizationId <= 0) {
             log.error("Impossible to get budgets of organization : ID is incorrect");
             throw new BadRequestException();
         }
@@ -293,7 +275,7 @@ public class OrganizationController {
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
         OrganizationEntity organization = organizationRepository.findByIdAndMembers_Id(organizationId, userLoggedInId);
-        if(organization == null && userService.isNotAdmin(userLoggedInId)) {
+        if (organization == null && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get budgets of organization {} : principal is not a member of organization", organizationId);
             throw new ForbiddenException();
         }
@@ -308,7 +290,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Find all usable budgets for an organization", description = "Find all usable budgets for an organization", tags = { "Organizations" })
+    @Operation(summary = "Find all usable budgets for an organization", description = "Find all usable budgets for an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all usable budgets for an organization", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = BudgetModel.class)))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -319,21 +301,21 @@ public class OrganizationController {
     @RequestMapping(value = "/organization/{id}/budgets/usable", method = RequestMethod.GET)
     public Set<BudgetModel> getUsableBudgets(Principal principal, @PathVariable("id") Long id) {
 
-        if(id < 0) {
+        if (id < 0) {
             log.error("Impossible to get usable budgets of organization {} : ID is incorrect", id);
             throw new BadRequestException();
         }
 
         // Verify that any of references are not null
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to delete organization : donation {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get usable budgets of organization {} : principal {} has not enough privileges", id, userLoggedInId);
             throw new ForbiddenException();
         }
@@ -348,7 +330,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Create an organization", description = "Create an organization", tags = { "Organizations" })
+    @Operation(summary = "Create an organization", description = "Create an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Return the created organization", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = OrganizationModel.class))),
             @ApiResponse(responseCode = "400", description = "Body is incomplete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
@@ -359,7 +341,7 @@ public class OrganizationController {
     public OrganizationModel create(Principal principal, @RequestBody OrganizationModel organizationModel) {
 
         // Verify that body is complete
-        if(organizationModel == null || organizationModel.getName() == null) {
+        if (organizationModel == null || organizationModel.getName() == null) {
             log.error("Impossible to create organization : body is incomplete");
             throw new BadRequestException();
         }
@@ -371,7 +353,7 @@ public class OrganizationController {
         organization = organizationRepository.save(organization);
 
         // Create authorities
-        for(OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
+        for (OrganizationAuthorityName authorityName : OrganizationAuthorityName.values()) {
             organizationAuthorityRepository.save(new OrganizationAuthorityEntity(organization, authorityName));
         }
 
@@ -384,7 +366,7 @@ public class OrganizationController {
         return OrganizationModel.fromEntity(organization);
     }
 
-    @Operation(summary = "Update an organization", description = "Update an organization", tags = { "Organizations" })
+    @Operation(summary = "Update an organization", description = "Update an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Organization updated", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "Body is not complete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -392,37 +374,29 @@ public class OrganizationController {
     })
     @PreAuthorize("hasRole('USER')")
     @RequestMapping(value = "/organization", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void update(Principal principal, @RequestBody OrganizationModel organizationModel) {
-
-        // Verify that body is complete
-        if(organizationModel == null || organizationModel.getName() == null || organizationModel.getId() <= 0) {
-            log.error("Impossible to update organization : body is incomplete");
-            throw new BadRequestException();
-        }
+    public void update(Principal principal, @Valid @RequestBody OrganizationModel organizationModel) {
 
         // Get corresponding entity
-        OrganizationEntity entity = organizationRepository.findById(organizationModel.getId()).orElse(null);
-        if(entity == null) {
+        organizationRepository.findById(organizationModel.getId()).ifPresentOrElse(organizationEntity -> {
+            // Verify that principal has correct privileges :
+            // Principal is owner of the organization OR Principal is admin
+            final Long userLoggedInId = userService.get(principal).getId();
+            if (!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
+                log.error("Impossible to update organization : principal {} has not enough privileges", userLoggedInId);
+                throw new ForbiddenException();
+            }
+            // Update entity
+            organizationEntity.setName(organizationModel.getName());
+            organizationEntity.setLogoUrl(organizationModel.getLogoUrl());
+            organizationEntity.setSocialName(organizationModel.getSocialName());
+            organizationRepository.save(organizationEntity);
+        }, () -> {
             log.error("Impossible to update organization : organization {} not found", organizationModel.getId());
             throw new NotFoundException();
-        }
-
-        // Verify that principal has correct privileges :
-        // Principal is owner of the organization OR Principal is admin
-        Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
-            throw new ForbiddenException();
-        }
-
-        // Update entity
-        entity.setName(organizationModel.getName());
-        entity.setLogoUrl(organizationModel.getLogoUrl());
-        entity.setSocialName(organizationModel.getSocialName());
-        organizationRepository.save(entity);
+        });
     }
 
-    @Operation(summary = "Delete an organization by its ID", description = "Delete an organization by its ID", tags = { "Organizations" })
+    @Operation(summary = "Delete an organization by its ID", description = "Delete an organization by its ID", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Organization deleted", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -434,7 +408,7 @@ public class OrganizationController {
     public void delete(Principal principal, @PathVariable("id") long id) {
 
         // Fails if campaign ID is missing
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to delete organization : ID is incorrect");
             throw new BadRequestException();
         }
@@ -443,7 +417,7 @@ public class OrganizationController {
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
 
         // Verify that any of references are not null
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to delete organization : donation {} not found", id);
             throw new NotFoundException();
         }
@@ -451,7 +425,7 @@ public class OrganizationController {
         // Verify that principal has correct privileges :
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
@@ -460,7 +434,7 @@ public class OrganizationController {
         organizationRepository.deleteById(id);
     }
 
-    @Operation(summary = "Get members of an organization", description = "Get members of an organization", tags = { "Organizations" })
+    @Operation(summary = "Get members of an organization", description = "Get members of an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all members of organization", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -472,21 +446,21 @@ public class OrganizationController {
     public DataPage<UserModel> getMembers(Principal principal, @PathVariable("id") long id, @RequestParam(name = "offset", defaultValue = "0") int offset, @RequestParam(name = "limit", defaultValue = "10") int limit) {
 
         // Verify that ID is correct
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get members of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get members of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get members of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -499,7 +473,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Add a member to an organization", description = "Add a member to an organization", tags = { "Organizations" })
+    @Operation(summary = "Add a member to an organization", description = "Add a member to an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Member added", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -512,7 +486,7 @@ public class OrganizationController {
     public void addMember(Principal principal, @PathVariable long id, @PathVariable long userId) {
 
         // Verify that IDs are corrects
-        if(id <= 0 || userId <= 0) {
+        if (id <= 0 || userId <= 0) {
             log.error("Impossible to add member to an organization : parameters are incorrect");
             throw new BadRequestException();
         }
@@ -520,14 +494,14 @@ public class OrganizationController {
         // Verify that organization and user exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         UserEntity user = userRepository.findById(userId).orElse(null);
-        if(organization == null || user == null) {
+        if (organization == null || user == null) {
             log.error("Impossible to add member to an organization : organization {} or user {} doesnt exist", id, userId);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to add member to an organization : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -548,7 +522,7 @@ public class OrganizationController {
                 );
     }
 
-    @Operation(summary = "Remove a member from an organization", description = "Remove a member from an organization", tags = { "Organizations" })
+    @Operation(summary = "Remove a member from an organization", description = "Remove a member from an organization", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Member removed", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -560,7 +534,7 @@ public class OrganizationController {
     public void removeMember(Principal principal, @PathVariable long id, @PathVariable long userId) {
 
         // Verify that IDs are corrects
-        if(id <= 0 || userId <= 0) {
+        if (id <= 0 || userId <= 0) {
             log.error("Impossible to remove member from an organization : parameters are incorrect");
             throw new BadRequestException();
         }
@@ -568,14 +542,14 @@ public class OrganizationController {
         // Verify that organization and user exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
         UserEntity user = userRepository.findById(userId).orElse(null);
-        if(organization == null || user == null) {
+        if (organization == null || user == null) {
             log.error("Impossible to remove member from an organization : organization {} or user {} doesnt exist", id, userId);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to remove member from an organization : principal is not a manager of organization {}", id);
             throw new ForbiddenException();
         }
@@ -593,7 +567,7 @@ public class OrganizationController {
         log.info("User {} has been removed from organization {}", user.getId(), organization.getId());
     }
 
-    @Operation(summary = "Get paginated organization projects", description = "Get paginated organization projects", tags = { "Organizations" })
+    @Operation(summary = "Get paginated organization projects", description = "Get paginated organization projects", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return paginated projects", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
             @ApiResponse(responseCode = "400", description = "Params are incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -604,24 +578,24 @@ public class OrganizationController {
     public DataPage<ProjectModel> getPaginatedProjects(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit, @RequestParam("filters") List<String> filters) {
 
         // Verify that params are correct
-        if(id <= 0 || offset < 0 || limit <= 0 || filters == null) {
+        if (id <= 0 || offset < 0 || limit <= 0 || filters == null) {
             log.error("Impossible to get organization projects : params are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get organization projects : organization not found");
             throw new NotFoundException();
         }
 
         // Prepare filter
         Set<ProjectStatus> status = new LinkedHashSet<>();
-        for(String filter : filters) {
+        for (String filter : filters) {
             status.add(ProjectStatus.valueOf(filter.toUpperCase(Locale.ROOT)));
         }
-        if(status.isEmpty()) {
+        if (status.isEmpty()) {
             status.addAll(List.of(ProjectStatus.values()));
         }
 
@@ -630,7 +604,7 @@ public class OrganizationController {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("title").ascending().and(Sort.by("status").ascending()));
         Page<ProjectEntity> entities;
         boolean isNotAdmin = userService.isNotAdmin(userLoggedInId);
-        if(isNotAdmin) {
+        if (isNotAdmin) {
             entities = projectRepository.findAllByOrganizationIdAndStatusIn(id, status, pageable);
         } else {
             entities = projectRepository.findAllByStatusIn(status, pageable);
@@ -642,7 +616,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Get paginated news", description = "Get paginated news", tags = { "Organizations" })
+    @Operation(summary = "Get paginated news", description = "Get paginated news", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returns corresponding news", content = @Content(schema = @Schema(implementation = DataPage.class))),
             @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @Content(schema = @Schema())),
@@ -654,21 +628,21 @@ public class OrganizationController {
     public DataPage<NewsModel> listNews(Principal principal, @PathVariable("id") Long id, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
 
         // Verify that IDs are corrects
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get news : parameters are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get news : organization not found");
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get news : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -680,7 +654,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Get organization authorities", description = "Get organization authorities", tags = { "Organizations" })
+    @Operation(summary = "Get organization authorities", description = "Get organization authorities", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organization authorities", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = OrganizationAuthorityModel.class)))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -692,21 +666,21 @@ public class OrganizationController {
     public Set<OrganizationAuthorityModel> getOrganizationAuthorities(Principal principal, @PathVariable("id") long id) {
 
         // Verify that IDs are corrects
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get organization authorities : parameters are incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get organization authorities : organization not found");
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get organization authorities : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -718,7 +692,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Get paginated organization contents", description = "Get paginated organization contents", tags = { "Organizations" })
+    @Operation(summary = "Get paginated organization contents", description = "Get paginated organization contents", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return paginated organization contents", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -730,21 +704,21 @@ public class OrganizationController {
     public DataPage<ContentModel> getContents(Principal principal, @PathVariable("id") long id, @RequestParam(name = "offset") int offset, @RequestParam(name = "limit") int limit) {
 
         // Verify that ID is correct
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get contents of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -757,7 +731,7 @@ public class OrganizationController {
         return models;
     }
 
-    @Operation(summary = "Get all organization contents", description = "Get all organization contents", tags = { "Organizations" })
+    @Operation(summary = "Get all organization contents", description = "Get all organization contents", tags = {"Organizations"})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Return all organization contents", content = @io.swagger.v3.oas.annotations.media.Content(array = @ArraySchema(schema = @Schema(implementation = ContentModel.class)))),
             @ApiResponse(responseCode = "400", description = "ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
@@ -769,21 +743,21 @@ public class OrganizationController {
     public Set<ContentModel> getAllContents(Principal principal, @PathVariable("id") long id) {
 
         // Verify that ID is correct
-        if(id <= 0) {
+        if (id <= 0) {
             log.error("Impossible to get contents of organizations : ID is incorrect");
             throw new BadRequestException();
         }
 
         // Verify that organization exists
         OrganizationEntity organization = organizationRepository.findById(id).orElse(null);
-        if(organization == null) {
+        if (organization == null) {
             log.error("Impossible to get contents of organizations : organization {} not found", id);
             throw new NotFoundException();
         }
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (!userService.isMemberOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get contents of organizations : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }

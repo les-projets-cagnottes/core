@@ -1,11 +1,7 @@
 package fr.lesprojetscagnottes.core.providers.slack.controller;
 
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
-import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
-import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
-import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
-import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.providers.slack.model.SlackTeamModel;
 import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
 import fr.lesprojetscagnottes.core.providers.slack.service.SlackTeamService;
@@ -22,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.util.StringUtils;
 
 import java.security.Principal;
 

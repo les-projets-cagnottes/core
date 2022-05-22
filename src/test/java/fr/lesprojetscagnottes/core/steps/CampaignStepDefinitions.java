@@ -9,6 +9,7 @@ import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepositor
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Date;
@@ -48,7 +49,7 @@ public class CampaignStepDefinitions {
             campaign = new CampaignEntity();
             campaign.setProject(context.getProjects().get(columns.get("project")));
             campaign.setBudget(context.getBudgets().get(columns.get("budget")));
-            campaign.setTitle(columns.get("title"));
+            campaign.setTitle(StringUtils.isNotEmpty(columns.get("title")) ? columns.get("title") : "Awesome title");
             campaign.setStatus(CampaignStatus.valueOf(columns.get("status")));
             campaign.setDonationsRequired(Float.valueOf(columns.get("donationsRequired")));
             campaign.setFundingDeadline(Date.valueOf(fundingDeadline));
