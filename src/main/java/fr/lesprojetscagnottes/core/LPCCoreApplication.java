@@ -2,8 +2,6 @@ package fr.lesprojetscagnottes.core;
 
 import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.authentication.ApiTokenRepository;
-import fr.lesprojetscagnottes.core.authentication.AuthenticationResponseEntity;
-import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
@@ -11,15 +9,16 @@ import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.common.security.TokenProvider;
 import fr.lesprojetscagnottes.core.common.strings.StringGenerator;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
+import fr.lesprojetscagnottes.core.providers.slack.task.CatcherTokenProviderTask;
 import fr.lesprojetscagnottes.core.user.UserGenerator;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -27,26 +26,20 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.support.EncodedResource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URL;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.Objects;
+import java.util.Timer;
 
 @Slf4j
 @SpringBootApplication
 @EnableScheduling
-public class LPCCoreApplication {
+public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -59,6 +52,9 @@ public class LPCCoreApplication {
 
 	@Autowired
 	private DonationProcessingTask donationProcessingTask;
+
+	@Autowired
+	private CatcherTokenProviderTask catcherTokenProviderTask;
 
 	@Autowired
 	private UserGenerator userGenerator;
@@ -81,12 +77,6 @@ public class LPCCoreApplication {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Autowired
-	private TokenProvider jwtTokenUtil;
-
-	@Autowired
-	private AuthService authService;
-
 	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
 
@@ -96,14 +86,14 @@ public class LPCCoreApplication {
 	@Value("${fr.lesprojetscagnottes.core.storage.data}")
 	private String dataStorageFolder;
 
-	@Value("${fr.lesprojetscagnottes.core.storage.slackeventscatcher}")
-	private String slackEventsCatcherStorage;
-
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
 
 	@Value("${spring.datasource.driver-class-name}")
 	private String datasourceDriverClassName;
+
+	@Value("${springdoc.swagger-ui.path}")
+	private String swaggerUrl;
 
 	private static ConfigurableApplicationContext context;
 
@@ -114,36 +104,7 @@ public class LPCCoreApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void init() {
 
-		// Execute src/main/resources/create.sql file
-		if (!datasourceDriverClassName.equals("org.postgresql.Driver")) {
-			log.warn("File 'create.sql' will not be executed as the datasource is not configured for postgresql");
-		} else {
-			ClassLoader classLoader = getClass().getClassLoader();
-			URL resource = classLoader.getResource("create.sql");
-			if (resource == null) {
-				String error = "File 'create.sql' not found";
-				log.error(error);
-				shutdown();
-			} else {
-				try {
-					ScriptUtils.executeSqlScript(
-							datasource.getConnection(),
-							new EncodedResource(new FileSystemResource(resource.getFile()), "UTF-8"),
-							false,
-							false,
-							ScriptUtils.DEFAULT_COMMENT_PREFIX,
-							";;",
-							ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
-							ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER);
-				} catch (SQLException e) {
-					String error = "Error while executing 'create.sql' file";
-					log.error(error, e);
-					shutdown();
-				}
-			}
-		}
-
-		UserEntity admin = null;
+		UserEntity admin;
 
 		// First launch of App
 		if (authorityRepository.count() == 0) {
@@ -185,42 +146,8 @@ public class LPCCoreApplication {
 
 		}
 
-		// If Slack is enabled, we create a dedicated user account
 		if(slackEnabled) {
-			log.info("Slack module is enabled. Retrieving a token for slack-events-catcher");
-			if(admin == null) {
-				admin = userRepository.findByEmail("admin");
-			}
-			List<AuthenticationResponseEntity> apiTokens = apiTokenRepository.findAllByDescription("slack-events-catcher");
-			AuthenticationResponseEntity apiToken;
-			if(apiTokens.size() == 1) {
-				apiToken = apiTokens.get(0);
-			} else if(apiTokens.size() == 0) {
-				Calendar cal = Calendar.getInstance();
-				cal.add(Calendar.YEAR, 1);
-				Date nextYear = cal.getTime();
-				Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, authService.getAuthorities(admin.getId()));
-				apiToken = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
-				apiToken.setDescription("slack-events-catcher");
-				apiToken.setExpiration(nextYear);
-				apiToken.setUser(admin);
-			} else {
-				log.error("Too many tokens registered for slack-events-catcher");
-				return;
-			}
-			prepareRootDirectories(slackEventsCatcherStorage);
-			String token = apiTokenRepository.save(apiToken).getToken();
-			String tokenFilePath = rootStorageFolder + File.separator + slackEventsCatcherStorage + File.separator + "token";
-			FileWriter myWriter;
-			try {
-				myWriter = new FileWriter(tokenFilePath);
-				myWriter.write(token);
-				myWriter.close();
-			} catch (IOException e) {
-				log.debug("Cannot save slack-events-catcher token in {}", tokenFilePath);
-			}
-		} else {
-			log.info("Slack module is disabled.");
+			new Timer().schedule(catcherTokenProviderTask, 0, 1200000);
 		}
 
 		prepareRootDirectories(dataStorageFolder);
@@ -256,6 +183,11 @@ public class LPCCoreApplication {
 
 	public void shutdown() {
 		context.close();
+	}
+
+	@Override
+	public void addViewControllers(ViewControllerRegistry registry) {
+		registry.addRedirectViewController("/", StringUtils.isNotEmpty(swaggerUrl) ? swaggerUrl : "/");
 	}
 }
 

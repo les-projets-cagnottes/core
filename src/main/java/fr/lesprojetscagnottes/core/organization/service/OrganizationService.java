@@ -30,4 +30,12 @@ public class OrganizationService {
     public OrganizationEntity save(OrganizationEntity organization) {
         return organizationRepository.save(organization);
     }
+
+    public Set<OrganizationEntity> findAllByMembers_Id(Long userId) {
+        return organizationRepository.findAllByMembers_Id(userId);
+    }
+
+    public Set<OrganizationEntity> findAllByProjects_Id(Long projectId) {
+        return organizationRepository.findAllByProjects_Id(projectId);
+    }
 }

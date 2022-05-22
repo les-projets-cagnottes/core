@@ -1,0 +1,4 @@
+<p>🚀 <b>[(${user_fullname})]</b> vient de publier le projet <b>[(${project_title})]</b></p>
+
+<p>Pour devenir réalité, le projet a besoin de vous ! Rendez-vous à l'adresse suivante pour le découvrir et rejoindre l'aventure :<br/>
+<a href="[(${project_url})]">[(${project_url})]</a></p>

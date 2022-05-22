@@ -48,7 +48,7 @@ public class FileService {
         return fileContent;
     }
 
-    public FileEntity saveOnFilesystem(File file, String mimeType, String directory, String name) throws IOException {
+    public FileEntity saveOnFilesystem(String filename, String mimeType, String directory, String name) throws IOException {
 
         // Extract data from File
         log.debug("contentType: " + mimeType);
@@ -59,10 +59,8 @@ public class FileService {
 
         // Write file on filesystem
         prepareDirectories(directory);
-        String fullPath = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
-        if(!file.renameTo(new File(fullPath))) {
-            log.error("Cannot move file to {}", fullPath);
-        }
+        String destination = rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + directory + java.io.File.separator + finalFileName;
+        move(filename, destination);
 
         // Create entity to return
         FileEntity entity = new FileEntity();
@@ -155,6 +153,23 @@ public class FileService {
 
     public String getPath(FileEntity entity) {
         return rootStorageFolder + java.io.File.separator + dataStorageFolder + File.separator + entity.getDirectory() + java.io.File.separator + entity.getFullname();
+    }
+
+    private void move(String source, String destination) {
+        try (InputStream is = new FileInputStream(source); OutputStream os = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+            if(!new File(source).delete()) {
+                log.warn("Cannot delete {}", source);
+            }
+        } catch (FileNotFoundException e) {
+            log.error("File {} or {} not found", source, destination, e);
+        } catch (IOException e) {
+            log.error("An error occurred when copying {} to {}", source, destination, e);
+        }
     }
 
     private void prepareDirectories(String directoryPath) {

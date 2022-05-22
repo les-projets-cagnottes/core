@@ -10,7 +10,7 @@ import static io.cucumber.spring.CucumberTestContext.SCOPE_CUCUMBER_GLUE;
 public class AuthorityHttpClient extends GenericHttpClient {
 
     public void getUserAuthority() {
-        get("/api/authority");
+        get("/api/authority/me");
     }
 
 }

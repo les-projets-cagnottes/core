@@ -66,10 +66,7 @@ public class UserEntity extends UserModel implements UserDetails {
             orphanRemoval = true)
     private Set<IdeaEntity> ideas = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "followers")
-    private Set<IdeaEntity> followedIdeas = new LinkedHashSet<>();
-
-    @ManyToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user")
     private Set<SlackUserEntity> slackUsers = new LinkedHashSet<>();
 
     @OneToMany(

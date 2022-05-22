@@ -1,5 +1,6 @@
 package fr.lesprojetscagnottes.core.providers.microsoft.service;
 
+import com.google.gson.Gson;
 import com.microsoft.bot.connector.authentication.MicrosoftAppCredentials;
 import com.microsoft.bot.integration.BotFrameworkHttpAdapter;
 import com.microsoft.bot.schema.Activity;
@@ -8,7 +9,10 @@ import com.microsoft.bot.schema.teams.TeamsChannelData;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
+import fr.lesprojetscagnottes.core.notification.entity.NotificationEntity;
+import fr.lesprojetscagnottes.core.notification.model.NotificationVariables;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftNotificationEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftTeamEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftTeamModel;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
@@ -38,6 +42,9 @@ public class MicrosoftBotService {
     private String webUrl;
 
     @Autowired
+    private Gson gson;
+
+    @Autowired
     private BotFrameworkHttpAdapter adapter;
 
     @Autowired
@@ -58,7 +65,7 @@ public class MicrosoftBotService {
 
         Context context = new Context();
         context.setVariables(model);
-        String teamsMessage = templateEngine.process("microsoft/fr/hello", context);
+        String teamsMessage = templateEngine.process("microsoft/fr/HELLO", context);
 
         Activity msActivity = Activity.createMessageActivity();
         msActivity.setText(teamsMessage);
@@ -118,4 +125,35 @@ public class MicrosoftBotService {
 
         hello(msTeam);
     }
+
+    public void sendNotification(NotificationEntity notification, MicrosoftNotificationEntity msNotification) {
+        Context context = new Context();
+        context.setVariables(gson.fromJson(notification.getVariables(), NotificationVariables.class));
+        String teamsMessage = templateEngine.process("microsoft/fr/" + notification.getName(), context);
+
+        Activity msActivity = Activity.createMessageActivity();
+        msActivity.setText(teamsMessage);
+
+        TeamsChannelData channelData = new TeamsChannelData();
+        MicrosoftTeamEntity msTeam = msNotification.getTeam();
+        channelData.setTeamsTeamId(msTeam.getGroupId());
+        channelData.setTeamsChannelId(msTeam.getChannelId());
+
+        ConversationParameters conversationParameters = new ConversationParameters();
+        conversationParameters.setIsGroup(true);
+        conversationParameters.setChannelData(channelData);
+        conversationParameters.setTenantId(msTeam.getTenantId());
+        conversationParameters.setActivity(msActivity);
+
+        MicrosoftAppCredentials appCredentials = new MicrosoftAppCredentials(microsoftClientId, microsoftClientSecret, msTeam.getTenantId());
+
+        adapter.createConversation(
+                msTeam.getChannelId(),
+                "https://smba.trafficmanager.net/emea/",
+                appCredentials,
+                conversationParameters,
+                null
+        );
+    }
+
 }

@@ -7,9 +7,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
@@ -22,12 +22,5 @@ public class IdeaEntity extends IdeaModel {
 
     @ManyToOne
     private OrganizationEntity organization = new OrganizationEntity();
-
-    @ManyToMany
-    @JoinTable(
-            name = "ideas_users",
-            joinColumns = {@JoinColumn(name = "idea_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
-    private Set<UserEntity> followers = new LinkedHashSet<>();
 
 }
