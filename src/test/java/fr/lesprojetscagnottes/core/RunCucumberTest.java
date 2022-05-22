@@ -25,7 +25,7 @@ public class RunCucumberTest {
     public static final PostgreSQLContainer<?> database;
 
     static  {
-        database = new PostgreSQLContainer<>("postgres:13.6-alpine")
+        database = new PostgreSQLContainer<>("postgres:12-alpine")
                 .withDatabaseName("lesprojetscagnottes")
                 .withUsername("lesprojetscagnottes")
                 .withPassword("lesprojetscagnottes");
