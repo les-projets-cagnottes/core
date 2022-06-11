@@ -30,7 +30,6 @@ public class OrganizationModel extends AuditEntity<String> {
     private String name;
 
     @Column
-    @NotNull
     private String socialName;
 
     @URL
