@@ -1,5 +1,6 @@
 package fr.lesprojetscagnottes.core.organization.controller;
 
+import fr.lesprojetscagnottes.core.account.service.AccountService;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.model.OrganizationAuthorityModel;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
@@ -75,10 +76,13 @@ public class OrganizationController {
 
     private final UserRepository userRepository;
 
+    private final AccountService accountService;
+
     private final UserService userService;
 
     @Autowired
     public OrganizationController(
+            AccountService accountService,
             BudgetRepository budgetRepository,
             ContentRepository contentRepository,
             IdeaRepository ideaRepository,
@@ -88,6 +92,7 @@ public class OrganizationController {
             ProjectRepository projectRepository,
             UserRepository userRepository,
             UserService userService) {
+        this.accountService = accountService;
         this.budgetRepository = budgetRepository;
         this.contentRepository = contentRepository;
         this.ideaRepository = ideaRepository;
@@ -520,6 +525,9 @@ public class OrganizationController {
                             log.info("User {} is now a member of organization {}", user.getId(), organization.getId());
                         }
                 );
+
+        // Create accounts for usable budgets
+        accountService.createUserAccountsForUsableBudgets(user, organization.getId());
     }
 
     @Operation(summary = "Remove a member from an organization", description = "Remove a member from an organization", tags = {"Organizations"})
