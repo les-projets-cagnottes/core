@@ -36,6 +36,8 @@ public class SlackTeamModel extends AuditEntity<String> {
     private String publicationChannel;
     @Column(name = "publication_channel_id")
     private String publicationChannelId;
+    @Column
+    private String image_132;
 
     public static SlackTeamModel fromEntity(SlackTeamEntity entity) {
 
@@ -54,6 +56,7 @@ public class SlackTeamModel extends AuditEntity<String> {
                 .botAccessToken(entity.getBotAccessToken())
                 .publicationChannel(entity.getPublicationChannel())
                 .publicationChannelId(entity.getPublicationChannelId())
+                .image_132(entity.getImage_132())
                 .organization(new GenericModel(entity.getOrganization())).build();
     }
 

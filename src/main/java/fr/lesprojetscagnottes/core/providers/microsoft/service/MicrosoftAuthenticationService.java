@@ -127,7 +127,7 @@ public class MicrosoftAuthenticationService {
         UserEntity savedUser = userService.save(user);
 
         // Associate User & MS User
-        msUser.setUser(user);
+        msUser.setUser(savedUser);
         microsoftUserService.save(msUser);
 
         // If the User is not member of organization => Add it

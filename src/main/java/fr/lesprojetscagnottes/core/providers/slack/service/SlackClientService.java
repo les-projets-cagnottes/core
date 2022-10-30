@@ -4,12 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,8 +25,102 @@ import java.util.List;
 @Service
 public class SlackClientService {
 
+    @Value("${fr.lesprojetscagnottes.slack.client_id}")
+    private String slackClientId;
+
+    @Value("${fr.lesprojetscagnottes.slack.client_secret}")
+    private String slackClientSecret;
+
     @Autowired
     private HttpClientService httpClientService;
+
+    public String token(String code, String redirect_uri) {
+        String url = "https://slack.com/api/oauth.v2.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
+        String token = null;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .GET()
+                .build();
+
+        try {
+            log.debug("Call {}", url);
+            HttpResponse<String> response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("Response from {} : {}", url, response.body());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            log.debug("Response converted into json : {}", json);
+            log.debug("authed_user : {}", json.get("authed_user"));
+            log.debug("team : {}", json.get("team"));
+            if (json.get("authed_user") != null && json.get("team") != null) {
+                JsonObject jsonUser = json.get("authed_user").getAsJsonObject();
+                token = jsonUser.get("access_token").getAsString();
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return token;
+    }
+
+    public SlackTeamEntity getTeam(String token) {
+        String url = "https://slack.com/api/team.info";
+        log.debug("GET " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Authorization", "Bearer " + token)
+                .build();
+        HttpResponse<String> response;
+        SlackTeamEntity slackTeam = null;
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("response : " + response.body());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+                JsonObject jsonTeam = json.get("team").getAsJsonObject();
+                slackTeam = new SlackTeamEntity();
+                slackTeam.setTeamId(jsonTeam.get("id").getAsString());
+                slackTeam.setTeamName(jsonTeam.get("name").getAsString());
+                slackTeam.setImage_132(jsonTeam.getAsJsonObject("icon").get("image_132").getAsString());
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return slackTeam;
+    }
+
+    public SlackUserEntity whoami(String token) {
+        String url = "https://slack.com/api/users.identity";
+        log.debug("GET " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(1))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Authorization", "Bearer " + token)
+                .build();
+        HttpResponse<String> response;
+        SlackUserEntity slackUser = null;
+        try {
+            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            log.debug("response : " + response.body());
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
+            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
+                JsonObject jsonUser = json.get("user").getAsJsonObject();
+                slackUser = new SlackUserEntity();
+                slackUser.setSlackId(jsonUser.get("id").getAsString());
+                slackUser.setName(jsonUser.get("name").getAsString());
+                slackUser.setEmail(jsonUser.get("email").getAsString());
+                slackUser.setImage_192(jsonUser.get("image_192").getAsString());
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return slackUser;
+    }
 
     public void postMessage(SlackTeamEntity slackTeam, String channelId, String text) {
         String url = "https://slack.com/api/chat.postMessage";
@@ -69,36 +164,6 @@ public class SlackClientService {
             log.error(e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    public SlackUserEntity getUser(String token) {
-        String url = "https://slack.com/api/users.identity";
-        log.debug("GET " + url);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMinutes(1))
-                .header("Content-Type", "application/json; charset=utf-8")
-                .header("Authorization", "Bearer " + token)
-                .build();
-        HttpResponse<String> response;
-        SlackUserEntity slackUser = null;
-        try {
-            response = httpClientService.getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            log.debug("response : " + response.body());
-            Gson gson = new Gson();
-            JsonObject json = gson.fromJson(response.body(), JsonObject.class);
-            if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
-                JsonObject jsonUser = json.get("user").getAsJsonObject();
-                slackUser = new SlackUserEntity();
-                slackUser.setSlackId(jsonUser.get("id").getAsString());
-                slackUser.setName(jsonUser.get("name").getAsString());
-                slackUser.setEmail(jsonUser.get("email").getAsString());
-                slackUser.setImage_192(jsonUser.get("image_192").getAsString());
-            }
-        } catch (IOException | InterruptedException e) {
-            log.error(e.getMessage(), e);
-        }
-        return slackUser;
     }
 
     public List<SlackUserEntity> listUsers(SlackTeamEntity slackTeam) {
