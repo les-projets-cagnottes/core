@@ -72,6 +72,10 @@ public class SlackTeamService {
         return slackTeamRepository.findById(id).orElse(null);
     }
 
+    public SlackTeamEntity findByTeamId(String teamId) {
+        return slackTeamRepository.findByTeamId(teamId);
+    }
+
     public SlackTeamModel findById(Principal principal, Long id) {
 
         // Verify that ID is correct
@@ -87,7 +91,7 @@ public class SlackTeamService {
             throw new NotFoundException();
         }
 
-        // If the news is in an organization, verify that principal is in this organization
+        // If the Slack Team is in an organization, verify that principal is in this organization
         if(entity.getOrganization() != null) {
             Long userLoggedInId = userService.get(principal).getId();
             if(!userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
