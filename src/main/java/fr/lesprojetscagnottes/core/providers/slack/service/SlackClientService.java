@@ -34,15 +34,16 @@ public class SlackClientService {
     @Autowired
     private HttpClientService httpClientService;
 
-    public String token(String code, String redirect_uri) {
+    public SlackUserEntity token(String code, String redirect_uri) {
         String url = "https://slack.com/api/oauth.v2.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
-        String token = null;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofMinutes(1))
                 .header("Content-Type", "application/json; charset=utf-8")
                 .GET()
                 .build();
+
+        SlackUserEntity slackUser = null;
 
         try {
             log.debug("Call {}", url);
@@ -55,12 +56,14 @@ public class SlackClientService {
             log.debug("team : {}", json.get("team"));
             if (json.get("authed_user") != null && json.get("team") != null) {
                 JsonObject jsonUser = json.get("authed_user").getAsJsonObject();
-                token = jsonUser.get("access_token").getAsString();
+                slackUser = new SlackUserEntity();
+                slackUser.setAccessToken(jsonUser.get("access_token").getAsString());
+                slackUser.setSlackId(jsonUser.get("id").getAsString());
             }
         } catch (IOException | InterruptedException e) {
             log.error(e.getMessage(), e);
         }
-        return token;
+        return slackUser;
     }
 
     public SlackTeamEntity getTeam(String token) {
@@ -92,8 +95,8 @@ public class SlackClientService {
         return slackTeam;
     }
 
-    public SlackUserEntity whoami(String token) {
-        String url = "https://slack.com/api/users.identity";
+    public SlackUserEntity getUser(String token, String user) {
+        String url = "https://slack.com/api/users.info?user=" + user;
         log.debug("GET " + url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -109,10 +112,10 @@ public class SlackClientService {
             Gson gson = new Gson();
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             if (json.get("ok") != null && json.get("ok").getAsBoolean()) {
-                JsonObject jsonUser = json.get("user").getAsJsonObject();
+                JsonObject jsonUser = json.get("user").getAsJsonObject().get("profile").getAsJsonObject();
                 slackUser = new SlackUserEntity();
-                slackUser.setSlackId(jsonUser.get("id").getAsString());
-                slackUser.setName(jsonUser.get("name").getAsString());
+                slackUser.setSlackId(user);
+                slackUser.setName(jsonUser.get("real_name").getAsString());
                 slackUser.setEmail(jsonUser.get("email").getAsString());
                 slackUser.setImage_192(jsonUser.get("image_192").getAsString());
             }

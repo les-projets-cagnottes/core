@@ -10,7 +10,7 @@
     </parent>
     <groupId>fr.les-projets-cagnottes</groupId>
     <artifactId>core</artifactId>
-    <version>0.14.0</version>
+    <version>0.14.1</version>
     <name>Les Projets Cagnottes - Core</name>
     <description>Core component of "Les Projets Cagnottes"</description>
 
