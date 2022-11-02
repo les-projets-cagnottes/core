@@ -56,14 +56,14 @@ public class SlackAuthenticationService {
     public AuthenticationResponseModel login(String code, String redirect_uri) throws AuthenticationException {
 
         // Get token from Slack
-        String token = slackClientService.token(code, redirect_uri);
-        if(token == null) {
+        SlackUserEntity slackAuthedUser = slackClientService.token(code, redirect_uri);
+        if(slackAuthedUser == null) {
             log.error("Unable to login with Slack : no token retrieved");
             throw new UnauthaurizedException();
         }
 
         // Get team from Slack
-        SlackTeamEntity slackApiTeam = slackClientService.getTeam(token);
+        SlackTeamEntity slackApiTeam = slackClientService.getTeam(slackAuthedUser.getAccessToken());
         if(slackApiTeam == null) {
             log.error("Unable to login with Slack : no team retrieved");
             throw new UnauthaurizedException();
@@ -83,7 +83,7 @@ public class SlackAuthenticationService {
         }
 
         // Sync personal infos
-        SlackUserEntity slackApiUser = slackClientService.whoami(token);
+        SlackUserEntity slackApiUser = slackClientService.getUser(slackAuthedUser.getAccessToken(), slackAuthedUser.getSlackId());
         if(slackApiUser == null) {
             log.error("Unable to login with Slack : cannot get Slack user");
             throw new UnauthaurizedException();
@@ -94,6 +94,7 @@ public class SlackAuthenticationService {
         if(slackUser == null) {
             slackUser = new SlackUserEntity();
             slackUser.setImId(slackClientService.openDirectMessageChannel(slackTeam, slackApiUser.getSlackId()));
+            slackUser.setUser(null);
         }
         slackUser.setEmail(slackApiUser.getEmail());
         slackUser.setSlackId(slackApiUser.getSlackId());

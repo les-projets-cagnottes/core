@@ -38,6 +38,9 @@ public class SlackUserModel extends AuditEntity<String> {
     private Boolean isRestricted;
 
     @Transient
+    private String accessToken;
+
+    @Transient
     protected GenericModel user;
 
     @Transient

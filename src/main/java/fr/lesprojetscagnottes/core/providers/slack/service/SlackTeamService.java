@@ -256,13 +256,14 @@ public class SlackTeamService {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if(!userService.isManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }
 
         // Get Slack users
         List<SlackUserEntity> slackUsers = slackClientService.listUsers(entity);
+        log.debug("Retrieved {} Slack Users", slackUsers.size());
 
         // For each Slack user, retrieve its data
         UserEntity user;
@@ -280,6 +281,8 @@ public class SlackTeamService {
                 slackUserEditted = slackUser;
             }
             slackUserEditted.setSlackTeam(entity);
+
+            log.debug("Syncing Slack User {} with local DB", slackUser.getSlackId());
 
             // Slack conversations.open method is Web API Tier 3 (50+ per minute) so wait 1200ms
             delay = (new Timestamp(System.currentTimeMillis())).getTime() - tsAfterOpenIm;
