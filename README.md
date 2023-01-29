@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Java 18 - [Download here](https://jdk.java.net/18/)
+- Java 19 - [Download here](https://jdk.java.net/19/)
 - PostgreSQL 12 - [Download here](https://www.postgresql.org/download/)
 - A PostgreSQL Client - [Download DBeaver here](https://dbeaver.io/download/)
 - Maven 3 - [Download here](https://maven.apache.org/download.cgi)
@@ -17,3 +17,7 @@
 ```bash
 mvn clean install spring-boot:run
 ```
+
+## Dynamic set of data for local debug
+
+Once the app is running, you can execute `src/test/resources/sql/dataset.sql` to have test data.
