@@ -17,3 +17,7 @@
 ```bash
 mvn clean install spring-boot:run
 ```
+
+## Dynamic set of data for local debug
+
+Once the app is running, you can execute `src/test/resources/sql/dataset.sql` to have test data.

@@ -10,9 +10,9 @@
     </parent>
     <groupId>fr.les-projets-cagnottes</groupId>
     <artifactId>core</artifactId>
-    <version>0.14.1</version>
+    <version>0.14.2</version>
     <name>Les Projets Cagnottes - Core</name>
-    <description>Core component of "Les Projets Cagnottes"</description>
+    <description>Les Projets Cagnottes - Main API Component</description>
 
     <properties>
         <java.version>18</java.version>
