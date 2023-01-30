@@ -15,7 +15,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.regex.Matcher;
 

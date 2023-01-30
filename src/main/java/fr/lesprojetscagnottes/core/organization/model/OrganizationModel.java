@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.LinkedHashSet;

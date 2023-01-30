@@ -9,9 +9,9 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)

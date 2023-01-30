@@ -6,9 +6,9 @@ import fr.lesprojetscagnottes.core.providers.microsoft.entity.MicrosoftNotificat
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)

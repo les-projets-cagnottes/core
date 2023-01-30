@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.LinkedHashSet;

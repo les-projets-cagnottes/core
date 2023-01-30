@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.common.config;
 
-import fr.lesprojetscagnottes.core.common.security.CorsFilter;
 import fr.lesprojetscagnottes.core.common.security.JwtAuthenticationEntryPoint;
 import fr.lesprojetscagnottes.core.common.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,20 +8,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.session.SessionManagementFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+public class WebSecurityConfig {
 
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -42,45 +44,53 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    CorsFilter corsFilter() {
-        return new CorsFilter();
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("POST, GET, PUT, OPTIONS, DELETE"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(Long.valueOf(3600));
+        configuration.setExposedHeaders(List.of("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization, Origin, Accept, Access-Control-Request-Method, Access-Control-Request-Headers"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterBefore(corsFilter(), SessionManagementFilter.class)
-                .csrf().disable()
-
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .authorizeRequests()
-                .antMatchers(HttpMethod.GET, "/").permitAll()
-                .antMatchers(HttpMethod.OPTIONS,"**").permitAll()
-                .antMatchers(HttpMethod.GET,"/files/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/api/auth/login**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/auth/login/slack**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/auth/login/microsoft**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/health").permitAll()
-                .antMatchers(HttpMethod.GET,"/actuator/health").permitAll()
-                .antMatchers(HttpMethod.GET,"/actuator/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/swagger-ui**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-
-                .and()
+                .csrf().disable()
+                .cors().and()
+                
+                .authorizeHttpRequests((authz) -> authz
+                        .requestMatchers(HttpMethod.OPTIONS,"**").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/",
+                                "/files/**",
+                                "/api/auth/login**",
+                                "/api/auth/login/slack**",
+                                "/api/auth/login/microsoft**",
+                                "/actuator/health",
+                                "/api/docs**",
+                                "/api/docs/**",
+                                "/api/docs/swagger-ui**",
+                                "/api/docs/swagger-ui/index.html").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login**").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
 
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
 }
