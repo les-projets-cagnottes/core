@@ -1,78 +1,72 @@
 package fr.lesprojetscagnottes.core.common.security;
 
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.SignatureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.lesprojetscagnottes.core.common.strings.AuthenticationConfigConstants;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Date;
 
-import static fr.lesprojetscagnottes.core.common.strings.Constants.HEADER_STRING;
-import static fr.lesprojetscagnottes.core.common.strings.Constants.TOKEN_PREFIX;
-
+@Slf4j
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    @Autowired
-    private TokenProvider jwtTokenUtil;
+    public JwtAuthenticationFilter(AuthenticationManager authManager) {
+        super(authManager);
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
-        String header = req.getHeader(HEADER_STRING);
-        String username = null;
-        String authToken = null;
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        try {
+            UserEntity creds = new ObjectMapper()
+                    .readValue(request.getInputStream(), UserEntity.class);
 
-        LOGGER.debug(req.getMethod());
-        LOGGER.debug(req.getRequestURI());
-        for (Iterator<String> iter = req.getHeaderNames().asIterator(); iter.hasNext(); ) {
-            String headerName = iter.next();
-            LOGGER.debug(headerName + " : " + req.getHeader(headerName));
+            log.debug("authenticate username : {}", creds.getEmail());
+
+            return this.getAuthenticationManager().authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            creds.getEmail(),
+                            creds.getPassword(),
+                            new ArrayList<>())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        if (header != null && header.startsWith(TOKEN_PREFIX)) {
-            authToken = header.replace(TOKEN_PREFIX, StringsCommon.EMPTY_STRING);
-            try {
-                username = jwtTokenUtil.getUsernameFromToken(authToken);
-            } catch (IllegalArgumentException e) {
-                logger.error("an error occured during getting username from token", e);
-            } catch (ExpiredJwtException e) {
-                logger.warn("the token is expired and not valid anymore", e);
-            } catch(SignatureException e){
-                logger.error("Authentication Failed. Username or Password not valid.");
-            }
-        } else {
-            logger.debug("Couldn't find bearer string, will ignore the header");
-        }
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication auth) throws IOException, ServletException {
+        String token = JWT.create()
+                .withSubject(((UserDetails) auth.getPrincipal()).getUsername())
+                .withClaim("role", auth.getAuthorities().iterator().next().getAuthority())
+                .withExpiresAt(new Date(System.currentTimeMillis() + AuthenticationConfigConstants.EXPIRATION_TIME))
+                .sign(Algorithm.HMAC512(AuthenticationConfigConstants.SECRET.getBytes()));
 
-            if (jwtTokenUtil.validateToken(authToken, userDetails)) {
-                UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthentication(authToken, SecurityContextHolder.getContext().getAuthentication(), userDetails);
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-                logger.info("authenticated user " + username + ", setting security context");
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        }
+        //START - SENDING JWT AS A BODY
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(
+                "{\"" + AuthenticationConfigConstants.HEADER_STRING + "\":\"" + AuthenticationConfigConstants.TOKEN_PREFIX + token + "\"}"
+        );
+        //END - SENDING JWT AS A BODY
 
-        chain.doFilter(req, res);
+        //START - SENDING JWT AS A HEADER
+        response.addHeader(AuthenticationConfigConstants.HEADER_STRING, AuthenticationConfigConstants.TOKEN_PREFIX + token);
+        //END - SENDING JWT AS A HEADER
     }
 }

@@ -1,24 +1,23 @@
 package fr.lesprojetscagnottes.core.common.security;
 
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import io.jsonwebtoken.*;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import fr.lesprojetscagnottes.core.common.strings.AuthenticationConfigConstants;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static fr.lesprojetscagnottes.core.common.strings.Constants.*;
+import static fr.lesprojetscagnottes.core.common.strings.AuthenticationConfigConstants.*;
 
 @Slf4j
 @Component
@@ -43,7 +42,7 @@ public class TokenProvider implements Serializable {
 
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(SIGNING_KEY)
+                .setSigningKey(SECRET)
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -72,22 +71,21 @@ public class TokenProvider implements Serializable {
         final String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        return Jwts.builder()
-                .setSubject(authentication.getName())
-                .claim(AUTHORITIES_KEY, authorities)
-                .signWith(SignatureAlgorithm.HS512, SIGNING_KEY)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(expiration)
-                .compact();
+        return JWT.create()
+                .withSubject(authentication.getName())
+                .withClaim(AUTHORITIES_KEY, authorities)
+                .withExpiresAt(expiration)
+                .withIssuedAt(new Date(System.currentTimeMillis()))
+                .sign(Algorithm.HMAC512(AuthenticationConfigConstants.SECRET.getBytes()));
     }
 
     public String generateToken(Authentication authentication) {
-        return generateToken(authentication, new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY_SECONDS * 1000));
+        return generateToken(authentication, new Date(System.currentTimeMillis() + EXPIRATION_TIME * 1000));
     }
 
     public String refreshToken(String token) {
         final Date createdDate = new Date();
-        final Date expirationDate = new Date(createdDate.getTime() + ACCESS_TOKEN_VALIDITY_SECONDS * 1000);
+        final Date expirationDate = new Date(createdDate.getTime() + EXPIRATION_TIME * 1000);
 
         SimpleDateFormat dt1 = new SimpleDateFormat("yyyyy-MM-dd");
         log.debug("createdDate = " + dt1.format(createdDate));
@@ -97,33 +95,13 @@ public class TokenProvider implements Serializable {
         claims.setIssuedAt(createdDate);
         claims.setExpiration(expirationDate);
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, SIGNING_KEY)
-                .compact();
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (
-                username.equals(userDetails.getUsername())
-                        && !isTokenExpired(token));
-    }
-
-    UsernamePasswordAuthenticationToken getAuthentication(final String token, final Authentication existingAuth, final UserDetails userDetails) {
-
-        final JwtParser jwtParser = Jwts.parser().setSigningKey(SIGNING_KEY);
-
-        final Jws<Claims> claimsJws = jwtParser.parseClaimsJws(token);
-
-        final Claims claims = claimsJws.getBody();
-
-        final Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-        return new UsernamePasswordAuthenticationToken(userDetails, StringsCommon.EMPTY_STRING, authorities);
+        DecodedJWT jwt = JWT.decode(token);
+        return JWT.create()
+                .withSubject(jwt.getSubject())
+                .withClaim(AUTHORITIES_KEY, jwt.getClaim(AUTHORITIES_KEY).asString())
+                .withExpiresAt(expirationDate)
+                .withIssuedAt(createdDate)
+                .sign(Algorithm.HMAC512(AuthenticationConfigConstants.SECRET.getBytes()));
     }
 
 }

@@ -2,14 +2,13 @@ package fr.lesprojetscagnottes.core.user.model;
 
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.common.strings.Constants;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -103,7 +102,7 @@ public class UserModel extends AuditEntity<String> {
     }
 
     public String getFullname() {
-        return this.firstname + Constants.SPACE + this.lastname;
+        return this.firstname + StringsCommon.SPACE + this.lastname;
     }
 
     public void emptyPassword() {

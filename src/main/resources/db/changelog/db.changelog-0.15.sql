@@ -260,6 +260,36 @@ SELECT setval('slack_user_seq', (select max(id) from slack_user) + 1, true);
 SELECT setval('users_seq', (select max(id) from users) + 1, true);
 --rollback select setval('users_seq', 0, true);
 
+--changeset lesprojetscagnottes:update-function-create_donation-sequence
+CREATE OR REPLACE FUNCTION create_donation(_account_id bigint, _campaign_id bigint, _amount real)
+    RETURNS boolean
+    LANGUAGE plpgsql
+    AS '
+        DECLARE
+            _account_amount FLOAT4;
+            _donation_id INT8;
+            _budget_id INT8;
+        BEGIN
+            select amount into _account_amount from accounts where id = _account_id;
+            IF _account_amount < _amount THEN
+                RAISE EXCEPTION ''Not enough amount on account %'', _account_id
+                    USING HINT = ''Please check your budget'';
+                return false;
+            END IF;
+            select nextval(''donations_seq'') into _donation_id;
+            select budget_id
+                into _budget_id
+                from accounts where id = _account_id;
+            insert into donations (id, amount, campaign_id, account_id)
+                values(_donation_id, _amount, _campaign_id, _account_id);
+            update accounts set amount = (amount - _amount) where id = _account_id;
+            update campaigns set total_donations = total_donations  + _amount where id = _campaign_id;
+            update budgets set total_donations = total_donations + _amount where id = _budget_id;
+
+            return true;
+        END;
+    ';
+
 --changeset lesprojetscagnottes:drop-sequence-hibernate_sequence
 DROP SEQUENCE hibernate_sequence;
 --rollback create sequence hibernate_sequence start with 1 increment by 1 no minvalue no maxvalue cache 1;
