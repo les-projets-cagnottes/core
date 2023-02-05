@@ -1,5 +1,6 @@
 package fr.lesprojetscagnottes.core.user.service;
 
+import fr.lesprojetscagnottes.core.authentication.service.AuthService;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
@@ -10,8 +11,10 @@ import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepositor
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.model.UserModel;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +24,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class UserService {
 
+    @Autowired
+    private AuthService authService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -49,7 +55,9 @@ public class UserService {
 
     public UserEntity get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        UserPrincipal userPrincipal = (UserPrincipal) token.getPrincipal();
+        log.debug("get principal : {}", token.getPrincipal());
+        UserDetails userDetails = this.authService.loadUserByUsername(token.getPrincipal().toString());
+        UserPrincipal userPrincipal = (UserPrincipal) userDetails;
         UserEntity user = userRepository.findByUsername(userPrincipal.getUsername());
         if (user == null) {
             user = userRepository.findByEmail(userPrincipal.getUsername());

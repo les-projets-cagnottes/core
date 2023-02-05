@@ -1,18 +1,15 @@
 package fr.lesprojetscagnottes.core.component;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,8 +53,8 @@ public class GenericHttpClient {
         }
         ResponseEntity<String> response = request
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, error -> {
-                    context.setLastHttpCode(error.rawStatusCode());
+                .onStatus(HttpStatusCode::is4xxClientError, error -> {
+                    context.setLastHttpCode(error.statusCode().value());
                     return Mono.empty();
                 })
                 .toEntity(String.class)
@@ -80,8 +77,8 @@ public class GenericHttpClient {
         }
         ResponseEntity<String> response = request
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, error -> {
-                    context.setLastHttpCode(error.rawStatusCode());
+                .onStatus(HttpStatusCode::is4xxClientError, error -> {
+                    context.setLastHttpCode(error.statusCode().value());
                     return Mono.empty();
                 })
                 .toEntity(String.class)
@@ -104,8 +101,8 @@ public class GenericHttpClient {
         }
         ResponseEntity<String> response = request
                 .retrieve()
-                .onStatus(HttpStatus::is4xxClientError, error -> {
-                    context.setLastHttpCode(error.rawStatusCode());
+                .onStatus(HttpStatusCode::is4xxClientError, error -> {
+                    context.setLastHttpCode(error.statusCode().value());
                     return Mono.empty();
                 })
                 .toEntity(String.class)

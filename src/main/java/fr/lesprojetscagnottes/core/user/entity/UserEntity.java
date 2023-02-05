@@ -18,7 +18,7 @@ import lombok.Setter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -75,7 +75,7 @@ public class UserEntity extends UserModel implements UserDetails {
     private Set<AuthenticationResponseEntity> apiTokens = new LinkedHashSet<>();
 
     @OneToMany(
-            mappedBy = "organization",
+            mappedBy = "author",
             orphanRemoval = true)
     private Set<NewsEntity> news = new LinkedHashSet<>();
 

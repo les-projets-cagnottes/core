@@ -4,10 +4,10 @@ import fr.lesprojetscagnottes.core.authorization.entity.AuthorityEntity;
 import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Component

@@ -10,8 +10,8 @@ import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.notification.model.NotificationName;
 import fr.lesprojetscagnottes.core.notification.service.NotificationService;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.Date;
 import java.util.HashMap;

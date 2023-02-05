@@ -33,12 +33,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.util.Objects;
 import java.util.Timer;
 
 @Slf4j
-@SpringBootApplication
 @EnableScheduling
+@SpringBootApplication
 public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Autowired
@@ -117,7 +116,10 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 			userGenerator.init(); // Refresh authorities
 
 			String email = "admin";
-			String password = Objects.requireNonNullElseGet(adminPassword, StringGenerator::randomString);
+			String password = adminPassword;
+			if(adminPassword == null || adminPassword.isEmpty()) {
+				password = StringGenerator.randomString();
+			}
 			admin = UserGenerator.newUser(email, passwordEncoder.encode(password));
 			admin.setUsername("admin");
 			admin.setFirstname("Administrator");
@@ -140,10 +142,9 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 			}
 
 			// If password was generated, we print it in the console
-			if (adminPassword == null) {
-				log.info("ONLY PRINTED ONCE - Default credentials are : admin / " + password);
+			if (adminPassword == null || adminPassword.isEmpty()) {
+				log.info("ONLY PRINTED ONCE - Default credentials are : admin / {}", password);
 			}
-
 		}
 
 		if(slackEnabled) {

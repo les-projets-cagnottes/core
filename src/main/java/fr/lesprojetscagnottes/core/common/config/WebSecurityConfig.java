@@ -1,28 +1,22 @@
 package fr.lesprojetscagnottes.core.common.config;
 
-import fr.lesprojetscagnottes.core.common.security.CorsFilter;
-import fr.lesprojetscagnottes.core.common.security.JwtAuthenticationEntryPoint;
-import fr.lesprojetscagnottes.core.common.security.JwtAuthenticationFilter;
+import fr.lesprojetscagnottes.core.common.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.session.SessionManagementFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+public class WebSecurityConfig {
 
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -31,10 +25,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService jwtUserDetailsService;
 
     @Autowired
-    private JwtAuthenticationFilter jwtRequestFilter;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+
+    private CustomAuthenticationManager authenticationManager;
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -47,40 +42,29 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-                .addFilterBefore(corsFilter(), SessionManagementFilter.class)
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
                 .csrf().disable()
+                .addFilterBefore(corsFilter(), SessionManagementFilter.class)
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/",
+                                "/files/**",
+                                "/api/auth/login",
+                                "/api/auth/login/slack**",
+                                "/api/auth/login/microsoft**",
+                                "/actuator/health",
+                                "/api/docs/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilter(new JwtAuthenticationFilter(authenticationManager))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager))
+                .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .build();
 
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .authorizeRequests()
-                .antMatchers(HttpMethod.GET, "/").permitAll()
-                .antMatchers(HttpMethod.OPTIONS,"**").permitAll()
-                .antMatchers(HttpMethod.GET,"/files/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/api/auth/login**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/auth/login/slack**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/auth/login/microsoft**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/health").permitAll()
-                .antMatchers(HttpMethod.GET,"/actuator/health").permitAll()
-                .antMatchers(HttpMethod.GET,"/actuator/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/swagger-ui**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/docs/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-
-                .and()
-                .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
-
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 
 }

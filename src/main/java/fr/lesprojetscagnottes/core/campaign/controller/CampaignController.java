@@ -22,8 +22,8 @@ import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepositor
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
+import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
@@ -45,7 +45,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.security.Principal;
 import java.util.*;

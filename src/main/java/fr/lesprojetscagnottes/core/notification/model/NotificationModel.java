@@ -6,7 +6,7 @@ import fr.lesprojetscagnottes.core.notification.entity.NotificationEntity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)

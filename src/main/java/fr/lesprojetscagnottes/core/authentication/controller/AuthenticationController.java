@@ -1,52 +1,42 @@
 package fr.lesprojetscagnottes.core.authentication.controller;
 
-import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
 import fr.lesprojetscagnottes.core.common.exception.AuthenticationException;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
-import fr.lesprojetscagnottes.core.authentication.model.AuthenticationRequestModel;
-import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.user.model.UserModel;
-import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
-import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
-import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
-import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.common.security.JwtAuthenticationFilter;
 import fr.lesprojetscagnottes.core.common.security.TokenProvider;
-import fr.lesprojetscagnottes.core.common.service.HttpClientService;
+import fr.lesprojetscagnottes.core.common.strings.AuthenticationConfigConstants;
+import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.model.UserModel;
+import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
-import fr.lesprojetscagnottes.core.providers.slack.repository.SlackTeamRepository;
-import fr.lesprojetscagnottes.core.providers.slack.repository.SlackUserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Authentication", description = "The Authentication API")
 public class AuthenticationController {
-
-    public static final String TOKEN_HEADER = "Authorization";
-
-    @Autowired
-    private HttpClientService httpClientService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -55,25 +45,7 @@ public class AuthenticationController {
     private TokenProvider jwtTokenUtil;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private BudgetRepository budgetRepository;
-
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private SlackTeamRepository slackTeamRepository;
-
-    @Autowired
-    private SlackUserRepository slackUserRepository;
-
-    @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private SlackClientService slackClientService;
 
     @Autowired
     private UserService userService;
@@ -84,14 +56,8 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials or user", content = @Content(schema = @Schema()))
     })
     @RequestMapping(value = "/auth/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public AuthenticationResponseModel login(@RequestBody AuthenticationRequestModel user) throws AuthenticationException {
-        final Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        user.getEmail(),
-                        user.getPassword()
-                )
-        );
-
+    public AuthenticationResponseModel login(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        final Authentication authentication = new JwtAuthenticationFilter(authenticationManager).attemptAuthentication(request, response);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = jwtTokenUtil.generateToken(authentication);
         return new AuthenticationResponseModel(token);
@@ -104,7 +70,7 @@ public class AuthenticationController {
     })
     @RequestMapping(value = "/auth/refresh", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public AuthenticationResponseModel refresh(HttpServletRequest request) {
-        String authToken = request.getHeader(TOKEN_HEADER);
+        String authToken = request.getHeader(AuthenticationConfigConstants.HEADER_STRING);
         final String token = authToken.substring(7);
         String username = jwtTokenUtil.getUsernameFromToken(token);
         UserEntity user = userRepository.findByUsername(username);
