@@ -1,6 +1,5 @@
 package fr.lesprojetscagnottes.core.common.audit;
 
-import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -15,9 +14,8 @@ public class AuditEntityListener implements AuditorAware<String> {
             return Optional.of("System");
         } else {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if(!principal.toString().equals("anonymousUser")) {
-                UserPrincipal user = (UserPrincipal) principal;
-                return Optional.of(user.getUsername());
+            if(!principal.toString().equals("anonymousUser") && principal.getClass().equals(String.class)) {
+                return Optional.of(principal.toString());
             } else {
                 return Optional.of("System");
             }
