@@ -293,7 +293,7 @@ public class UserController {
     public Set<AccountModel> getAccountsByBudgetIds(Principal principal, @PathVariable("id") Long id, @RequestParam("budgetIds") Set<Long> budgetIds) {
 
         // Fails if user ID is missing
-        if(id <= 0 || budgetIds.size() <= 0) {
+        if(id <= 0) {
             log.error("Impossible to get accounts by user ID & budget IDs : params are incorrect");
             throw new BadRequestException();
         }
@@ -472,7 +472,7 @@ public class UserController {
     public Set<DonationModel> getDonationsByAccountIds(Principal principal, @PathVariable("id") long contributorId, @RequestParam("accountIds") Set<Long> accountIds) {
 
         // Fails if campaign ID is missing
-        if(contributorId <= 0 || accountIds.size() <= 0) {
+        if(contributorId <= 0) {
             log.error("Impossible to get donations by contributor ID : params are incorrect");
             throw new BadRequestException();
         }

@@ -161,16 +161,16 @@ values
 
 SELECT public.create_donation(
 (select id from accounts where budget_id =((select id from budgets where name = 'Cagnotte')) and owner_id = (select id from users where username = 'DenisGiroux@dayrep.com')),
-(select id from campaigns where title = 'Du nouveau mobilier'), 400.0);
+(select id from campaigns where created_by = 'DenisGiroux@dayrep.com'), 400.0);
 SELECT public.create_donation(
 (select id from accounts where budget_id =((select id from budgets where name = 'Cagnotte')) and owner_id = (select id from users where username = 'MatildaCaisse@dayrep.com')),
-(select id from campaigns where title = 'Du nouveau mobilier'), 200.0);
+(select id from campaigns where created_by = 'DenisGiroux@dayrep.com'), 200.0);
 SELECT public.create_donation(
 (select id from accounts where budget_id =((select id from budgets where name = 'Cagnotte')) and owner_id = (select id from users where username = 'AlphonseLejeune@teleworm.us')),
-(select id from campaigns where title = 'Du nouveau mobilier'), 200.0);
+(select id from campaigns where created_by = 'DenisGiroux@dayrep.com'), 200.0);
 SELECT public.create_donation(
 (select id from accounts where budget_id =((select id from budgets where name = 'Cagnotte')) and owner_id = (select id from users where username = 'MatildaCaisse@dayrep.com')),
-(select id from campaigns where title = 'Le projet ABCD'), 300.0);
+(select id from campaigns where created_by = 'MatildaCaisse@dayrep.com'), 300.0);
 
 UPDATE public.donations
 	SET created_at=(now() - interval '45 days'), updated_at=(now() - interval '45 days')
