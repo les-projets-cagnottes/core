@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SlackTeamRepository extends JpaRepository<SlackTeamEntity, Long> {
     SlackTeamEntity findByTeamId(String teamId);
+    SlackTeamEntity findByOrganizationId(Long id);
+
 }

@@ -84,17 +84,11 @@ public class SlackController {
 
         Map<String, Object> model = new HashMap<>();
         model.put("URL", webUrl);
-
-        slackTeam.getSlackUsers().stream()
-                .filter(slackUser -> slackUser.getId().equals(orgAdminUser.getId())) // TODO Cannot work because slackUserId != UserId
-                .findAny()
-                .ifPresentOrElse(
-                        slackUser -> model.put("contact", "<@" + slackUser.getSlackId() + ">"),
-                        () -> model.put("contact", "*" + orgAdminUser.getFirstname() + " " + orgAdminUser.getLastname() + "*"));
+        model.put("contact", "*" + orgAdminUser.getFirstname() + " " + orgAdminUser.getLastname() + "*");
 
         Context context = new Context();
         context.setVariables(model);
-        String slackMessage = templateEngine.process("slack/fr/hello", context);
+        String slackMessage = templateEngine.process("slack/fr/HELLO", context);
 
         slackClientService.inviteBotInConversation(slackTeam);
         slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
@@ -136,12 +130,13 @@ public class SlackController {
         // Verify that principal has correct privileges :
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotOwnerOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to send hello world message : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
 
         // Send message
+        log.debug("Envoi de hello vers {}/{}", slackTeam.getTeamId(), slackTeam.getPublicationChannelId());
         hello(slackTeam);
     }
 
@@ -258,7 +253,7 @@ public class SlackController {
 
             Context context = new Context();
             context.setVariables(model);
-            String slackMessage = templateEngine.process("slack/fr/new-member", context);
+            String slackMessage = templateEngine.process("slack/fr/WELCOME_PRIVATE", context);
 
             slackClientService.postMessage(slackTeam, slackUserInDb.getImId(), slackMessage);
         });

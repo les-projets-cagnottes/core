@@ -109,4 +109,23 @@ public class UserModel extends AuditEntity<String> {
         this.password = "***";
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("UserModel{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", createdAt='").append(getCreatedAt()).append('\'');
+        sb.append(", createdBy='").append(getCreatedBy()).append('\'');
+        sb.append(", updatedAt='").append(getUpdatedAt()).append('\'');
+        sb.append(", updatedBy='").append(getUpdatedBy()).append('\'');
+        sb.append(", username='").append(username).append('\'');
+        sb.append(", password='").append(password).append('\'');
+        sb.append(", email='").append(email).append('\'');
+        sb.append(", firstname='").append(firstname).append('\'');
+        sb.append(", lastname='").append(lastname).append('\'');
+        sb.append(", avatarUrl='").append(avatarUrl).append('\'');
+        sb.append(", enabled=").append(enabled);
+        sb.append(", lastPasswordResetDate=").append(lastPasswordResetDate);
+        sb.append('}');
+        return sb.toString();
+    }
 }

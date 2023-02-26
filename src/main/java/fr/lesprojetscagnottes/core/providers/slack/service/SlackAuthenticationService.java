@@ -131,10 +131,10 @@ public class SlackAuthenticationService {
         organizationService.save(organization);
 
         // Create accounts for usable budgets
-        accountService.createUserAccountsForUsableBudgets(user, organization.getId());
+        accountService.createUserAccountsForUsableBudgets(savedUser, organization.getId());
 
         // Generate token
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser, null, authService.getAuthorities(user.getId()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return new AuthenticationResponseModel(jwtTokenUtil.generateToken(authentication));
     }

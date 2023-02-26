@@ -1,6 +1,0 @@
-:bulb: Toi, je suis sûr que tu as des idées plein la tête ! Alors qu'attends-tu pour les *partager* ?
-
-Qu'elles visent à améliorer [(${organization.socialName})], organiser un évènement entre collègues ou changer le monde, n'hésite pas à les renseigner à l'adresse suivante :
-[(${baseUrl})]/ideas
-
-Et si tu vois dans la liste une idée qui t'intéresse, *contacte son auteur* ! Il sera sûrement ravi de te payer un verre pour en discuter ensemble :tropical_drink:

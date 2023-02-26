@@ -147,7 +147,7 @@ public class ContentController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to create content in organization : principal is not a sponsor of organization {}", organizationId);
             throw new ForbiddenException();
         }
@@ -192,7 +192,7 @@ public class ContentController {
         log.debug(organizations.toString());
         boolean isSponsorOfNoneOrganization = true;
         for (OrganizationEntity organization : organizations) {
-            isSponsorOfNoneOrganization &= !this.userService.isSponsorOfOrganization(userLoggedInId, organization.getId());
+            isSponsorOfNoneOrganization &= this.userService.isNotSponsorOfOrganization(userLoggedInId, organization.getId());
             log.debug(String.valueOf(isSponsorOfNoneOrganization));
         }
         if(isSponsorOfNoneOrganization && userService.isNotAdmin(userLoggedInId)) {
@@ -247,7 +247,7 @@ public class ContentController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isSponsorOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotSponsorOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to delete content : principal is not a member of organization {}", organization.getId());
             throw new ForbiddenException();
         }

@@ -1,0 +1,7 @@
+:moneybag: L'équipe du projet *[(${project_title})]* vient de lancer une campagne de financement
+
+Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement"
+[(${project_url})]
+
+Pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :
+[(${profile_url})]
