@@ -72,7 +72,7 @@ public class TokenProvider implements Serializable {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         return JWT.create()
-                .withSubject(authentication.getName())
+                .withSubject(authentication.getPrincipal().toString())
                 .withClaim(AUTHORITIES_KEY, authorities)
                 .withExpiresAt(expiration)
                 .withIssuedAt(new Date(System.currentTimeMillis()))

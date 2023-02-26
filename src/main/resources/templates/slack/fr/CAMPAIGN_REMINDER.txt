@@ -1,0 +1,9 @@
+:timer_clock: Il reste *[(${days_until_deadline})] jour(s)* pour compléter la campagne de financement du projet [(${project_title})]
+
+A ce jour, il manque [(${donation_missing_formatted})] €
+
+Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement"
+[(${project_url})]
+
+Pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :
+[(${profile_url})]

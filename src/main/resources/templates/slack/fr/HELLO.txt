@@ -2,6 +2,7 @@ Bonjour à tous :wave:
 
 Connaissez-vous *Les Projets Cagnottes* ?
 Avec ces projets, chacun est libre de :
+
 :rocket: Lancer un projet
 :handshake: Rejoindre un projet
 :moneybag: Financer un projet avec sa part du budget de l'organisation

@@ -118,7 +118,7 @@ public class MicrosoftBotService {
         // Verify that principal has correct privileges :
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotOwnerOfOrganization(userLoggedInId, organization.getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to send hello world message to ms team : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }

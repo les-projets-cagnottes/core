@@ -685,7 +685,7 @@ public class UserController {
 
         // Test that user logged in has correct rights
         Long userLoggedInId = userService.get(principal).getId();
-        if(userService.isNotAdmin(userLoggedInId) && !userService.isOwnerOfOrganization(userLoggedInId, organizationAuthorityInDb.getOrganization().getId())) {
+        if(userService.isNotAdmin(userLoggedInId) && userService.isNotOwnerOfOrganization(userLoggedInId, organizationAuthorityInDb.getOrganization().getId())) {
             log.error("Impossible to grant user {} with organization authority {} : principal has not enough privileges", id, organizationAuthority.getId());
             throw new ForbiddenException();
         }

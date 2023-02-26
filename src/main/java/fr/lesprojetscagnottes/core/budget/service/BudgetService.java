@@ -71,14 +71,14 @@ public class BudgetService {
 
         // Test that user logged in has correct rights
         UserEntity userLoggedIn = userService.get(principal);
-        if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
+        if(userService.isNotSponsorOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
             log.error("Impossible to save budget {} : principal {} has not enough privileges", budgetModel.getName(), userLoggedIn.getId());
             throw new ForbiddenException();
         }
 
         // Test that sponsor has correct rights
         Long sponsorId = budgetModel.getSponsor().getId();
-        if(!userService.isSponsorOfOrganization(sponsorId, organization.getId())) {
+        if(userService.isNotSponsorOfOrganization(sponsorId, organization.getId())) {
             log.error("Impossible to save budget {} : sponsor {} has not enough privileges", budgetModel.getName(), sponsor.getId());
             throw new ForbiddenException();
         }

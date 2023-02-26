@@ -22,8 +22,6 @@ import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepositor
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
-import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import fr.lesprojetscagnottes.core.user.service.UserService;
@@ -44,8 +42,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.security.Principal;
 import java.util.*;
@@ -61,13 +57,7 @@ public class CampaignController {
     private Gson gson;
 
     @Autowired
-    private SpringTemplateEngine templateEngine;
-
-    @Autowired
     private CampaignScheduler campaignScheduler;
-
-    @Autowired
-    private SlackClientService slackClientService;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -294,34 +284,6 @@ public class CampaignController {
             model.put("project_url", webUrl + "/projects/" + project.getId());
             model.put("profile_url", webUrl + "/profile");
             notificationService.create(NotificationName.CAMPAIGN_STARTED, model, project.getOrganization().getId());
-
-            // TODO : Remove Slack legacy notification
-            model.put("URL", webUrl);
-            model.put("project", campaignFinal.getProject());
-            if(organization.getSlackTeam() != null) {
-
-                SlackTeamEntity slackTeam = organization.getSlackTeam();
-
-                organization.getMembers().stream()
-                        .filter(member -> member.getId().equals(leader.getId()))
-                        .findAny()
-                        .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
-                                .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                        slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
-                                        () -> model.put("leader", leader.getFullname())),() -> model.put("leader", leader.getFullname()));
-
-                Context context = new Context();
-                context.setVariables(model);
-                String slackMessage = templateEngine.process("slack/fr/campaign-created", context);
-
-                log.info("[create][" + campaignFinal.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
-
-                slackClientService.inviteBotInConversation(slackTeam);
-                slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                log.info("[create][" + campaignFinal.getId() + "] Slack Message Sent");
-            }
         }
         campaign.setId(campaignFinal.getId());
         return campaign;

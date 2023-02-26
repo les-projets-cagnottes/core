@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,16 +32,31 @@ public class AuthService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.debug(username);
+        log.debug("looking for user {}", username);
         UserEntity user = userRepository.findByUsername(username);
+        log.debug("-> by username : {}", user);
         if (user == null) {
             user = userRepository.findByEmail(username);
+            log.debug("-> by email : {}", user);
             if (user == null) {
-                throw new UsernameNotFoundException("User not found");
+                try {
+                    Pattern pattern = Pattern.compile(".*id='(\\d+)'.*");
+                    Matcher matcher = pattern.matcher(username);
+                    if (matcher.find()) {
+                        user = userRepository.findById(Long.parseLong(matcher.group(1))).orElse(null);
+                    }
+                    log.debug("-> by id : {}", user);
+                } catch (NumberFormatException nfe) {
+                    throw new UsernameNotFoundException("User not found");
+                }
             }
         }
-
-        return new UserPrincipal(username, user.getPassword(), getAuthorities(user.getId()));
+        if(user != null) {
+            log.debug("user found : {}", user.getEmail());
+            return new UserPrincipal(user.getEmail(), user.getPassword(), getAuthorities(user.getId()));
+        } else {
+            return null;
+        }
     }
 
     public List<GrantedAuthority> getAuthorities(long userId) {

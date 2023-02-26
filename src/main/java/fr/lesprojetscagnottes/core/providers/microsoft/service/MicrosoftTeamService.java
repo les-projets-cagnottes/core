@@ -160,7 +160,7 @@ public class MicrosoftTeamService {
 
         // Test that user logged in has correct rights
         UserEntity userLoggedIn = userService.get(principal);
-        if(!userService.isOwnerOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
+        if(userService.isNotOwnerOfOrganization(userLoggedIn.getId(), organization.getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
             log.error("Impossible to save ms team {} : principal {} has not enough privileges", msTeam, userLoggedIn.getId());
             throw new ForbiddenException();
         }
@@ -186,7 +186,7 @@ public class MicrosoftTeamService {
         // Verify if principal has correct privileges
         if(msTeam.getOrganization() != null && msTeam.getOrganization().getId() > 0) {
             Long userLoggedInId = userService.get(principal).getId();
-            if(!userService.isOwnerOfOrganization(userLoggedInId, msTeam.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            if(userService.isNotOwnerOfOrganization(userLoggedInId, msTeam.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
                 log.error("Impossible disconnect MS Team from organization : principal is not owner of organization {}", msTeam.getOrganization().getId());
                 throw new ForbiddenException();
             }
@@ -213,7 +213,7 @@ public class MicrosoftTeamService {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to sync MS Team data with organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }

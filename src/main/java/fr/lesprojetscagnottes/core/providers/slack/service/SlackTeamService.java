@@ -94,7 +94,7 @@ public class SlackTeamService {
         // If the Slack Team is in an organization, verify that principal is in this organization
         if(entity.getOrganization() != null) {
             Long userLoggedInId = userService.get(principal).getId();
-            if(!userService.isMemberOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            if(userService.isNotOwnerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
                 log.error("Impossible to get Slack Team by ID : principal has not enough privileges");
                 throw new ForbiddenException();
             }
@@ -102,6 +102,10 @@ public class SlackTeamService {
 
         // Transform and return organization
         return SlackTeamModel.fromEntity(entity);
+    }
+
+    public SlackTeamEntity findByOrganizationId(Long id) {
+        return slackTeamRepository.findByOrganizationId(id);
     }
 
     public String create(Principal principal, long org_id, String code, String redirect_uri) {
@@ -121,7 +125,7 @@ public class SlackTeamService {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isOwnerOfOrganization(userLoggedInId, org_id) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotManagerOfOrganization(userLoggedInId, org_id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to add Slack workspace to organization : principal is not owner of organization {}", org_id);
             throw new ForbiddenException();
         }
@@ -192,7 +196,7 @@ public class SlackTeamService {
         // If user is not admin => organization where principal is member
         // Else => all organizations
         Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotOwnerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to get Slack team by ID : principal has not enough privileges");
             throw new ForbiddenException();
         }
@@ -221,7 +225,7 @@ public class SlackTeamService {
         // Verify if principal has correct privileges
         if(entity.getOrganization() != null) {
             Long userLoggedInId = userService.get(principal).getId();
-            if(!userService.isOwnerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+            if(userService.isNotOwnerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
                 log.error("Cannot delete Slack Team : principal is not owner of organization {}", entity.getOrganization().getId());
                 throw new ForbiddenException();
             }
@@ -256,7 +260,7 @@ public class SlackTeamService {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if(!userService.isManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotManagerOfOrganization(userLoggedInId, entity.getOrganization().getId()) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to sync Slack data with organization : principal is not owner of organization {}", id);
             throw new ForbiddenException();
         }

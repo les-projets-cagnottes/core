@@ -9,9 +9,6 @@ import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.notification.model.NotificationName;
 import fr.lesprojetscagnottes.core.notification.service.NotificationService;
-import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
-import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
-import fr.lesprojetscagnottes.core.providers.slack.service.SlackClientService;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
 import fr.lesprojetscagnottes.core.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -35,12 +30,6 @@ public class CampaignScheduler {
 
     @Autowired
     private DonationProcessingTask donationProcessingTask;
-
-    @Autowired
-    private SpringTemplateEngine templateEngine;
-
-    @Autowired
-    private SlackClientService slackClientService;
 
     @Autowired
     private CampaignRepository campaignRepository;
@@ -120,7 +109,6 @@ public class CampaignScheduler {
             log.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
         } else {
             if(donationsMissing > 0) {
-
                 Map<String, Object> model = new HashMap<>();
                 model.put("days_until_deadline", daysUntilDeadline);
                 model.put("donation_missing_formatted", String.format("%.2f", donationsMissing));
@@ -128,37 +116,6 @@ public class CampaignScheduler {
                 model.put("project_url", webUrl + "/projects/" + campaign.getProject().getId());
                 model.put("profile_url", webUrl + "/profile");
                 notificationService.create(NotificationName.CAMPAIGN_REMINDER, model, campaign.getProject().getOrganization().getId());
-
-                // TODO : Remove Slack legacy notification
-                model.put("URL", webUrl);
-                model.put("campaign", campaign);
-                model.put("daysUntilDeadline", daysUntilDeadline);
-                model.put("donationsMissing", donationsMissing);
-                model.put("donationsMissingFormatted", String.format("%.2f", donationsMissing));
-                OrganizationEntity organization = campaign.getProject().getOrganization();
-                if(organization.getSlackTeam() != null) {
-                    SlackTeamEntity slackTeam = organization.getSlackTeam();
-                    organization.getMembers().stream()
-                            .filter(member -> member.getId().equals(leader.getId()))
-                            .findAny()
-                            .ifPresentOrElse(member -> slackTeam.getSlackUsers().stream()
-                                .filter(slackUser -> slackUser.getUser().getId().equals(leader.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                    slackUser -> model.put("leader", "<@" + slackUser.getSlackId() + ">"),
-                                    () -> model.put("leader", leader.getFullname())),
-                                () -> model.put("leader", leader.getFullname())
-                            );
-
-                    Context context = new Context();
-                    context.setVariables(model);
-                    String slackMessage = templateEngine.process("slack/fr/campaign-reminder", context);
-
-                    log.info("[notifyCampaignStatus][" + campaign.getId() + "] Send Slack Message to " + slackTeam.getTeamId() + " / " + slackTeam.getPublicationChannelId() + " :\n" + slackMessage);
-                    slackClientService.inviteBotInConversation(slackTeam);
-                    slackClientService.postMessage(slackTeam, slackTeam.getPublicationChannelId(), slackMessage);
-                    log.info("[notifyCampaignStatus][" + campaign.getId() + "] Slack Message Sent");
-                }
             }
         }
 

@@ -58,7 +58,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(AuthenticationConfigConstants.HEADER_STRING);
-        log.debug(token);
         if (token != null) {
 
             // parse the token.
@@ -68,6 +67,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
             String username = verify.getSubject();
             String role = verify.getClaim(AUTHORITIES_KEY).asString();
+
+            log.debug("username : {}", username);
+            log.debug("role : {}", role);
 
             if (username != null) {
                 return new UsernamePasswordAuthenticationToken(username, null, getAuthorities(role));

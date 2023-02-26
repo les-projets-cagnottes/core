@@ -386,7 +386,7 @@ public class OrganizationController {
             // Verify that principal has correct privileges :
             // Principal is owner of the organization OR Principal is admin
             final Long userLoggedInId = userService.get(principal).getId();
-            if (!userService.isOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
+            if (userService.isNotOwnerOfOrganization(userLoggedInId, organizationModel.getId()) && userService.isNotAdmin(userLoggedInId)) {
                 log.error("Impossible to update organization : principal {} has not enough privileges", userLoggedInId);
                 throw new ForbiddenException();
             }
@@ -430,7 +430,7 @@ public class OrganizationController {
         // Verify that principal has correct privileges :
         // Principal is owner of the organization OR Principal is admin
         Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotOwnerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to delete organization : principal {} has not enough privileges", userLoggedInId);
             throw new ForbiddenException();
         }
@@ -506,7 +506,7 @@ public class OrganizationController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to add member to an organization : principal is not a member of organization {}", id);
             throw new ForbiddenException();
         }
@@ -557,7 +557,7 @@ public class OrganizationController {
 
         // Verify if principal has correct privileges
         Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
+        if (userService.isNotManagerOfOrganization(userLoggedInId, id) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to remove member from an organization : principal is not a manager of organization {}", id);
             throw new ForbiddenException();
         }

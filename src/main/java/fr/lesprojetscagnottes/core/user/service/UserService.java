@@ -5,6 +5,7 @@ import fr.lesprojetscagnottes.core.authorization.name.AuthorityName;
 import fr.lesprojetscagnottes.core.authorization.name.OrganizationAuthorityName;
 import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.authorization.repository.OrganizationAuthorityRepository;
+import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.security.UserPrincipal;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
@@ -19,10 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -55,12 +53,16 @@ public class UserService {
 
     public UserEntity get(Principal principal) {
         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) principal;
-        log.debug("get principal : {}", token.getPrincipal());
-        UserDetails userDetails = this.authService.loadUserByUsername(token.getPrincipal().toString());
-        UserPrincipal userPrincipal = (UserPrincipal) userDetails;
-        UserEntity user = userRepository.findByUsername(userPrincipal.getUsername());
-        if (user == null) {
-            user = userRepository.findByEmail(userPrincipal.getUsername());
+        UserEntity user;
+        if(token.getPrincipal().getClass().equals(GenericModel.class)) {
+            user = userRepository.findById(Long.getLong(token.getPrincipal().toString())).orElse(null);
+        } else {
+            UserDetails userDetails = this.authService.loadUserByUsername(token.getPrincipal().toString());
+            UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+            user = userRepository.findByUsername(userPrincipal.getUsername());
+            if (user == null) {
+                user = userRepository.findByEmail(userPrincipal.getUsername());
+            }
         }
         return user;
     }
@@ -99,15 +101,13 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public UserEntity findOne(String username) {
-        return userRepository.findByUsername(username);
-    }
-
     public UserEntity save(UserEntity user) {
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setLastPasswordResetDate(new Date());
         }
+        user.setUsername(user.getEmail());
+        log.debug("Saving {}", user);
         return userRepository.save(user);
     }
 
@@ -115,20 +115,20 @@ public class UserService {
         return organizationRepository.findByIdAndMembers_Id(organizationId, userId) != null;
     }
 
-    public boolean isSponsorOfOrganization(long userId, long organizationId) {
-        return isMemberOfOrganization(userId, organizationId) && hasOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_SPONSOR);
+    public boolean isNotSponsorOfOrganization(long userId, long organizationId) {
+        return !isMemberOfOrganization(userId, organizationId) || hasNotOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_SPONSOR);
     }
 
-    public boolean isManagerOfOrganization(long userId, long organizationId) {
-        return isMemberOfOrganization(userId, organizationId) && hasOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_MANAGER);
+    public boolean isNotManagerOfOrganization(long userId, long organizationId) {
+        return !isMemberOfOrganization(userId, organizationId) || hasNotOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_MANAGER);
     }
 
-    public boolean isOwnerOfOrganization(long userId, long organizationId) {
-        return isMemberOfOrganization(userId, organizationId) && hasOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_OWNER);
+    public boolean isNotOwnerOfOrganization(long userId, long organizationId) {
+        return !isMemberOfOrganization(userId, organizationId) || hasNotOrganizationAuthority(userId, organizationId, OrganizationAuthorityName.ROLE_OWNER);
     }
 
-    private boolean hasOrganizationAuthority(long userId, long organizationId, OrganizationAuthorityName authorityName) {
-        return organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationId, userId, authorityName) != null;
+    private boolean hasNotOrganizationAuthority(long userId, long organizationId, OrganizationAuthorityName authorityName) {
+        return organizationAuthorityRepository.findByOrganizationIdAndUsersIdAndName(organizationId, userId, authorityName) == null;
     }
 
     public boolean isNotAdmin(long userId) {

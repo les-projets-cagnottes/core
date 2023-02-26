@@ -282,7 +282,7 @@ public class ProjectService {
         UserEntity userLoggedIn = userService.get(principal);
         Long userLoggedInId = userLoggedIn.getId();
         if(userService.isNotAdmin(userLoggedInId)
-                && !userService.isManagerOfOrganization(userLoggedInId, project.getOrganization().getId())
+                && userService.isNotManagerOfOrganization(userLoggedInId, project.getOrganization().getId())
                 && !userLoggedInId.equals(project.getLeader().getId())) {
             log.error("Impossible to update project status {} : principal has not enough privileges", project.getId());
             throw new ForbiddenException();
@@ -299,6 +299,7 @@ public class ProjectService {
         if(previousStatus.equals(ProjectStatus.DRAFT)
                 && status.equals(ProjectStatus.IN_PROGRESS)) {
             Map<String, Object> model = new HashMap<>();
+            model.put("user_username", userLoggedIn.getUsername());
             model.put("user_fullname", userLoggedIn.getFullname());
             model.put("project_title", project.getTitle());
             model.put("project_url", webUrl + "/projects/" + project.getId());

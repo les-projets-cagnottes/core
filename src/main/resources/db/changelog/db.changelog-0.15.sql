@@ -182,83 +182,83 @@ CREATE SEQUENCE IF NOT EXISTS users_seq
 
 --changeset lesprojetscagnottes:set-sequence-value-accounts
 SELECT setval('accounts_seq', (select max(id) from accounts) + 1, true);
---rollback select setval('accounts_seq', 0, true);
+--rollback select setval('accounts_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-api_tokens
 SELECT setval('api_tokens_seq', (select max(id) from api_tokens) + 1, true);
---rollback select setval('api_tokens_seq', 0, true);
+--rollback select setval('api_tokens_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-authorities
 SELECT setval('authorities_seq', (select max(id) from authorities) + 1, true);
---rollback select setval('authorities_seq', 0, true);
+--rollback select setval('authorities_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-budgets
 SELECT setval('budgets_seq', (select max(id) from budgets) + 1, true);
---rollback select setval('budgets_seq', 0, true);
+--rollback select setval('budgets_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-campaigns
 SELECT setval('campaigns_seq', (select max(id) from campaigns) + 1, true);
---rollback select setval('campaigns_seq', 0, true);
+--rollback select setval('campaigns_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-contents
 SELECT setval('contents_seq', (select max(id) from contents) + 1, true);
---rollback select setval('contents_seq', 0, true);
+--rollback select setval('contents_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-donations
 SELECT setval('donations_seq', (select max(id) from donations) + 1, true);
---rollback select setval('donations_seq', 0, true);
+--rollback select setval('donations_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-files
 SELECT setval('files_seq', (select max(id) from files) + 1, true);
---rollback select setval('files_seq', 0, true);
+--rollback select setval('files_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-ideas
 SELECT setval('ideas_seq', (select max(id) from ideas) + 1, true);
---rollback select setval('ideas_seq', 0, true);
+--rollback select setval('ideas_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-ms_notifications
 SELECT setval('ms_notifications_seq', (select max(id) from ms_notifications) + 1, true);
---rollback select setval('ms_notifications_seq', 0, true);
+--rollback select setval('ms_notifications_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-ms_team
 SELECT setval('ms_team_seq', (select max(id) from ms_team) + 1, true);
---rollback select setval('ms_team_seq', 0, true);
+--rollback select setval('ms_team_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-ms_user
 SELECT setval('ms_user_seq', (select max(id) from ms_user) + 1, true);
---rollback select setval('ms_user_seq', 0, true);
+--rollback select setval('ms_user_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-news
 SELECT setval('news_seq', (select max(id) from news) + 1, true);
---rollback select setval('news_seq', 0, true);
+--rollback select setval('news_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-notifications
 SELECT setval('notifications_seq', (select max(id) from notifications) + 1, true);
---rollback select setval('notifications_seq', 0, true);
+--rollback select setval('notifications_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-organizations
 SELECT setval('organizations_seq', (select max(id) from organizations) + 1, true);
---rollback select setval('organizations_seq', 0, true);
+--rollback select setval('organizations_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-organizations_authorities
 SELECT setval('organizations_authorities_seq', (select max(id) from organizations_authorities) + 1, true);
---rollback select setval('organizations_authorities_seq', 0, true);
+--rollback select setval('organizations_authorities_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-projects
 SELECT setval('projects_seq', (select max(id) from projects) + 1, true);
---rollback select setval('projects_seq', 0, true);
+--rollback select setval('projects_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-slack_team
 SELECT setval('slack_team_seq', (select max(id) from slack_team) + 1, true);
---rollback select setval('slack_team_seq', 0, true);
+--rollback select setval('slack_team_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-slack_user
 SELECT setval('slack_user_seq', (select max(id) from slack_user) + 1, true);
---rollback select setval('slack_user_seq', 0, true);
+--rollback select setval('slack_user_seq', 1, true);
 
 --changeset lesprojetscagnottes:set-sequence-value-users
 SELECT setval('users_seq', (select max(id) from users) + 1, true);
---rollback select setval('users_seq', 0, true);
+--rollback select setval('users_seq', 1, true);
 
 --changeset lesprojetscagnottes:update-function-create_donation-sequence
 CREATE OR REPLACE FUNCTION create_donation(_account_id bigint, _campaign_id bigint, _amount real)
@@ -293,3 +293,36 @@ CREATE OR REPLACE FUNCTION create_donation(_account_id bigint, _campaign_id bigi
 --changeset lesprojetscagnottes:drop-sequence-hibernate_sequence
 DROP SEQUENCE hibernate_sequence;
 --rollback create sequence hibernate_sequence start with 1 increment by 1 no minvalue no maxvalue cache 1;
+
+--changeset lesprojetscagnottes:create-table-slack_notifications
+CREATE TABLE IF NOT EXISTS slack_notifications (
+    id bigint primary key,
+    created_at timestamp without time zone DEFAULT now(),
+    created_by character varying(255) DEFAULT 'System'::character varying,
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by character varying(255) DEFAULT 'System'::character varying,
+    sent boolean,
+    notification_id bigint,
+    team_id bigint
+);
+--rollback drop table ms_notifications;
+
+--changeset lesprojetscagnottes:add-fk-slack_notification
+ALTER TABLE ONLY slack_notifications
+    ADD CONSTRAINT fk_notification FOREIGN KEY (notification_id) REFERENCES notifications(id),
+    ADD CONSTRAINT fk_slack_team FOREIGN KEY (team_id) REFERENCES slack_team(id);
+--rollback alter table ms_notifications drop constraint fk_slack_team;
+--rollback alter table ms_notifications drop constraint fk_notification;
+
+--changeset lesprojetscagnottes:create-sequence-slack_notifications
+CREATE SEQUENCE IF NOT EXISTS slack_notifications_seq
+    START WITH 1
+    INCREMENT BY 50
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+--rollback drop sequence slack_notifications_seq;
+
+--changeset lesprojetscagnottes:set-sequence-value-slack_notifications
+SELECT setval('slack_notifications_seq', 1, true);
+--rollback select setval('slack_notifications_seq', 1, true);

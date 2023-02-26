@@ -6,12 +6,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import fr.lesprojetscagnottes.core.common.service.HttpClientService;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
+import fr.lesprojetscagnottes.core.notification.entity.NotificationEntity;
+import fr.lesprojetscagnottes.core.notification.model.NotificationVariables;
+import fr.lesprojetscagnottes.core.providers.slack.entity.SlackNotificationEntity;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackTeamEntity;
 import fr.lesprojetscagnottes.core.providers.slack.entity.SlackUserEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,7 +37,13 @@ public class SlackClientService {
     private String slackClientSecret;
 
     @Autowired
+    private Gson gson;
+
+    @Autowired
     private HttpClientService httpClientService;
+
+    @Autowired
+    private SpringTemplateEngine templateEngine;
 
     public SlackUserEntity token(String code, String redirect_uri) {
         String url = "https://slack.com/api/oauth.v2.access?client_id=" + slackClientId + "&client_secret=" + slackClientSecret + "&code=" + code + "&redirect_uri=" + redirect_uri;
@@ -270,5 +281,15 @@ public class SlackClientService {
             log.error(e.getMessage(), e);
         }
         return botId;
+    }
+
+    public void sendNotification(NotificationEntity notification, SlackNotificationEntity slackNotification) {
+        Context context = new Context();
+        context.setVariables(gson.fromJson(notification.getVariables(), NotificationVariables.class));
+        String message = templateEngine.process("slack/fr/" + notification.getName(), context);
+
+        SlackTeamEntity slackTeam = slackNotification.getTeam();
+        inviteBotInConversation(slackTeam);
+        postMessage(slackTeam, slackTeam.getPublicationChannelId(), message);
     }
 }

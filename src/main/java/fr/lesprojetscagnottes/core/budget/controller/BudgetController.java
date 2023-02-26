@@ -287,7 +287,7 @@ public class BudgetController {
         // Verify that principal is member of organization
         Long userLoggedInId = userService.get(principal).getId();
         Long organizationId = budget.getOrganization().getId();
-        if(!userService.isSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
+        if(userService.isNotSponsorOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
             log.error("Impossible to distribute budget {} : principal {} is not sponsor of organization {}", budget.getName(), userLoggedInId, budget.getOrganization().getId());
             throw new ForbiddenException();
         }
@@ -345,7 +345,7 @@ public class BudgetController {
         }
 
         // Test that user logged in has correct rights
-        if(!userService.isSponsorOfOrganization(userLoggedIn.getId(), budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
+        if(userService.isNotSponsorOfOrganization(userLoggedIn.getId(), budget.getOrganization().getId()) && userService.isNotAdmin(userLoggedIn.getId())) {
             log.error("Impossible to delete budget {} : principal {} has not enough privileges", budget.getName(), userLoggedIn.getId());
             throw new ForbiddenException();
         }
