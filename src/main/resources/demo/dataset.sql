@@ -2,7 +2,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- PURGE
 
+delete from public.ms_notifications;
+delete from public.ms_user;
+delete from public.ms_team;
+delete from public.slack_user;
+delete from public.slack_team;
+delete from public.slack_notifications;
+delete from public.notifications;
 delete from public.ideas;
+delete from public.news;
 delete from public.donations;
 delete from public.campaigns;
 delete from public.projects_members;
