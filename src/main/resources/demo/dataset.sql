@@ -1,5 +1,22 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- PURGE
+
+delete from public.ideas;
+delete from public.donations;
+delete from public.campaigns;
+delete from public.projects_members;
+delete from public.projects;
+delete from public.accounts;
+delete from public.budgets;
+delete from public.contents;
+delete from public.user_authority_organizations;
+delete from public.organizations_users;
+delete from public.user_authority;
+delete from public.users;
+delete from public.organizations_authorities;
+delete from public.organizations;
+
 -- ORGANIZATION
 
 insert into public.organizations
@@ -22,8 +39,8 @@ insert into public.users
 (id, created_at, created_by, updated_at, updated_by, avatar_url, email,
 enabled, firstname, lastpasswordresetdate, lastname, "password", username)
 values
-(nextval('users_seq'), NOW(), 'System', NOW(), 'System', 'https://eu.ui-avatars.com/api/?name=Charlotte+Fournier', 'CharlottePaquette@rhyta.com',
-true, 'Charlotte', NOW(), 'Fournier', '$2a$10$mTExeAyURZPO4mE7GEbQA.KCB/t.rf8NgCg67vaj7wB.ZzzHG78Ai', 'CharlottePaquette@rhyta.com'),
+(nextval('users_seq'), NOW(), 'System', NOW(), 'System', 'https://eu.ui-avatars.com/api/?name=Charlotte+Paquette', 'CharlottePaquette@rhyta.com',
+true, 'Charlotte', NOW(), 'Paquette', '$2a$10$mTExeAyURZPO4mE7GEbQA.KCB/t.rf8NgCg67vaj7wB.ZzzHG78Ai', 'CharlottePaquette@rhyta.com'),
 (nextval('users_seq'), NOW(), 'System', NOW(), 'System', 'https://eu.ui-avatars.com/api/?name=Alphonse+Lejeune', 'AlphonseLejeune@teleworm.us',
 true, 'Alphonse', NOW(), 'Lejeune', '$2a$10$MSBSKYkqNF5AklPxR6VPOu05q4UlDWC9Oah71PFx5EAa3aMss/8V6', 'AlphonseLejeune@teleworm.us'),
 (nextval('users_seq'), NOW(), 'System', NOW(), 'System', 'https://eu.ui-avatars.com/api/?name=Denis+Giroux', 'DenisGiroux@dayrep.com',
@@ -151,11 +168,11 @@ insert into public.campaigns
 (id,created_at,created_by,updated_at,updated_by,project_id,budget_id,donations_required,funding_deadline,status,total_donations)
 values
 (nextval('campaigns_seq'), now() - interval '2 months', 'DenisGiroux@dayrep.com', now() - interval '2 months', 'DenisGiroux@dayrep.com',
-(select id from projects where title = 'Du nouveau mobilier'),(select id from budgets where name = 'Cagnotte'),800.0, now() - interval '1 month', 'SUCCESSFUL', 800.0),
+(select id from projects where title = 'Du nouveau mobilier'),(select id from budgets where name = 'Cagnotte'),800.0, now() - interval '1 month', 'SUCCESSFUL', 0.0),
 (nextval('campaigns_seq'), now() - interval '1 month', 'CharlottePaquette@rhyta.com', now() - interval '1 month', 'CharlottePaquette@rhyta.com',
-(select id from projects where title = 'Un feu d''artifice pour le séminaire annuel'),(select id from budgets where name = 'Cagnotte'),0.0, now() - interval '14 days', 'FAILED', 0.0),
+(select id from projects where title = 'Un feu d''artifice pour le séminaire annuel'),(select id from budgets where name = 'Cagnotte'),2000.0, now() - interval '14 days', 'FAILED', 0.0),
 (nextval('campaigns_seq'), now() - interval '6 days', 'MatildaCaisse@dayrep.com', now() - interval '6 days', 'MatildaCaisse@dayrep.com',
-(select id from projects where title = 'Le projet ABCD'),(select id from budgets where name = 'Cagnotte'),500.0, now() + interval '15 days', 'IN_PROGRESS', 300.0);
+(select id from projects where title = 'Le projet ABCD'),(select id from budgets where name = 'Cagnotte'),500.0, now() + interval '15 days', 'IN_PROGRESS', 0.0);
 
 --- DONATIONS
 
@@ -174,10 +191,10 @@ SELECT public.create_donation(
 
 UPDATE public.donations
 	SET created_at=(now() - interval '45 days'), updated_at=(now() - interval '45 days')
-	WHERE campaign_id=(select id from campaigns where title = 'Du nouveau mobilier');
+	WHERE campaign_id=(select id from campaigns where created_by = 'DenisGiroux@dayrep.com');
 UPDATE public.donations
 	SET created_at=(now() - interval '6 days'), updated_at=(now() - interval '6 days')
-	WHERE campaign_id=(select id from campaigns where title = 'Le projet ABCD');
+	WHERE campaign_id=(select id from campaigns where created_by = 'MatildaCaisse@dayrep.com');
 
 --- IDEAS
 

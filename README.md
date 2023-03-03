@@ -18,6 +18,10 @@
 mvn clean install spring-boot:run
 ```
 
-## Dynamic set of data for local debug
+## Dynamic set of data for demo and local debug
 
-Once the app is running, you can execute `src/test/resources/sql/dataset.sql` to have test data.
+Put the following environment variable and the DB will be filled with dynamic data :
+
+```bash
+export FR_LESPROJETSCAGNOTTES_CORE_DEMO=true
+```
