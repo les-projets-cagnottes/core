@@ -26,6 +26,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -76,6 +78,9 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Value(("${fr.lesprojetscagnottes.core.demo}"))
+	private boolean demoMode;
+
 	@Value("${fr.lesprojetscagnottes.admin_password}")
 	private String adminPassword;
 
@@ -87,9 +92,6 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 
 	@Value("${fr.lesprojetscagnottes.slack.enabled}")
 	private boolean slackEnabled;
-
-	@Value("${spring.datasource.driver-class-name}")
-	private String datasourceDriverClassName;
 
 	@Value("${springdoc.swagger-ui.path}")
 	private String swaggerUrl;
@@ -106,14 +108,23 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 		UserEntity admin;
 
 		// First launch of App
-		if (authorityRepository.count() == 0) {
+		if (demoMode || authorityRepository.count() == 0) {
 
-			// Creation of every roles in database
-			for (AuthorityName authorityName : AuthorityName.values()) {
-				authorityRepository.save(new AuthorityEntity(authorityName));
+			if(authorityRepository.count() == 0) {
+
+				// Creation of every role in database
+				for (AuthorityName authorityName : AuthorityName.values()) {
+					authorityRepository.save(new AuthorityEntity(authorityName));
+				}
+
+				userGenerator.init(); // Refresh authorities
 			}
 
-			userGenerator.init(); // Refresh authorities
+			if(demoMode) {
+				log.info("DEMO MODE ENABLED");
+				ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator(false, false, "UTF-8", new ClassPathResource("demo/dataset.sql"));
+				resourceDatabasePopulator.execute(datasource);
+			}
 
 			String email = "admin";
 			String password = adminPassword;
