@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.donation.repository;
 
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,16 +9,17 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Set;
 
-public interface DonationRepository extends JpaRepository<Donation, Long> {
-    Page<Donation> findAll(Pageable pageable);
+public interface DonationRepository extends JpaRepository<DonationEntity, Long> {
 
-    Set<Donation> findAllByCampaignId(long campaignId);
+    Page<DonationEntity> findAll(Pageable pageable);
 
-    Set<Donation> findAllByAccountId(Long id);
+    Set<DonationEntity> findAllByCampaignId(long campaignId);
 
-    Set<Donation> findAllByAccountIdInOrderByCreatedAtAsc(Set<Long> accountIds);
+    Set<DonationEntity> findAllByAccountId(Long id);
 
-    Page<Donation> findByCampaign_idOrderByIdAsc(long id, Pageable pageable);
+    Set<DonationEntity> findAllByAccountIdInOrderByCreatedAtAsc(Set<Long> accountIds);
+
+    Page<DonationEntity> findByCampaign_idOrderByIdAsc(long id, Pageable pageable);
 
     @Query(value = "SELECT create_donation(:_account_id, :_campaign_id, :_amount);", nativeQuery = true)
     boolean createDonation(@Param("_account_id") long accountId, @Param("_campaign_id") long campaignId, @Param("_amount") float amount);

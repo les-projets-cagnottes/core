@@ -124,6 +124,7 @@ public class LPCCoreApplication implements WebMvcConfigurer {
 				log.info("DEMO MODE ENABLED");
 				ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator(false, false, "UTF-8", new ClassPathResource("demo/dataset.sql"));
 				resourceDatabasePopulator.execute(datasource);
+				adminPassword = "admin";
 			}
 
 			String email = "admin";

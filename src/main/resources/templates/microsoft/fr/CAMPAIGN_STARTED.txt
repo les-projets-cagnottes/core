@@ -1,6 +1,6 @@
 <p>💰 L'équipe du projet <b>[(${project_title})]</b> vient de lancer une campagne de financement</p>
 
-<p>Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement" :<br/>
+<p>Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton <b>Contribuer financièrement</b> :<br/>
 <a href="[(${project_url})]">[(${project_url})]</a></p>
 
 <p>Pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :<br/>

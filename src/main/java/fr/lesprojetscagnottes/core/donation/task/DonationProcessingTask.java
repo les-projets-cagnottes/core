@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.donation.task;
 
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperation;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
@@ -21,7 +21,7 @@ public class DonationProcessingTask extends TimerTask {
 
     Queue<DonationOperation> queue = new LinkedList<>();
 
-    public void insert(Donation donation, DonationOperationType type) {
+    public void insert(DonationEntity donation, DonationOperationType type) {
         queue.add(new DonationOperation(donation, type));
     }
 
@@ -29,7 +29,7 @@ public class DonationProcessingTask extends TimerTask {
     public void run() {
         DonationOperation operation = queue.poll();
         if(operation != null) {
-            Donation donation = operation.getDonation();
+            DonationEntity donation = operation.getDonation();
             switch (operation.getType()) {
                 case CREATION -> {
                     log.info("Create donation : {}", donation);
@@ -43,7 +43,7 @@ public class DonationProcessingTask extends TimerTask {
         }
     }
 
-    private void createDonation(Donation donation) {
+    private void createDonation(DonationEntity donation) {
         try {
             if(!donationRepository.createDonation(donation.getAccount().getId(), donation.getCampaign().getId(), donation.getAmount())) {
                 log.error("An error occured while creating donation {}", donation);
@@ -53,7 +53,7 @@ public class DonationProcessingTask extends TimerTask {
         }
     }
 
-    private void deleteDonation(Donation donation) {
+    private void deleteDonation(DonationEntity donation) {
         try {
             if(!donationRepository.deleteDonation(donation.getId())) {
                 log.error("An error occured while deleting donation {}", donation);

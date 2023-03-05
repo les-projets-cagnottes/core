@@ -2,7 +2,7 @@
 
 A ce jour, il manque [(${donation_missing_formatted})] €
 
-Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement"
+Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton *Contribuer financièrement*
 [(${project_url})]
 
 Pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :

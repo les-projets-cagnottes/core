@@ -1,16 +1,15 @@
-package fr.lesprojetscagnottes.core.campaign;
+package fr.lesprojetscagnottes.core.campaign.scheduler;
 
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignStatus;
 import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.notification.model.NotificationName;
 import fr.lesprojetscagnottes.core.notification.service.NotificationService;
-import fr.lesprojetscagnottes.core.user.entity.UserEntity;
-import fr.lesprojetscagnottes.core.user.repository.UserRepository;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,23 +27,31 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CampaignScheduler {
 
-    @Autowired
-    private DonationProcessingTask donationProcessingTask;
-
-    @Autowired
-    private CampaignRepository campaignRepository;
-
-    @Autowired
-    private DonationRepository donationRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
     @Value("${fr.lesprojetscagnottes.web.url}")
     private String webUrl;
+
+    private final UserService userService;
+
+    private final DonationProcessingTask donationProcessingTask;
+
+    private final CampaignRepository campaignRepository;
+
+    private final DonationRepository donationRepository;
+
+    private final NotificationService notificationService;
+
+    @Autowired
+    public CampaignScheduler(UserService userService,
+                             DonationProcessingTask donationProcessingTask,
+                             CampaignRepository campaignRepository,
+                             DonationRepository donationRepository,
+                             NotificationService notificationService) {
+        this.userService = userService;
+        this.donationProcessingTask = donationProcessingTask;
+        this.campaignRepository = campaignRepository;
+        this.donationRepository = donationRepository;
+        this.notificationService = notificationService;
+    }
 
     @Scheduled(cron = "${fr.lesprojetscagnottes.core.schedule.campaignfunding}")
     @Transactional
@@ -53,9 +60,9 @@ public class CampaignScheduler {
         Set<CampaignEntity> campaigns = campaignRepository.findAllByStatusAndFundingDeadlineLessThan(CampaignStatus.IN_PROGRESS, new Date());
         log.info("[processCampaignFundingDeadlines] " + campaigns.size() + " campaign(s) found");
         campaigns.forEach(campaign -> {
-            Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
+            Set<DonationEntity> donations = donationRepository.findAllByCampaignId(campaign.getId());
             float totalDonations = 0f;
-            for (Donation donation : donations) {
+            for (DonationEntity donation : donations) {
                 totalDonations += donation.getAmount();
             }
             log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Campaign : " + campaign.getId());
@@ -66,7 +73,7 @@ public class CampaignScheduler {
             } else {
                 campaign.setStatus(CampaignStatus.FAILED);
                 log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Status => FAILED");
-                for (Donation donation : donations) {
+                for (DonationEntity donation : donations) {
                     donationProcessingTask.insert(donation, DonationOperationType.DELETION);
                 }
                 log.info("[processCampaignFundingDeadlines][" + campaign.getId() + "] Donations deleted");
@@ -87,7 +94,7 @@ public class CampaignScheduler {
             log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Campaign : " + campaign.getId());
             log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Days until deadline : " + diff);
 
-            if(diff == 7 || diff == 1) {
+            if (diff == 7 || diff == 1) {
                 notifyCampaignStatus(campaign, diff);
             }
         });
@@ -96,28 +103,21 @@ public class CampaignScheduler {
 
     public void notifyCampaignStatus(CampaignEntity campaign, long daysUntilDeadline) {
 
-        Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
+        Set<DonationEntity> donations = donationRepository.findAllByCampaignId(campaign.getId());
         float totalDonations = 0f;
-        for (Donation donation : donations) {
+        for (DonationEntity donation : donations) {
             totalDonations += donation.getAmount();
         }
         float donationsMissing = campaign.getDonationsRequired() - totalDonations;
         log.info("[notifyCampaignsAlmostFinished][" + campaign.getId() + "] Donations : " + donationsMissing + " €");
 
-        UserEntity leader = userRepository.findById(campaign.getProject().getLeader().getId()).orElse(null);
-        if(leader == null) {
-            log.error("Impossible to notify about campaign status : leader of campaign {} id null", campaign.getId());
-        } else {
-            if(donationsMissing > 0) {
-                Map<String, Object> model = new HashMap<>();
-                model.put("days_until_deadline", daysUntilDeadline);
-                model.put("donation_missing_formatted", String.format("%.2f", donationsMissing));
-                model.put("project_title", campaign.getProject().getTitle());
-                model.put("project_url", webUrl + "/projects/" + campaign.getProject().getId());
-                model.put("profile_url", webUrl + "/profile");
-                notificationService.create(NotificationName.CAMPAIGN_REMINDER, model, campaign.getProject().getOrganization().getId());
-            }
-        }
+        Map<String, Object> model = new HashMap<>();
+        model.put("days_until_deadline", daysUntilDeadline);
+        model.put("donation_missing_formatted", String.format("%.2f", donationsMissing));
+        model.put("project_title", campaign.getProject().getTitle());
+        model.put("project_url", webUrl + "/projects/" + campaign.getProject().getId());
+        model.put("profile_url", webUrl + "/profile");
+        notificationService.create(NotificationName.CAMPAIGN_REMINDER, model, campaign.getProject().getOrganization().getId());
 
     }
 }

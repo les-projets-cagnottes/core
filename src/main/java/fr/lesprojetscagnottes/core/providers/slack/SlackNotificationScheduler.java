@@ -19,8 +19,8 @@ import java.util.List;
 @Slf4j
 public class SlackNotificationScheduler {
 
-    @Value("${fr.lesprojetscagnottes.microsoft.enabled}")
-    private boolean msEnabled;
+    @Value("${fr.lesprojetscagnottes.slack.enabled}")
+    private boolean slackEnabled;
 
     @Autowired
     private SlackClientService slackClientService;
@@ -37,7 +37,7 @@ public class SlackNotificationScheduler {
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void processNotifications() {
-        if(msEnabled) {
+        if(slackEnabled) {
             List<NotificationEntity> notifications = notificationService.list();
             notifications.forEach(notification -> {
                 log.debug("Process notification {}", notification.getId());

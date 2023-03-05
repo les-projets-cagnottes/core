@@ -1,17 +1,17 @@
 package fr.lesprojetscagnottes.core.donation.controller;
 
-import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
 import fr.lesprojetscagnottes.core.account.entity.AccountEntity;
-import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.account.repository.AccountRepository;
+import fr.lesprojetscagnottes.core.authorization.repository.AuthorityRepository;
+import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.budget.repository.BudgetRepository;
 import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
-import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignStatus;
+import fr.lesprojetscagnottes.core.campaign.repository.CampaignRepository;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.queue.DonationOperationType;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -107,7 +108,7 @@ public class DonationController {
                     if(account.getInitialAmount() != budget.getAmountPerMember()) {
                         log.error("Initial amount for account {} ({}) dont match with budget amount per member {} ({})", account.getId(), account.getInitialAmount(), budget.getId(), budget.getAmountPerMember());
                     }
-                    Set<Donation> accountDonations = donationRepository.findAllByAccountId(account.getId());
+                    Set<DonationEntity> accountDonations = donationRepository.findAllByAccountId(account.getId());
                     final float[] totalDonationsAmount = {0f};
                     accountDonations.forEach(donation -> totalDonationsAmount[0] += donation.getAmount());
                     log.info("|- Total donations : {}", totalDonationsAmount[0]);
@@ -137,7 +138,7 @@ public class DonationController {
         List<CampaignEntity> campaigns = campaignRepository.findAll();
         campaigns.forEach(campaign -> {
             log.info("Campaign {} : {}", campaign.getId(), campaign.getId());
-            Set<Donation> donations = donationRepository.findAllByCampaignId(campaign.getId());
+            Set<DonationEntity> donations = donationRepository.findAllByCampaignId(campaign.getId());
             final float[] totalDonationsAmount = {0f};
             donations.forEach(donation -> {
                 log.info("|- Donation {} : {}", donation.getId(), donation.getAmount());
@@ -232,7 +233,7 @@ public class DonationController {
 
         // Otherwise save donation
         float amount = donation.getAmount();
-        Donation donationToSave = new Donation();
+        DonationEntity donationToSave = new DonationEntity();
         donationToSave.setAccount(account);
         donationToSave.setCampaign(campaign);
         donationToSave.setAmount(amount);
@@ -252,7 +253,6 @@ public class DonationController {
     @ResponseBody
     @PreAuthorize("hasRole('USER')")
     public void delete(Principal principal, @PathVariable("id") long id) {
-
         // Fails if campaign ID is missing
         if(id <= 0) {
             log.error("Impossible to delete donation : ID is incorrect");
@@ -260,10 +260,10 @@ public class DonationController {
         }
 
         // Retrieve full referenced objects
-        Donation donation = donationRepository.findById(id).orElse(null);
-
-        // Verify that any of references are not null
-        if(donation == null) {
+        DonationEntity donation;
+        try {
+            donation = donationRepository.getReferenceById(id);
+        } catch(EntityNotFoundException e) {
             log.error("Impossible to delete donation : donation {} not found", id);
             throw new NotFoundException();
         }

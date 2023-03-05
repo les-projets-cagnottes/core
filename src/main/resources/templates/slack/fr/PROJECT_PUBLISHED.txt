@@ -1,4 +1,4 @@
-:rocket: *[(${user_fullname})]* vient de publier  le projet *[(${project_title})]*
+:rocket: *[(${user_fullname})]* vient de publier le projet *[(${project_title})]*
 
 Pour devenir réalité, le projet a besoin d'une équipe ! Rendez-vous à l'adresse suivante pour le découvrir et rejoindre l'aventure :
 [(${project_url})]

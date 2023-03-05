@@ -45,6 +45,10 @@ public class BudgetService {
         return budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(date, isDistributed, organizationId);
     }
 
+    public Set<BudgetEntity> findAllUsableBudgetsInOrganization(Date today, Long organization) {
+        return budgetRepository.findAllUsableBudgetsInOrganization(today, organization);
+    }
+
     public BudgetModel save(Principal principal, BudgetModel budgetModel) {
 
         // Fails if any of references are null

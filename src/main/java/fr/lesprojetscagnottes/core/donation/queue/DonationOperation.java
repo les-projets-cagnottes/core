@@ -1,6 +1,6 @@
 package fr.lesprojetscagnottes.core.donation.queue;
 
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,9 +10,9 @@ import lombok.Setter;
 public class DonationOperation {
 
     private DonationOperationType type;
-    private Donation donation;
+    private DonationEntity donation;
 
-    public DonationOperation(Donation donation, DonationOperationType type) {
+    public DonationOperation(DonationEntity donation, DonationOperationType type) {
         this.donation = donation;
         this.type = type;
     }

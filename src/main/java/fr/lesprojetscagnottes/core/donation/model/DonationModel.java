@@ -1,25 +1,21 @@
 package fr.lesprojetscagnottes.core.donation.model;
 
-import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
 import fr.lesprojetscagnottes.core.common.GenericModel;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Transient;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)
 @MappedSuperclass
 public class DonationModel extends AuditEntity<String> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DonationModel.class);
 
     @Column(name = "amount")
     @NotNull
@@ -31,7 +27,7 @@ public class DonationModel extends AuditEntity<String> {
     @Transient
     protected GenericModel campaign;
 
-    public static DonationModel fromEntity(Donation entity) {
+    public static DonationModel fromEntity(DonationEntity entity) {
         DonationModel model = new DonationModel();
         model.setCreatedAt(entity.getCreatedAt());
         model.setCreatedBy(entity.getCreatedBy());
@@ -41,7 +37,6 @@ public class DonationModel extends AuditEntity<String> {
         model.setAmount(entity.getAmount());
         model.setAccount(new GenericModel(entity.getAccount()));
         model.setCampaign(new GenericModel(entity.getCampaign()));
-        LOGGER.debug("Generated : " + model.toString());
         return model;
     }
 

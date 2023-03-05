@@ -21,6 +21,7 @@ delete from public.contents;
 delete from public.user_authority_organizations;
 delete from public.organizations_users;
 delete from public.user_authority;
+delete from public.api_tokens;
 delete from public.users;
 delete from public.organizations_authorities;
 delete from public.organizations;
@@ -88,10 +89,11 @@ VALUES
 --- CONTENTS
 
 INSERT INTO public.contents (id,created_at,created_by,updated_at,updated_by,organization_id,"name","value") values
-(nextval('contents_seq'),NOW(),'AlphonseLejeune@teleworm.us',NOW(),'AlphonseLejeune@teleworm.us',(select id from organizations where name = 'Super Boite'),'Règles d''utilisation du budget Super Boite','## Eligibilité
-Attention : tous les projets ne sont pas éligibles aux campagnes cagnottes. Avant de soumettre votre campagne sur la plateforme, vérifiez que vous respectez bien les règles suivantes :
-
-> Ceci est une démo, faites ce que vous voulez
+(nextval('contents_seq'),NOW(),'AlphonseLejeune@teleworm.us',NOW(),'AlphonseLejeune@teleworm.us',(select id from organizations where name = 'Super Boite'),'Règles d''utilisation du budget Super Boite','<h2 id="eligibilit-">Eligibilité</h2>
+<p>Attention : tous les projets ne sont pas éligibles aux campagnes cagnottes. Avant de soumettre votre campagne sur la plateforme, vérifiez que vous respectez bien les règles suivantes :</p>
+<blockquote>
+<p>Ceci est une démo, faites ce que vous voulez</p>
+</blockquote>
  ');
 
 --- BUDGETS

@@ -326,3 +326,7 @@ CREATE SEQUENCE IF NOT EXISTS slack_notifications_seq
 --changeset lesprojetscagnottes:set-sequence-value-slack_notifications
 SELECT setval('slack_notifications_seq', 1, true);
 --rollback select setval('slack_notifications_seq', 1, true);
+
+--changeset lesprojetscagnottes:drop-donations-contributor_id
+ALTER TABLE donations DROP COLUMN contributor_id;
+--rollback alter table donations add column contributor_id bigint;

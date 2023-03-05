@@ -8,7 +8,7 @@ import fr.lesprojetscagnottes.core.component.AuthenticationHttpClient;
 import fr.lesprojetscagnottes.core.component.CampaignHttpClient;
 import fr.lesprojetscagnottes.core.component.CucumberContext;
 import fr.lesprojetscagnottes.core.component.DonationHttpClient;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import io.cucumber.datatable.DataTable;
@@ -43,9 +43,9 @@ public class DonationStepDefinitions {
     @Given("The following donations are made")
     public void theFollowingDonationsAreMade(DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-        Donation donation;
+        DonationEntity donation;
         for (Map<String, String> columns : rows) {
-            donation = new Donation();
+            donation = new DonationEntity();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + columns.get("contributor")));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
@@ -57,11 +57,11 @@ public class DonationStepDefinitions {
     public void submitTheFollowingDonations(String userFirstname, DataTable table) {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
 
-        Donation donation;
+        DonationEntity donation;
         for (Map<String, String> columns : rows) {
 
             // Create donation
-            donation = new Donation();
+            donation = new DonationEntity();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + userFirstname));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
@@ -87,15 +87,15 @@ public class DonationStepDefinitions {
         List<DonationModel> donationsReturned = body.getContent();
         Assert.assertNotNull(donationsReturned);
 
-        Donation donation;
+        DonationEntity donation;
         for (Map<String, String> columns : rows) {
 
             // Create budget from feature
-            donation = new Donation();
+            donation = new DonationEntity();
             donation.setAmount(Float.parseFloat(columns.get("amount")));
             donation.setAccount(context.getAccounts().get(columns.get("budget") + "-" + columns.get("contributor")));
             donation.setCampaign(context.getCampaigns().get(columns.get("campaign")));
-            final Donation donationFinal = donation;
+            final DonationEntity donationFinal = donation;
             donationsReturned.stream()
                     .filter(donationReturned -> donationFinal.getAmount() == donationReturned.getAmount())
                     .filter(donationReturned -> donationFinal.getAccount().getId().equals(donationReturned.getAccount().getId()))
@@ -125,7 +125,7 @@ public class DonationStepDefinitions {
     @Then("{string} has {string} donation on the {string} account")
     public void hasDonationOnTheAccount(String userFirstname, String nbDonations, String budgetName) {
         AccountEntity account = context.getAccounts().get(budgetName + "-" + userFirstname);
-        Set<Donation> donations = donationRepository.findAllByAccountId(account.getId());
+        Set<DonationEntity> donations = donationRepository.findAllByAccountId(account.getId());
         Assert.assertEquals(Integer.valueOf(nbDonations), Integer.valueOf(donations.size()));
     }
 }

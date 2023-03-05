@@ -26,7 +26,7 @@ public class BudgetEntity extends BudgetModel {
     @ManyToOne
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
     @ManyToOne

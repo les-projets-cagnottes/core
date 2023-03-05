@@ -2,7 +2,7 @@
 
 <p>A ce jour, il manque [(${donation_missing_formatted})] €</p>
 
-<p>Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton "Contribuer financièrement" :<br/>
+<p>Pour contribuer avec votre cagnotte, rendez-vous sur la page du projet puis cliquer sur le bouton <b>Contribuer financièrement</b> :<br/>
 <a href="[(${project_url})]">[(${project_url})]</a></p>
 
 <p>pour connaître le montant actuel de votre cagnotte, rendez-vous sur votre profil  :<br/>

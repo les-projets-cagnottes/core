@@ -87,7 +87,7 @@ public class ApiTokenController {
         cal.add(Calendar.YEAR, 1);
         Date nextYear = cal.getTime();
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authService.getAuthorities(user.getId()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null, authService.getAuthorities(user.getId()));
         AuthenticationResponseEntity authenticationResponse = new AuthenticationResponseEntity(jwtTokenUtil.generateToken(authentication, nextYear));
         authenticationResponse.setExpiration(nextYear);
         authenticationResponse.setUser(user);

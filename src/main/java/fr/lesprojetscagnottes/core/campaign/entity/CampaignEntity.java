@@ -2,13 +2,13 @@ package fr.lesprojetscagnottes.core.campaign.entity;
 
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.campaign.model.CampaignModel;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -18,13 +18,13 @@ import java.util.Set;
 @Table(name = "campaigns")
 public class CampaignEntity extends CampaignModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ProjectEntity project = new ProjectEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private BudgetEntity budget = new BudgetEntity();
 
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
-    private Set<Donation> donations = new LinkedHashSet<>();
+    private Set<DonationEntity> donations = new LinkedHashSet<>();
 
 }

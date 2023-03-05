@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.notification.service;
 
 import com.google.gson.Gson;
+import fr.lesprojetscagnottes.core.common.date.DateUtils;
 import fr.lesprojetscagnottes.core.notification.entity.NotificationEntity;
 import fr.lesprojetscagnottes.core.notification.model.NotificationName;
 import fr.lesprojetscagnottes.core.notification.repository.NotificationRepository;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +28,8 @@ public class NotificationService {
     private NotificationRepository notificationRepository;
 
     public List<NotificationEntity> list() {
-        return notificationRepository.findAll();
+        LocalDateTime lastWeek = LocalDateTime.now().minusDays(30);
+        return notificationRepository.findAllByCreatedAtGreaterThan(DateUtils.asDate(lastWeek));
     }
 
     public NotificationEntity create(NotificationName name, Map<String, Object> variables, Long organizationId) {

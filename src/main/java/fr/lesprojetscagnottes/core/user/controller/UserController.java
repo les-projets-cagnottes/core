@@ -16,7 +16,7 @@ import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.common.pagination.DataPage;
-import fr.lesprojetscagnottes.core.donation.entity.Donation;
+import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.donation.model.DonationModel;
 import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
@@ -453,7 +453,7 @@ public class UserController {
         accounts.forEach(account -> accountIds.add(account.getId()));
 
         // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
+        Set<DonationEntity> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 
@@ -494,7 +494,7 @@ public class UserController {
         }
 
         // Get and transform donations
-        Set<Donation> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
+        Set<DonationEntity> entities = donationRepository.findAllByAccountIdInOrderByCreatedAtAsc(accountIds);
         Set<DonationModel> models = new LinkedHashSet<>();
         entities.forEach(entity -> models.add(DonationModel.fromEntity(entity)));
 

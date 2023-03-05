@@ -37,7 +37,7 @@ public class CatcherTokenProviderTask extends TimerTask {
         cal.add(Calendar.MINUTE, 30);
         Date nextYear = cal.getTime();
         UserEntity admin = userService.findByEmail("admin");
-        Authentication authentication = new UsernamePasswordAuthenticationToken(admin, null, authService.getAuthorities(admin.getId()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(admin.getEmail(), null, authService.getAuthorities(admin.getId()));
         log.debug("Send token to slack-events-catcher");
         catcherService.sendToken(jwtTokenUtil.generateToken(authentication, nextYear));
     }

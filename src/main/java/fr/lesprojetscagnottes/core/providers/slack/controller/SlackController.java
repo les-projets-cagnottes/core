@@ -149,7 +149,7 @@ public class SlackController {
     })
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/slack/{teamId}/member", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void teamJoin(@PathVariable String teamId, @RequestBody UserEntity user) {
+    public void updateMember(@PathVariable String teamId, @RequestBody UserEntity user) {
 
         // Fails if Team ID or User is missing
         if(teamId == null || teamId.isEmpty() || user == null || user.getSlackUsers().size() != 1) {
@@ -190,12 +190,16 @@ public class SlackController {
             // Create User if not exists in DB
             UserEntity userInDb = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
             if (userInDb == null) {
-                userInDb = UserGenerator.newUser(user);
+                userInDb = userService.findByEmail(slackUserInDb.getEmail());
+                if(userInDb == null) {
+                    userInDb = UserGenerator.newUser(user);
+                }
             }
             userInDb.setEmail(user.getEmail());
             userInDb.setFirstname(user.getFirstname());
             userInDb.setLastname(user.getLastname());
             userInDb.setAvatarUrl(user.getAvatarUrl());
+            userInDb.setEnabled(user.getEnabled());
             userInDb.setPassword(StringsCommon.EMPTY_STRING);
             final UserEntity userInDbFinal = userInDb;
 
@@ -212,26 +216,32 @@ public class SlackController {
             slackUserEntityFinal.setUser(userWithSlackUser);
             final SlackUserEntity slackUserFinal2 = slackUserRepository.save(slackUserEntityFinal);
 
-            // If the SlackTeam doesnt have the SlackUser -> Add it
-            slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
-                    .findAny()
-                    .ifPresentOrElse(
-                            slackTeamUser -> {},
-                            () -> {
-                                slackTeam.getSlackUsers().add(slackUserFinal2);
-                                slackTeamRepository.save(slackTeam);
-                            });
+            if(user.getEnabled()) {
 
-            // If the User is not member of organization => Add it
-            organization.getMembers().stream().filter(member -> member.getId().equals(userWithSlackUser.getId()))
-                    .findAny()
-                    .ifPresentOrElse(
-                            member -> {},
-                            () -> {
-                                organization.getMembers().add(userWithSlackUser);
-                                organizationRepository.save(organization);
-                            }
-                    );
+                // If the SlackTeam doesnt have the SlackUser -> Add it
+                slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal2.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                slackTeamUser -> {},
+                                () -> {
+                                    slackTeam.getSlackUsers().add(slackUserFinal2);
+                                    slackTeamRepository.save(slackTeam);
+                                });
+
+                // If the User is not member of organization => Add it
+                organization.getMembers().stream().filter(member -> member.getId().equals(userWithSlackUser.getId()))
+                        .findAny()
+                        .ifPresentOrElse(
+                                member -> {},
+                                () -> organization.getMembers().add(userWithSlackUser)
+                        );
+            } else {
+                // If the User is disabled, we remove it from the organization
+                organization.getMembers().stream().filter(member -> member.getId().equals(userWithSlackUser.getId()))
+                        .findAny()
+                        .ifPresent(member -> organization.getMembers().remove(member));
+            }
+            organizationRepository.save(organization);
 
             // Distribute usable budgets
             Set<BudgetEntity> budgets = budgetRepository.findAllByEndDateGreaterThanAndIsDistributedAndOrganizationId(new Date(), true, organization.getId());
@@ -257,74 +267,6 @@ public class SlackController {
 
             slackClientService.postMessage(slackTeam, slackUserInDb.getImId(), slackMessage);
         });
-    }
-
-    @Operation(summary = "Update a user in an organization", description = "Update a user in a Slack Team organization", tags = { "Slack" })
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User updated", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "400", description = "Team ID is incorrect or body is incomplete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Slack Team or organization not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('ADMIN')")
-    @RequestMapping(value = "/slack/{teamId}/member", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void updateUser(@PathVariable String teamId, @RequestBody UserEntity user) {
-
-        // Fails if Team ID or User is missing
-        if(teamId == null || teamId.isEmpty() || user == null) {
-            log.error("Impossible to update a user in an organization : Team ID is incorrect or body is incomplete");
-            throw new BadRequestException();
-        }
-
-        // Retrieve full referenced objects
-        SlackTeamEntity slackTeam = slackTeamRepository.findByTeamId(teamId);
-
-        // Verify that any of references are not null
-        if(slackTeam == null ) {
-            log.error("Impossible to update a user in an organization : team {} not found", teamId);
-            throw new NotFoundException();
-        }
-
-        // Verify that Slack Team is associated with an organization
-        OrganizationEntity organization = slackTeam.getOrganization();
-        if(organization == null ) {
-            log.error("Impossible to update a user in an organization : no organization is associated with Slack Team");
-            throw new NotFoundException();
-        }
-
-        user.getSlackUsers().forEach(slackUser -> {
-                    SlackUserEntity slackUserInDb = slackUserRepository.findBySlackId(slackUser.getSlackId());
-
-                    UserEntity userEditted = userRepository.findBySlackUsers_Id(slackUserInDb.getId());
-                    userEditted.setAvatarUrl(user.getAvatarUrl());
-                    userEditted.setEnabled(user.getEnabled());
-                    final UserEntity userInDb = userRepository.save(userEditted);
-
-                    slackUserInDb.setSlackTeam(slackTeam);
-                    slackUserInDb.setUser(userInDb);
-                    final SlackUserEntity slackUserFinal = slackUserRepository.save(slackUserInDb);
-
-                    if(user.getEnabled()) {
-                        slackTeam.getSlackUsers().stream().filter(slackTeamUser -> slackTeamUser.getId().equals(slackUserFinal.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                        slackTeamUser -> slackTeamUser = slackUserFinal,
-                                        () -> slackTeam.getSlackUsers().add(slackUserFinal));
-                        slackTeamRepository.save(slackTeam);
-
-                        organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                                .findAny()
-                                .ifPresentOrElse(
-                                        member -> member = userInDb,
-                                        () -> organization.getMembers().add(userInDb)
-                                );
-                    } else {
-                        organization.getMembers().stream().filter(member -> member.getId().equals(userInDb.getId()))
-                                .findAny()
-                                .ifPresent(member -> organization.getMembers().remove(member));
-                    }
-                    organizationRepository.save(organization);
-                });
     }
 
 }

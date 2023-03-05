@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.2</version>
+        <version>3.0.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>fr.les-projets-cagnottes</groupId>
     <artifactId>core</artifactId>
-    <version>0.15.1</version>
+    <version>0.15.2</version>
     <name>Les Projets Cagnottes - Core</name>
     <description>Les Projets Cagnottes - Main API Component</description>
     <properties>
@@ -195,7 +195,7 @@
         <dependency>
             <groupId>net.masterthought</groupId>
             <artifactId>cucumber-reporting</artifactId>
-            <version>5.7.4</version>
+            <version>5.7.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
