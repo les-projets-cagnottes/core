@@ -18,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Date;
 
 @Slf4j
 @Service
@@ -59,6 +60,10 @@ public class NewsService {
         DataPage<NewsModel> models = new DataPage<>(entities);
         entities.getContent().forEach(entity -> models.getContent().add(NewsModel.fromEntity(entity)));
         return models;
+    }
+
+    public NewsEntity findFirstByProjectIdAndCreatedAtGreaterThanOrderByCreatedAtDesc(Long id, Date createdAt) {
+        return newsRepository.findFirstByProjectIdAndCreatedAtGreaterThanOrderByCreatedAtDesc(id, createdAt);
     }
 
 }

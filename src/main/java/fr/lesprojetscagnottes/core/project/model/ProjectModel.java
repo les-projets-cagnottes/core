@@ -1,15 +1,16 @@
 package fr.lesprojetscagnottes.core.project.model;
 
+import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.common.audit.AuditEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
-import fr.lesprojetscagnottes.core.common.GenericModel;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -26,6 +27,9 @@ public class ProjectModel extends AuditEntity<String> {
     @NotNull
     @Enumerated(EnumType.STRING)
     protected ProjectStatus status;
+
+    @Column(name = "last_status_update")
+    protected Date lastStatusUpdate;
 
     @Column(name = "short_description")
     protected String shortDescription;
@@ -63,6 +67,7 @@ public class ProjectModel extends AuditEntity<String> {
         model.setId(entity.getId());
         model.setTitle(entity.getTitle());
         model.setStatus(entity.getStatus());
+        model.setLastStatusUpdate(entity.getLastStatusUpdate());
         model.setShortDescription(entity.getShortDescription());
         model.setLongDescription(entity.getLongDescription());
         model.setPeopleRequired(entity.getPeopleRequired());

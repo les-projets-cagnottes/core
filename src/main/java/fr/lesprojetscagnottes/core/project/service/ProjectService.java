@@ -20,10 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -288,13 +285,13 @@ public class ProjectService {
 
         // Update status
         project.setStatus(status);
+        project.setLastStatusUpdate(new Date());
         projectRepository.save(project);
 
         // Prepare & send notifications
         if(previousStatus.equals(ProjectStatus.DRAFT)
                 && status.equals(ProjectStatus.IN_PROGRESS)) {
             Map<String, Object> model = new HashMap<>();
-            model.put("user_username", userLoggedIn.getUsername());
             model.put("user_fullname", userLoggedIn.getFullname());
             model.put("project_title", project.getTitle());
             model.put("project_url", webUrl + "/projects/" + project.getId());

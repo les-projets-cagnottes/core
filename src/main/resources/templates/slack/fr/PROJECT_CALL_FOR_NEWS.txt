@@ -1,0 +1,5 @@
+:face_with_monocle: Cela fait maintenant 2 mois que nous n'entendons plus parler du projet *[(${project_title})]*.
+[(${user_tagname})], quelles sont les nouvelles ?
+
+Rends-toi sur la page de visualisation du projet et ajoute une actualité dans la section du bas :
+[(${project_url})]
