@@ -1,11 +1,11 @@
 package fr.lesprojetscagnottes.core.news.controller;
 
-import com.google.gson.Gson;
 import fr.lesprojetscagnottes.core.common.exception.BadRequestException;
 import fr.lesprojetscagnottes.core.common.exception.ForbiddenException;
 import fr.lesprojetscagnottes.core.common.exception.NotFoundException;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
+import fr.lesprojetscagnottes.core.news.model.NewsType;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.organization.repository.OrganizationRepository;
@@ -29,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -37,9 +38,6 @@ import java.util.Set;
 @RequestMapping("/api")
 @Tag(name = "News", description = "The News API")
 public class NewsController {
-
-    @Autowired
-    private Gson gson;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -156,6 +154,12 @@ public class NewsController {
         if(organization != null && !userService.isMemberOfOrganization(userLoggedIn.getId(), organization.getId())) {
             log.error("Impossible to create news \"{}\" : principal {} is not member of organization {}", news.getTitle(), userLoggedIn.getId(), organization.getId());
             throw new ForbiddenException();
+        }
+
+        // Update project if necessary
+        if(project != null && news.getType().equals(NewsType.ARTICLE)) {
+            project.setLastStatusUpdate(new Date());
+            project = projectRepository.save(project);
         }
 
         // Save news

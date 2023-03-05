@@ -9,7 +9,6 @@ import fr.lesprojetscagnottes.core.donation.repository.DonationRepository;
 import fr.lesprojetscagnottes.core.donation.task.DonationProcessingTask;
 import fr.lesprojetscagnottes.core.notification.model.NotificationName;
 import fr.lesprojetscagnottes.core.notification.service.NotificationService;
-import fr.lesprojetscagnottes.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,8 +29,6 @@ public class CampaignScheduler {
     @Value("${fr.lesprojetscagnottes.web.url}")
     private String webUrl;
 
-    private final UserService userService;
-
     private final DonationProcessingTask donationProcessingTask;
 
     private final CampaignRepository campaignRepository;
@@ -41,12 +38,10 @@ public class CampaignScheduler {
     private final NotificationService notificationService;
 
     @Autowired
-    public CampaignScheduler(UserService userService,
-                             DonationProcessingTask donationProcessingTask,
+    public CampaignScheduler(DonationProcessingTask donationProcessingTask,
                              CampaignRepository campaignRepository,
                              DonationRepository donationRepository,
                              NotificationService notificationService) {
-        this.userService = userService;
         this.donationProcessingTask = donationProcessingTask;
         this.campaignRepository = campaignRepository;
         this.donationRepository = donationRepository;
