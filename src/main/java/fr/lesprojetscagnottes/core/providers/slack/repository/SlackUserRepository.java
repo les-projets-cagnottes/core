@@ -14,4 +14,5 @@ public interface SlackUserRepository extends JpaRepository<SlackUserEntity, Long
     @Transactional
     void deleteAllBySlackTeamId(Long slackTeamId);
 
+    SlackUserEntity findByUserIdAndSlackTeamId(Long userId, Long slackTeamId);
 }

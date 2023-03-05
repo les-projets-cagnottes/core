@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Date;
 import java.util.Set;
 
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
@@ -17,6 +18,8 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
     Set<ProjectEntity> findAllByLeaderId(Long memberId);
 
     Set<ProjectEntity> findAllByPeopleGivingTime_Id(Long memberId);
+
+    Set<ProjectEntity> findAllByStatusInAndLastStatusUpdateLessThan(Set<ProjectStatus> status, Date lastStatusUpdate);
 
     Page<ProjectEntity> findAllByStatusIn(Set<ProjectStatus> status, Pageable pageable);
 

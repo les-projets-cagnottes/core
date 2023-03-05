@@ -21,6 +21,10 @@ public class SlackUserService {
         return slackUserRepository.findBySlackId(slackId);
     }
 
+    public SlackUserEntity findByUserIdAndSlackTeamId(Long userId, Long slackTeamId) {
+        return slackUserRepository.findByUserIdAndSlackTeamId(userId, slackTeamId);
+    }
+
     public SlackUserEntity save(SlackUserEntity slackUser) {
         return slackUserRepository.save(slackUser);
     }
