@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.notification.entity;
 
 import fr.lesprojetscagnottes.core.notification.model.NotificationModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import jakarta.persistence.Table;
 @Table(name = "notifications")
 public class NotificationEntity extends NotificationModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
 }

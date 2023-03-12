@@ -14,7 +14,6 @@ public class AuditEntityListener implements AuditorAware<String> {
             return Optional.of("System");
         } else {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            System.out.println(principal.toString());
             if(!principal.toString().equals("anonymousUser") && principal.getClass().equals(String.class)) {
                 return Optional.of(principal.toString());
             } else {

@@ -4,6 +4,7 @@ import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,13 +19,13 @@ import jakarta.persistence.Table;
 @Table(name = "news")
 public class NewsEntity extends NewsModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private UserEntity author = new UserEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ProjectEntity project = new ProjectEntity();
 
 }

@@ -32,14 +32,14 @@ public class UserEntity extends UserModel implements UserDetails {
     @Serial
     private static final long serialVersionUID = 6210782306288115135L;
 
-    @ManyToMany(fetch=FetchType.EAGER)
+    @ManyToMany(fetch=FetchType.LAZY)
     @JoinTable(
             name = "user_authority",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id")})
     private Set<AuthorityEntity> userAuthorities = new LinkedHashSet<>();
 
-    @ManyToMany(fetch=FetchType.EAGER)
+    @ManyToMany(fetch=FetchType.LAZY)
     @JoinTable(
             name = "user_authority_organizations",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
@@ -49,34 +49,28 @@ public class UserEntity extends UserModel implements UserDetails {
     @Transient
     private Set<SimpleGrantedAuthority> authorities = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
-    @ManyToMany(mappedBy = "members")
+    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     private Set<OrganizationEntity> organizations = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "sponsor")
+    @OneToMany(mappedBy = "sponsor", fetch = FetchType.LAZY)
     private Set<BudgetEntity> budgets = new LinkedHashSet<>();
 
-    @ManyToMany(mappedBy = "peopleGivingTime")
+    @ManyToMany(mappedBy = "peopleGivingTime", fetch = FetchType.LAZY)
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
-    @OneToMany(
-            mappedBy = "submitter",
-            orphanRemoval = true)
+    @OneToMany( mappedBy = "submitter", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<IdeaEntity> ideas = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<SlackUserEntity> slackUsers = new LinkedHashSet<>();
 
-    @OneToMany(
-            mappedBy = "user",
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<AuthenticationResponseEntity> apiTokens = new LinkedHashSet<>();
 
-    @OneToMany(
-            mappedBy = "author",
-            orphanRemoval = true)
+    @OneToMany( mappedBy = "author", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<NewsEntity> news = new LinkedHashSet<>();
 
     public UserEntity() {

@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.providers.microsoft.entity;
 
 import fr.lesprojetscagnottes.core.notification.entity.NotificationEntity;
 import fr.lesprojetscagnottes.core.providers.microsoft.model.MicrosoftNotificationModel;
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,10 +17,10 @@ import jakarta.persistence.Table;
 @Table(name = "ms_notifications")
 public class MicrosoftNotificationEntity extends MicrosoftNotificationModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private NotificationEntity notification = new NotificationEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private MicrosoftTeamEntity team = new MicrosoftTeamEntity();
 
 }

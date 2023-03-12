@@ -20,19 +20,19 @@ import java.util.Set;
 @Table(name = "budgets")
 public class BudgetEntity extends BudgetModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ContentEntity rules = new ContentEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
     @OneToMany(mappedBy = "budget", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private UserEntity sponsor = new UserEntity();
 
-    @OneToMany(mappedBy = "budget")
+    @OneToMany(mappedBy = "budget", fetch = FetchType.LAZY)
     private Set<AccountEntity> accounts = new LinkedHashSet<>();
 
     @Override

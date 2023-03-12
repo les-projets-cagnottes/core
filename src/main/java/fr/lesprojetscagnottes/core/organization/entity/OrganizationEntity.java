@@ -24,16 +24,14 @@ import java.util.Set;
 @Table(name = "organizations")
 public class OrganizationEntity extends OrganizationModel {
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "organizations_users",
             joinColumns = {@JoinColumn(name = "organization_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     private Set<UserEntity> members = new LinkedHashSet<>();
 
-    @OneToMany(
-            mappedBy = "organization",
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "organization", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
     @OneToMany(

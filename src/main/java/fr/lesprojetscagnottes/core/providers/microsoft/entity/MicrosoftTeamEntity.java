@@ -16,11 +16,11 @@ import java.util.Set;
 @Table(name = "ms_team")
 public class MicrosoftTeamEntity extends MicrosoftTeamModel {
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @OneToMany(mappedBy = "msTeam", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "msTeam", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<MicrosoftUserEntity> msUsers = new LinkedHashSet<>();
 
 }

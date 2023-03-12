@@ -19,10 +19,10 @@ import java.util.Set;
 @Table(name = "projects")
 public class ProjectEntity extends ProjectModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private UserEntity leader = new UserEntity();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<CampaignEntity> campaigns = new LinkedHashSet<>();
 
     @ManyToMany
@@ -32,12 +32,10 @@ public class ProjectEntity extends ProjectModel {
             inverseJoinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     private Set<UserEntity> peopleGivingTime = new LinkedHashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @OneToMany(
-            mappedBy = "project",
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "project", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<NewsEntity> news = new LinkedHashSet<>();
 
 }

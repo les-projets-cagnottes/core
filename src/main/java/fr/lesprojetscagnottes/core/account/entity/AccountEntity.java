@@ -4,10 +4,7 @@ import fr.lesprojetscagnottes.core.account.model.AccountModel;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.donation.entity.DonationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,13 +18,13 @@ import java.util.Set;
 @Table(name = "accounts")
 public class AccountEntity extends AccountModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private UserEntity owner = new UserEntity();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private BudgetEntity budget = new BudgetEntity();
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
     private Set<DonationEntity> donations = new LinkedHashSet<>();
 
 }
