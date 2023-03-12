@@ -16,11 +16,11 @@ import java.util.Set;
 @Table(name = "slack_team")
 public class SlackTeamEntity extends SlackTeamModel {
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private OrganizationEntity organization = new OrganizationEntity();
 
-    @OneToMany(mappedBy = "slackTeam", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "slackTeam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<SlackUserEntity> slackUsers = new LinkedHashSet<>();
 
 }

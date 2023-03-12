@@ -24,7 +24,7 @@ public class CampaignEntity extends CampaignModel {
     @ManyToOne(fetch = FetchType.LAZY)
     private BudgetEntity budget = new BudgetEntity();
 
-    @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<DonationEntity> donations = new LinkedHashSet<>();
 
 }

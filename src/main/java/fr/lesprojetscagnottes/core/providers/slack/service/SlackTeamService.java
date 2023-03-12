@@ -44,29 +44,44 @@ public class SlackTeamService {
     @Value("${fr.lesprojetscagnottes.slack.client_secret}")
     private String slackClientSecret;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+    private final AccountService accountService;
+
+    private final HttpClientService httpClientService;
+
+    private final OrganizationService organizationService;
+
+    private final UserService userService;
+
+    private final SlackClientService slackClientService;
+
+    private final SlackNotificationService slackNotificationService;
+
+    private final SlackUserService slackUserService;
+
+    private final SlackTeamRepository slackTeamRepository;
 
     @Autowired
-    private AccountService accountService;
-
-    @Autowired
-    private HttpClientService httpClientService;
-
-    @Autowired
-    private OrganizationService organizationService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private SlackClientService slackClientService;
-
-    @Autowired
-    private SlackUserService slackUserService;
-
-    @Autowired
-    private SlackTeamRepository slackTeamRepository;
+    public SlackTeamService(PasswordEncoder passwordEncoder,
+                            AccountService accountService,
+                            HttpClientService httpClientService,
+                            OrganizationService organizationService,
+                            UserService userService,
+                            SlackClientService slackClientService,
+                            SlackNotificationService slackNotificationService,
+                            SlackUserService slackUserService,
+                            SlackTeamRepository slackTeamRepository) {
+        this.passwordEncoder = passwordEncoder;
+        this.accountService = accountService;
+        this.httpClientService = httpClientService;
+        this.organizationService = organizationService;
+        this.userService = userService;
+        this.slackClientService = slackClientService;
+        this.slackNotificationService = slackNotificationService;
+        this.slackUserService = slackUserService;
+        this.slackTeamRepository = slackTeamRepository;
+    }
 
     public SlackTeamEntity findById(Long id) {
         return slackTeamRepository.findById(id).orElse(null);
@@ -232,6 +247,7 @@ public class SlackTeamService {
         }
 
         // Delete Slack Team
+        slackNotificationService.deleteAllBySlackTeamId(id);
         slackUserService.deleteAllBySlackTeamId(id);
         slackTeamRepository.deleteById(id);
     }

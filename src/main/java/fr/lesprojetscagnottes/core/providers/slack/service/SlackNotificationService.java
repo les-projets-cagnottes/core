@@ -20,4 +20,8 @@ public class SlackNotificationService {
     public SlackNotificationEntity save(SlackNotificationEntity notification) {
         return slackNotificationRepository.save(notification);
     }
+
+    public void deleteAllBySlackTeamId(Long id) {
+        slackNotificationRepository.deleteAllByTeamId(id);
+    }
 }

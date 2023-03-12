@@ -3,6 +3,7 @@ package fr.lesprojetscagnottes.core.idea.entity;
 import fr.lesprojetscagnottes.core.idea.model.IdeaModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,10 +18,10 @@ import jakarta.persistence.Table;
 @Table(name = "ideas")
 public class IdeaEntity extends IdeaModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     protected UserEntity submitter;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
 }

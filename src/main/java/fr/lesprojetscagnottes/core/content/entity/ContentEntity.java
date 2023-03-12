@@ -2,6 +2,7 @@ package fr.lesprojetscagnottes.core.content.entity;
 
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
+import jakarta.persistence.FetchType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import jakarta.persistence.Table;
 @Table(name = "contents")
 public class ContentEntity extends ContentModel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private OrganizationEntity organization = new OrganizationEntity();
 
 }
