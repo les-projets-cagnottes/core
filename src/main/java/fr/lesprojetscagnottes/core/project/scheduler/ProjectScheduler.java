@@ -8,6 +8,8 @@ import fr.lesprojetscagnottes.core.notification.service.NotificationService;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.project.model.ProjectStatus;
 import fr.lesprojetscagnottes.core.project.repository.ProjectRepository;
+import fr.lesprojetscagnottes.core.user.entity.UserEntity;
+import fr.lesprojetscagnottes.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +30,18 @@ public class ProjectScheduler {
 
     private final NotificationService notificationService;
 
+    private final UserService userService;
+
     private final ProjectRepository projectRepository;
 
     @Autowired
     public ProjectScheduler(NewsService newsService,
                             NotificationService notificationService,
+                            UserService userService,
                             ProjectRepository projectRepository) {
         this.newsService = newsService;
         this.notificationService = notificationService;
+        this.userService = userService;
         this.projectRepository = projectRepository;
     }
 
@@ -51,10 +57,11 @@ public class ProjectScheduler {
         projects.forEach(project -> {
             NewsEntity news = newsService.findFirstByProjectIdAndCreatedAtGreaterThanOrderByCreatedAtDesc(project.getId(), nowMinus2MonthsDate);
             if(news == null) {
+                UserEntity leader = userService.findById(project.getLeader().getId());
                 Map<String, Object> model = new HashMap<>();
-                model.put("_user_email_", project.getLeader().getEmail());
+                model.put("_user_email_", leader.getEmail());
                 model.put("_organization_id_", project.getOrganization().getId());
-                model.put("user_fullname", project.getLeader().getFullname());
+                model.put("user_fullname", leader.getFullname());
                 model.put("project_title", project.getTitle());
                 model.put("project_url", webUrl + "/projects/" + project.getId());
                 notificationService.create(NotificationName.PROJECT_CALL_FOR_NEWS, model, project.getOrganization().getId());
