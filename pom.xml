@@ -15,7 +15,7 @@
     <description>Les Projets Cagnottes - Main API Component</description>
     <properties>
         <java.version>19</java.version>
-        <testcontainers.version>1.17.6</testcontainers.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
     </properties>
     <dependencies>
         <dependency>
