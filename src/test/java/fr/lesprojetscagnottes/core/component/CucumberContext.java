@@ -9,7 +9,6 @@ import fr.lesprojetscagnottes.core.campaign.entity.CampaignEntity;
 import fr.lesprojetscagnottes.core.common.strings.StringsCommon;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.authentication.model.AuthenticationResponseModel;
-import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.organization.entity.OrganizationEntity;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
 import fr.lesprojetscagnottes.core.user.entity.UserEntity;
@@ -39,7 +38,6 @@ public class CucumberContext {
     private Map<String, BudgetEntity> budgets = new HashMap<>();
     private Map<String, ProjectEntity> projects = new HashMap<>();
     private Map<String, CampaignEntity> campaigns = new HashMap<>();
-    private Map<String, IdeaEntity> ideas = new HashMap<>();
 
     private Gson gson;
 
@@ -63,7 +61,6 @@ public class CucumberContext {
         projects = new HashMap<>();
         budgets = new HashMap<>();
         contents = new HashMap<>();
-        ideas = new HashMap<>();
         users = new HashMap<>();
         organizationAuthorities = new HashMap<>();
         organizations = new HashMap<>();

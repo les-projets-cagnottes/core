@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import jakarta.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Getter(AccessLevel.PUBLIC)
 @Setter(AccessLevel.PUBLIC)

@@ -15,9 +15,6 @@ import fr.lesprojetscagnottes.core.common.pagination.DataPage;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
 import fr.lesprojetscagnottes.core.content.model.ContentModel;
 import fr.lesprojetscagnottes.core.content.repository.ContentRepository;
-import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
-import fr.lesprojetscagnottes.core.idea.model.IdeaModel;
-import fr.lesprojetscagnottes.core.idea.repository.IdeaRepository;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.news.model.NewsModel;
 import fr.lesprojetscagnottes.core.news.repository.NewsRepository;
@@ -50,7 +47,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.*;
 
@@ -63,8 +60,6 @@ public class OrganizationController {
     private final BudgetRepository budgetRepository;
 
     private final ContentRepository contentRepository;
-
-    private final IdeaRepository ideaRepository;
 
     private final NewsRepository newsRepository;
 
@@ -85,7 +80,6 @@ public class OrganizationController {
             AccountService accountService,
             BudgetRepository budgetRepository,
             ContentRepository contentRepository,
-            IdeaRepository ideaRepository,
             NewsRepository newsRepository,
             OrganizationAuthorityRepository organizationAuthorityRepository,
             OrganizationRepository organizationRepository,
@@ -95,7 +89,6 @@ public class OrganizationController {
         this.accountService = accountService;
         this.budgetRepository = budgetRepository;
         this.contentRepository = contentRepository;
-        this.ideaRepository = ideaRepository;
         this.newsRepository = newsRepository;
         this.organizationAuthorityRepository = organizationAuthorityRepository;
         this.organizationRepository = organizationRepository;
@@ -221,46 +214,6 @@ public class OrganizationController {
 
         return models;
     }
-
-    @Operation(summary = "Find all ideas for an organization", description = "Find all ideas for an organization", tags = {"Organizations"})
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returns corresponding ideas", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema(implementation = DataPage.class))),
-            @ApiResponse(responseCode = "400", description = "Budget ID is incorrect", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "403", description = "Principal has not enough privileges", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema())),
-            @ApiResponse(responseCode = "404", description = "Budget not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @Schema()))
-    })
-    @PreAuthorize("hasRole('USER')")
-    @RequestMapping(value = "/organization/{id}/ideas", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"offset", "limit"})
-    public DataPage<IdeaModel> getIdeas(Principal principal, @PathVariable("id") Long organizationId, @RequestParam("offset") int offset, @RequestParam("limit") int limit) {
-
-        // Verify that ID is correct
-        if (organizationId <= 0) {
-            log.error("Impossible to get ideas of organization : ID is incorrect");
-            throw new BadRequestException();
-        }
-
-        // Verify that principal is member of organization
-        Long userLoggedInId = userService.get(principal).getId();
-        if (!userService.isMemberOfOrganization(userLoggedInId, organizationId) && userService.isNotAdmin(userLoggedInId)) {
-            log.error("Impossible to get ideas of organization {} : principal is not a member of organization", organizationId);
-            throw new ForbiddenException();
-        }
-
-        // Verify that organization and user exists
-        OrganizationEntity organization = organizationRepository.findById(organizationId).orElse(null);
-        if (organization == null) {
-            log.error("Impossible to get ideas of organization {} : organization doesnt exist", organizationId);
-            throw new NotFoundException();
-        }
-
-        // Get and transform ideas
-        Page<IdeaEntity> entities = ideaRepository.findByOrganizationId(organizationId, PageRequest.of(offset, limit, Sort.by("createdAt").descending()));
-        DataPage<IdeaModel> models = new DataPage<>(entities);
-        entities.getContent().forEach(entity -> models.getContent().add(IdeaModel.fromEntity(entity)));
-
-        return models;
-    }
-
 
     @Operation(summary = "Find all budgets for an organization", description = "Find all budgets for an organization", tags = {"Organizations"})
     @ApiResponses(value = {
