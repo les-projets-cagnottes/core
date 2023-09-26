@@ -158,13 +158,13 @@ public class ProjectService {
         ProjectEntity projectToSave = null;
         if(projectModel.getId() > 0) {
             projectToSave = findById(projectModel.getId());
-            if(projectToSave != null) {
-                projectToSave.setStatus(ProjectStatus.DRAFT);
+            if(projectToSave == null) {
+                log.error("Impossible to update project {} : cannot find any project in DB", projectModel.getId());
+                throw new NotFoundException();
             }
         }
         if(projectToSave == null) {
             projectToSave = new ProjectEntity();
-            projectToSave.setStatus(projectModel.getStatus());
         }
 
         // Save project

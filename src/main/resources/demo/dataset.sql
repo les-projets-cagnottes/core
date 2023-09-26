@@ -9,7 +9,6 @@ delete from public.slack_notifications;
 delete from public.slack_user;
 delete from public.slack_team;
 delete from public.notifications;
-delete from public.ideas;
 delete from public.news;
 delete from public.donations;
 delete from public.campaigns;
@@ -208,13 +207,9 @@ UPDATE public.donations
 
 --- IDEAS
 
-insert into public.ideas
-(id, created_at, created_by, has_anonymous_creator, has_leader_creator, icon, long_description, short_description, updated_at, updated_by,
-organization_id, submitter_id)
+INSERT INTO public.projects
+(id, created_at, created_by, updated_at, updated_by, long_description, people_required, short_description, status, title, leader_id, workspace, organization_id, last_status_update, idea_has_anonymous_creator, idea_has_leader_creator)
 values
-(nextval('ideas_seq'), now(), 'CharlottePaquette@rhyta.com', false, false, 'fas fa-recycle', 'Ca va être génial !<br>', 'Clean walk du quartier', now(), 'CharlottePaquette@rhyta.com',
-(select id from organizations where name = 'Super Boite'), (select id from users where username = 'CharlottePaquette@rhyta.com')),
-(nextval('ideas_seq'), now(), 'anonymous', true, false, 'fas fa-code-branch', 'C''est galère de poser des congés.<br>', 'Optimiser le logiciel de pose des congés', now(), 'anonymous',
-(select id from organizations where name = 'Super Boite'), NULL),
-(nextval('ideas_seq'), now(), 'DenisGiroux@dayrep.com', false, true, 'fas fa-apple-alt', 'Qui n''aime pas les fruits ?<br>','Des fruits frais en salle de pause' ,now(), 'DenisGiroux@dayrep.com',
-(select id from organizations where name = 'Super Boite'), (select id from users where username = 'DenisGiroux@dayrep.com'));
+(nextval('ideas_seq'), now(), 'CharlottePaquette@rhyta.com', now(), 'CharlottePaquette@rhyta.com', 'Ca va être génial !<br>', NULL, 'Clean walk du quartier', 'IDEA', 'Clean walk du quartier', (select id from users where username = 'CharlottePaquette@rhyta.com'), NULL, (select id from organizations where name = 'Super Boite'), now(), false, false),
+(nextval('ideas_seq'), now(), 'anonymous', now(), 'anonymous', 'C''est galère de poser des congés.<br>', NULL, 'Optimiser le logiciel de pose des congés', 'IDEA', 'Optimiser le logiciel de pose des congés', NULL, NULL, (select id from organizations where name = 'Super Boite'), now(), true, false),
+(nextval('ideas_seq'), now(), 'DenisGiroux@dayrep.com', now(), 'DenisGiroux@dayrep.com', 'Qui n''aime pas les fruits ?<br>', NULL, 'Des fruits frais en salle de pause', 'IDEA', 'Des fruits frais en salle de pause', (select id from users where username = 'DenisGiroux@dayrep.com'), NULL, (select id from organizations where name = 'Super Boite'), now(), false, true);

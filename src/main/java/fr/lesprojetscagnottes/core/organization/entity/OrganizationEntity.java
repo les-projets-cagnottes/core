@@ -3,7 +3,6 @@ package fr.lesprojetscagnottes.core.organization.entity;
 import fr.lesprojetscagnottes.core.authorization.entity.OrganizationAuthorityEntity;
 import fr.lesprojetscagnottes.core.budget.entity.BudgetEntity;
 import fr.lesprojetscagnottes.core.content.entity.ContentEntity;
-import fr.lesprojetscagnottes.core.idea.entity.IdeaEntity;
 import fr.lesprojetscagnottes.core.news.entity.NewsEntity;
 import fr.lesprojetscagnottes.core.organization.model.OrganizationModel;
 import fr.lesprojetscagnottes.core.project.entity.ProjectEntity;
@@ -38,11 +37,6 @@ public class OrganizationEntity extends OrganizationModel {
             mappedBy = "organization",
             orphanRemoval = true)
     private Set<BudgetEntity> budgets = new LinkedHashSet<>();
-
-    @OneToMany(
-            mappedBy = "organization",
-            orphanRemoval = true)
-    private Set<IdeaEntity> ideas = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "organization",

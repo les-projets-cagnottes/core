@@ -61,9 +61,6 @@ public class UserEntity extends UserModel implements UserDetails {
     @ManyToMany(mappedBy = "peopleGivingTime", fetch = FetchType.LAZY)
     private Set<ProjectEntity> projects = new LinkedHashSet<>();
 
-    @OneToMany( mappedBy = "submitter", orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<IdeaEntity> ideas = new LinkedHashSet<>();
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<SlackUserEntity> slackUsers = new LinkedHashSet<>();
 

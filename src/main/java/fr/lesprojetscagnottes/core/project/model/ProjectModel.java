@@ -9,7 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -26,22 +26,28 @@ public class ProjectModel extends AuditEntity<String> {
     @Column(length = 50)
     @NotNull
     @Enumerated(EnumType.STRING)
-    protected ProjectStatus status;
+    protected ProjectStatus status = ProjectStatus.DRAFT;
+
+    @Column(name = "idea_has_anonymous_creator")
+    protected Boolean ideaHasAnonymousCreator = false;
+
+    @Column(name = "idea_has_leader_creator")
+    protected Boolean ideaHasLeaderCreator = false;
 
     @Column(name = "last_status_update")
     protected Date lastStatusUpdate;
 
     @Column(name = "short_description")
-    protected String shortDescription;
+    protected String shortDescription = StringsCommon.EMPTY_STRING;
 
     @Column(name = "long_description", columnDefinition = "TEXT")
-    protected String longDescription;
+    protected String longDescription = StringsCommon.EMPTY_STRING;
 
     @Column(name = "people_required")
     protected Integer peopleRequired;
 
     @Column
-    private String workspace;
+    private String workspace = StringsCommon.EMPTY_STRING;
 
     @Transient
     protected GenericModel leader;
