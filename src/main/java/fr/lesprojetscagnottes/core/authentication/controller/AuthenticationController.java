@@ -60,6 +60,7 @@ public class AuthenticationController {
         final Authentication authentication = new JwtAuthenticationFilter(authenticationManager).attemptAuthentication(request, response);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = jwtTokenUtil.generateToken(authentication);
+        log.debug("Authentication successful. Token generated : " + token);
         return new AuthenticationResponseModel(token);
     }
 
