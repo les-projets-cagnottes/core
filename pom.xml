@@ -14,7 +14,7 @@
     <name>Les Projets Cagnottes - Core</name>
     <description>Les Projets Cagnottes - Main API Component</description>
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <testcontainers.version>1.19.0</testcontainers.version>
     </properties>
     <dependencies>
@@ -229,7 +229,7 @@
                     <dependency>
                         <groupId>org.springframework.restdocs</groupId>
                         <artifactId>spring-restdocs-asciidoctor</artifactId>
-                        <version>${spring-restdocs.version}</version>
+                        <version>3.0.0</version>
                     </dependency>
                 </dependencies>
             </plugin>
