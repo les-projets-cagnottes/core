@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Java 19 - [Download here](https://jdk.java.net/19/)
+- Java 17 - [Download here](https://jdk.java.net/17/)
 - PostgreSQL 12 - [Download here](https://www.postgresql.org/download/)
 - A PostgreSQL Client - [Download DBeaver here](https://dbeaver.io/download/)
 - Maven 3 - [Download here](https://maven.apache.org/download.cgi)
