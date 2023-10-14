@@ -1,6 +1,7 @@
 package fr.lesprojetscagnottes.core.vote.model;
 
 public enum VoteType {
+    NONE("NONE"),
     UP("UP"),
     DOWN("DOWN");
 

@@ -137,7 +137,7 @@ public class VoteService {
         }
 
         // Get existing vote
-        VoteEntity voteToSave = voteRepository.findByProjectIdAndUserId(project.getId(), userLoggedInId);
+        VoteEntity voteToSave = this.getUserVote(project.getId(), userLoggedInId);
 
         if(voteToSave != null && voteToSave.getType().equals(voteModel.getType())) {
             this.delete(voteToSave);
@@ -150,11 +150,11 @@ public class VoteService {
         voteToSave.setType(voteModel.getType());
         voteToSave.setProject(project);
         voteToSave.setUser(userLoggedIn);
-        return this.save(voteToSave);
+        return VoteModel.fromEntity(this.save(voteToSave));
     }
 
     public VoteEntity getUserVote(Long userId, Long projectId) {
-        return voteRepository.findByProjectIdAndUserId(projectId, userId);
+        return voteRepository.findByProjectIdAndUserId(projectId, userId).orElse(new VoteEntity());
     }
 
     public VoteModel getUserVote(Principal principal, Long projectId) {

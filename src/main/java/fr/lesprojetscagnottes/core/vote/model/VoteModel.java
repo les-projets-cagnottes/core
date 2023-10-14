@@ -17,7 +17,7 @@ public class VoteModel extends AuditEntity<String> {
     @Column(length = 50)
     @NotNull
     @Enumerated(EnumType.STRING)
-    protected VoteType type = VoteType.UP;
+    protected VoteType type = VoteType.NONE;
 
     @Transient
     protected GenericModel project;
