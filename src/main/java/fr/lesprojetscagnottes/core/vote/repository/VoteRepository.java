@@ -9,5 +9,5 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
 
     Long countByTypeAndProjectId(VoteType voteType, Long projectId);
 
-    Optional<VoteEntity> findByProjectIdAndUserId(Long id, Long userLoggedInId);
+    Optional<VoteEntity> findOneByProjectIdAndUserId(Long projectId, Long userId);
 }

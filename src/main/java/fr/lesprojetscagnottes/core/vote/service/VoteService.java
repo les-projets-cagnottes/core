@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -137,13 +138,13 @@ public class VoteService {
         }
 
         // Get existing vote
-        VoteEntity voteToSave = this.getUserVote(project.getId(), userLoggedInId);
+        log.debug("Find vote for user {} on project {}", userLoggedInId, project.getId());
+        VoteEntity voteToSave = this.getUserVote(userLoggedInId, project.getId());
 
-        if(voteToSave != null && voteToSave.getType().equals(voteModel.getType())) {
+        log.debug("Vote received : {}, Vote in DB : {}", voteModel.getType(), voteToSave.getType());
+        if(voteToSave.getType().equals(voteModel.getType())) {
             this.delete(voteToSave);
             return null;
-        } else if (voteToSave == null) {
-            voteToSave = new VoteEntity();
         }
 
         // Save project
@@ -154,7 +155,8 @@ public class VoteService {
     }
 
     public VoteEntity getUserVote(Long userId, Long projectId) {
-        return voteRepository.findByProjectIdAndUserId(projectId, userId).orElse(new VoteEntity());
+        Optional<VoteEntity> result = voteRepository.findOneByProjectIdAndUserId(projectId, userId);
+        return result.orElse(new VoteEntity());
     }
 
     public VoteModel getUserVote(Principal principal, Long projectId) {
