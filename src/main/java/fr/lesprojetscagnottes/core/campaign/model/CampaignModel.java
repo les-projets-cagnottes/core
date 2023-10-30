@@ -18,7 +18,6 @@ import java.util.Date;
 public class CampaignModel extends AuditEntity<String> {
 
     @Column
-    @NotNull
     protected String title = StringsCommon.EMPTY_STRING;
 
     @Column(length = 50)
