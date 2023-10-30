@@ -241,7 +241,7 @@ public class ProjectService {
 
         // Prepare & send notifications for ideas
         if ((previousStatus.equals(ProjectStatus.NEW) || previousStatus.equals(ProjectStatus.DRAFT))
-                && projectToSave.getStatus().equals(ProjectStatus.IDEA)) {
+                && projectToSave.getStatus().equals(ProjectStatus.IDEA) && !projectToSave.getIdeaHasAnonymousCreator()) {
             Map<String, Object> model = new HashMap<>();
             model.put("_user_email_", userLoggedIn.getEmail());
             model.put("user_fullname", userLoggedIn.getFullname());
